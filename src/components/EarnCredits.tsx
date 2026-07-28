@@ -483,7 +483,7 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
               </span>
             </h3>
             <p className="text-xs text-slate-300 mt-0.5">
-              Sponsor bağlantısını ziyaret ederek sunucumuza ve kredi sistemine destek olun.
+              Sponsor bağlantısını ziyaret ederek sunucumuza ve kredi sistemine destek olun(linke tıklayınca ne çıkacağından sorumlu değiliz).
             </p>
           </div>
         </div>
