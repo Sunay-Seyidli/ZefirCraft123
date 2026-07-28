@@ -1,0 +1,22 @@
+{
+  "name": "ZefirCraft Minecraft Server",
+  "short_name": "ZefirCraft",
+  "description": "ZefirCraft Minecraft Sunucu Portalı",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c101e",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

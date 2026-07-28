@@ -1,0 +1,6 @@
+{
+  "name": "ZefirCraft",
+  "description": "ZefirCraft Minecraft Sunucu Web Sitesi ve Yönetim Paneli",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
