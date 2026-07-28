@@ -20,7 +20,6 @@ import Friends from "./components/Friends";
 import UserProfileModal from "./components/UserProfileModal";
 import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
-import LuckyWheel from "./components/LuckyWheel";
 import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
@@ -75,7 +74,7 @@ export default function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "");
-      const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+      const validPages = ["home", "store", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
       if (hash && validPages.includes(hash)) {
         setCurrentPage(hash);
       }
@@ -260,14 +259,6 @@ export default function App() {
             onNavigate={changePageWithLoader}
           />
         );
-      case "wheel":
-        return (
-          <LuckyWheel
-            user={user}
-            onUpdateCredits={(newCr) => setUser(u => u ? { ...u, credits: newCr } : null)}
-            onNavigate={changePageWithLoader}
-          />
-        );
       case "chest":
         return <Chest />;
       case "earn":
@@ -352,8 +343,7 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Ana Sayfa", icon: <HomeIcon className="w-4 h-4" /> },
     { id: "store", label: "Mağaza", icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: "wheel", label: "Çarkıfelek", icon: <Gift className="w-4 h-4 text-amber-400 animate-pulse" /> },
-    { id: "earn", label: "Kredi Kazan", tag: "Yakında", icon: <Coins className="w-4 h-4 text-amber-400" /> },
+    { id: "earn", label: "Kredi Kazan", tag: "Yakında", icon: <Coins className="w-4 h-4 text-amber-400 animate-pulse" /> },
     { id: "chest", label: "Web Sandığı", icon: <Inbox className="w-4 h-4" /> },
     { id: "rankings", label: "Sıralama", icon: <Award className="w-4 h-4" /> },
     { id: "friends", label: "Arkadaşlar", icon: <Users className="w-4 h-4" />, badge: unreadCount },
