@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import LazyImage from "./LazyImage";
+import ScrollReveal from "./ScrollReveal";
 import {
   Copy, Users, Shield, Server, Award, Sparkles, Check, ChevronRight,
   Calendar, Eye, Trash2, PlusCircle, Volume2, Package, Inbox, HelpCircle, 
@@ -34,6 +36,7 @@ export default function Home({ onNavigate }: HomeProps) {
     version: "1.21.4"
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [webVisitorsCount, setWebVisitorsCount] = useState<number>(1);
 
   // LeaderOS dynamic data
   const [articles, setArticles] = useState<Article[]>([]);
@@ -109,6 +112,22 @@ export default function Home({ onNavigate }: HomeProps) {
 
   useEffect(() => {
     fetchNewsAndStats();
+
+    const fetchVisitors = async () => {
+      try {
+        const res = await fetch("/api/stats/online-visitors");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.total === "number") {
+            setWebVisitorsCount(data.total);
+          }
+        }
+      } catch (e) {}
+    };
+
+    fetchVisitors();
+    const visitorInterval = setInterval(fetchVisitors, 6000);
+    return () => clearInterval(visitorInterval);
   }, []);
 
   // Fetch live Minecraft server stats
@@ -272,39 +291,44 @@ export default function Home({ onNavigate }: HomeProps) {
           </div>
 
           {/* Majestic Server Copy Connection Capsule & Vote Button */}
-          <div className="mt-8 w-full max-w-lg px-1 space-y-2.5">
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full">
+          <div className="mt-8 w-full max-w-2xl px-1 space-y-2.5">
+            <div className="flex flex-col md:flex-row items-stretch gap-3 w-full">
               {/* Server IP Copy Capsule */}
               <button
                 onClick={handleCopyIp}
-                className={`flex-1 group relative flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer shadow-lg hover:shadow-sky-950/50 ${
+                className={`flex-1 group relative flex items-center justify-between gap-2.5 p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer shadow-lg hover:shadow-sky-950/50 ${
                   copied
                     ? "bg-emerald-500/10 border-emerald-500/40"
                     : "bg-[#0b0f1d]/90 hover:bg-[#12182b] border-[#223152]"
                 }`}
               >
                 {/* Left status dot and IP */}
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2.5 min-w-0 shrink-0">
                   <div className="relative flex h-3 w-3 shrink-0">
                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${copied ? "bg-emerald-400" : "bg-sky-400"}`}></span>
                     <span className={`relative inline-flex rounded-full h-3 w-3 ${copied ? "bg-emerald-500" : "bg-sky-500"}`}></span>
                   </div>
                   
                   {/* IP Details */}
-                  <div className="text-left leading-tight">
+                  <div className="text-left leading-tight shrink-0">
                     <span className="text-[9px] text-slate-500 block font-extrabold uppercase tracking-wider">SUNUCU ADRESİ</span>
-                    <span className="font-mono text-sm text-slate-200 font-extrabold tracking-wide group-hover:text-sky-400 transition-colors break-all">
+                    <span className="font-mono text-xs sm:text-sm text-slate-200 font-extrabold tracking-wide group-hover:text-sky-400 transition-colors whitespace-nowrap">
                       {ip}
                     </span>
                   </div>
                 </div>
 
                 {/* Right interactive button / Copy badge */}
-                <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto border-t border-slate-800/40 sm:border-t-0 pt-2.5 sm:pt-0">
-                  <span className="text-[10px] font-black bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl whitespace-nowrap">
-                    {loadingStats ? "..." : `${serverStats.players.online} / ${serverStats.players.max} Çevrimiçi`}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl whitespace-nowrap flex items-center gap-1 shadow-sm" title="Tüm sayfalarda anlık gezinen web ziyaretçileri">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>{webVisitorsCount} Web</span>
                   </span>
-                  <div className={`p-1.5 sm:p-2 rounded-xl transition-colors shrink-0 ${copied ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800/40 text-slate-400 group-hover:text-white"}`}>
+                  <span className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl whitespace-nowrap flex items-center gap-1 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                    <span>{loadingStats ? "..." : `${serverStats.players.online}/${serverStats.players.max} Oyuncu`}</span>
+                  </span>
+                  <div className={`p-1.5 sm:p-2 rounded-xl transition-colors shrink-0 ${copied ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800/60 text-slate-300 group-hover:text-white group-hover:bg-slate-800"}`}>
                     {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   </div>
                 </div>
@@ -466,67 +490,68 @@ export default function Home({ onNavigate }: HomeProps) {
             </div>
           ) : (
             <div className="space-y-6">
-              {articles.map((art) => (
-                <motion.article
-                  key={art._id}
-                  whileHover={{ y: -3 }}
-                  className="bg-[#111625]/75 border border-[#22304d] rounded-3xl overflow-hidden shadow-lg hover:border-sky-500/30 transition-all flex flex-col md:flex-row group"
-                >
-                  {/* cover image */}
-                  <div className="md:w-1/3 aspect-video md:aspect-auto relative bg-slate-900 shrink-0 overflow-hidden">
-                    <img
-                      src={art.imageUrl}
-                      alt={art.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
+              {articles.map((art, index) => (
+                <ScrollReveal key={art._id} delay={index * 0.08} direction="up">
+                  <motion.article
+                    whileHover={{ y: -3 }}
+                    className="bg-[#111625]/75 border border-[#22304d] rounded-3xl overflow-hidden shadow-lg hover:border-sky-500/30 transition-all flex flex-col md:flex-row group"
+                  >
+                    {/* cover image */}
+                    <div className="md:w-1/3 aspect-video md:aspect-auto relative bg-slate-900 shrink-0 overflow-hidden">
+                      <LazyImage
+                        src={art.imageUrl}
+                        alt={art.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
 
-                  {/* content */}
-                  <div className="p-6 flex-1 flex flex-col justify-between gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-4 text-[10px] text-slate-400 font-extrabold">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-sky-400" />
-                          {formatTime(art.createdAt)}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <Eye className="w-3.5 h-3.5 text-sky-400" />
-                          {art.views || 42} Görüntülenme
-                        </span>
+                    {/* content */}
+                    <div className="p-6 flex-1 flex flex-col justify-between gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4 text-[10px] text-slate-400 font-extrabold">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-sky-400" />
+                            {formatTime(art.createdAt)}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5 text-sky-400" />
+                            {art.views || 42} Görüntülenme
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg font-black text-white leading-tight group-hover:text-sky-400 transition-colors">
+                          {art.title}
+                        </h3>
+
+                        <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                          {art.content}
+                        </p>
                       </div>
 
-                      <h3 className="text-lg font-black text-white leading-tight group-hover:text-sky-400 transition-colors">
-                        {art.title}
-                      </h3>
-
-                      <p className="text-xs text-red-500 leading-relaxed line-clamp-3">
-                        {art.content}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-[#1e2a44]/50">
-                      <button
-                        onClick={() => setSelectedArticle(art)}
-                        className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        Devamını Oku
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      {isAdmin && (
+                      <div className="flex items-center justify-between pt-3 border-t border-[#1e2a44]/50">
                         <button
-                          type="button"
-                          onClick={() => handleDeleteArticle(art._id)}
-                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg cursor-pointer border border-red-500/20 transition-all"
-                          title="Duyuruyu Sil"
+                          onClick={() => setSelectedArticle(art)}
+                          className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 cursor-pointer transition-colors"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          Devamını Oku
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </button>
-                      )}
+
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteArticle(art._id)}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg cursor-pointer border border-red-500/20 transition-all"
+                            title="Duyuruyu Sil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.article>
+                  </motion.article>
+                </ScrollReveal>
               ))}
             </div>
           )}
@@ -536,189 +561,196 @@ export default function Home({ onNavigate }: HomeProps) {
         <div className="lg:col-span-4 space-y-6">
           
           {/* Widget 1: Sunucuya Nasıl Katılırım? (Kayıt Rehberi) */}
-          <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 font-sans">
-              <Gamepad2 className="w-4 h-4 text-sky-400" />
-              Nasıl Kayıt Olurum?
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Sitemize giriş yapıp sipariş verebilmek veya web sandığınızı kullanabilmek için öncelikle oyun içinden kayıt olmanız gerekmektedir.
-            </p>
-            <div className="bg-[#0e1324] border border-[#212f4c] rounded-2xl p-4 space-y-3 shadow-inner text-xs">
-              <div className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">1</span>
-                <p className="text-slate-300">Minecraft'ı açın ve sunucu adresine <b className="text-sky-300 select-all font-mono font-extrabold">zefircraft.mcsh.io</b> yazıp giriş yapın.</p>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">2</span>
-                <p className="text-slate-300">Sohbet penceresine <code className="text-sky-300 font-bold bg-[#1b233a] px-1.5 py-0.5 rounded">/kayit [sifre] [sifre]</code> yazıp kaydolun.</p>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">3</span>
-                <p className="text-slate-300">Sitedeki "Giriş Yap" panelinden aynı kullanıcı adı ve şifrenizle oturum açın.</p>
+          <ScrollReveal delay={0.1} direction="left">
+            <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 font-sans">
+                <Gamepad2 className="w-4 h-4 text-sky-400" />
+                Nasıl Kayıt Olurum?
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Sitemize giriş yapıp sipariş verebilmek veya web sandığınızı kullanabilmek için öncelikle oyun içinden kayıt olmanız gerekmektedir.
+              </p>
+              <div className="bg-[#0e1324] border border-[#212f4c] rounded-2xl p-4 space-y-3 shadow-inner text-xs">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">1</span>
+                  <p className="text-slate-300">Minecraft'ı açın ve sunucu adresine <b className="text-sky-300 select-all font-mono font-extrabold">zefircraft.mcsh.io</b> yazıp giriş yapın.</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">2</span>
+                  <p className="text-slate-300">Sohbet penceresine <code className="text-sky-300 font-bold bg-[#1b233a] px-1.5 py-0.5 rounded">/kayit [sifre] [sifre]</code> yazıp kaydolun.</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">3</span>
+                  <p className="text-slate-300">Sitedeki "Giriş Yap" panelinden aynı kullanıcı adı ve şifrenizle oturum açın.</p>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Widget 2: Web Sandığı (Web Chest Status) */}
-          <div className="bg-gradient-to-br from-[#12192c] to-[#0c101e] border border-[#22304d] rounded-3xl p-6 shadow-lg space-y-4 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,#2563eb10,transparent_50%)]"></div>
-            <div className="flex items-center gap-2 relative z-10">
-              <Inbox className="w-5 h-5 text-sky-400 animate-pulse" />
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Web Sandığım</h3>
-            </div>
-
-            {localStorage.getItem("koli_token") || localStorage.getItem("zefir_token") ? (
-              <div className="space-y-3 relative z-10">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Sandığınızda teslim edilmeyi bekleyen <b className="text-white text-sm font-black">{chestCount}</b> adet eşya bulunuyor.
-                </p>
-                <button
-                  onClick={() => onNavigate("chest")}
-                  className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-colors cursor-pointer"
-                >
-                  Sandığımı Aç
-                </button>
+          <ScrollReveal delay={0.15} direction="left">
+            <div className="bg-gradient-to-br from-[#12192c] to-[#0c101e] border border-[#22304d] rounded-3xl p-6 shadow-lg space-y-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,#2563eb10,transparent_50%)]"></div>
+              <div className="flex items-center gap-2 relative z-10">
+                <Inbox className="w-5 h-5 text-sky-400 animate-pulse" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Web Sandığım</h3>
               </div>
-            ) : (
-              <div className="space-y-3 relative z-10">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Hesabınıza giriş yaparak web sandığınızdaki rütbe ve eşyaları oyuna teslim edebilirsiniz.
-                </p>
-                <button
-                  onClick={() => onNavigate("login")}
-                  className="w-full py-2.5 bg-[#1b233a] hover:bg-[#253252] text-sky-400 border border-[#2b3a5c] font-extrabold text-xs rounded-xl transition-all cursor-pointer"
-                >
-                  Hesaba Giriş Yap
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* Widget: Son Alışverişler (Dynamic Rolling Recent Purchases) */}
-          <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 font-sans">
-              <Flame className="w-4 h-4 text-cyan-400 animate-pulse" />
-              Son Alışverişler
-            </h3>
-            
-            <div className="space-y-3">
-              {recentPurchases.length === 0 ? (
-                <div className="text-center py-4 text-xs text-slate-500 italic">
-                  Henüz bir alışveriş yapılmadı.
+              {localStorage.getItem("koli_token") || localStorage.getItem("zefir_token") ? (
+                <div className="space-y-3 relative z-10">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Sandığınızda teslim edilmeyi bekleyen <b className="text-white text-sm font-black">{chestCount}</b> adet eşya bulunuyor.
+                  </p>
+                  <button
+                    onClick={() => onNavigate("chest")}
+                    className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-colors cursor-pointer"
+                  >
+                    Sandığımı Aç
+                  </button>
                 </div>
               ) : (
-                recentPurchases.map((sale, idx) => {
-                  // Format time nicely
-                  const date = new Date(sale.createdAt);
-                  const minutesAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60));
-                  let timeStr = "";
-                  if (isNaN(minutesAgo)) {
-                    timeStr = "Yeni";
-                  } else if (minutesAgo < 1) {
-                    timeStr = "Az önce";
-                  } else if (minutesAgo < 60) {
-                    timeStr = `${minutesAgo} dakika önce`;
-                  } else if (minutesAgo < 1440) {
-                    timeStr = `${Math.floor(minutesAgo / 60)} saat önce`;
-                  } else {
-                    timeStr = `${Math.floor(minutesAgo / 1440)} gün önce`;
-                  }
-
-                  return (
-                    <div key={idx} className="flex items-center justify-between bg-[#171f33]/60 border border-[#23304a]/45 rounded-2xl p-3 hover:bg-[#1c263f] hover:border-[#32456a] transition-all">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={`https://mc-heads.net/avatar/${sale.username}/28`}
-                          alt={sale.username}
-                          referrerPolicy="no-referrer"
-                          className="w-7 h-7 rounded-lg border border-[#22304d]/40 shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <div className="text-xs font-black text-slate-200 truncate">{sale.username}</div>
-                          <div className="text-[10px] text-slate-400 truncate">{sale.productName}</div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-[10px] font-black text-sky-400">{sale.price} Kr.</div>
-                        <div className="text-[9px] text-slate-500 font-bold">{timeStr}</div>
-                      </div>
-                    </div>
-                  );
-                })
+                <div className="space-y-3 relative z-10">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Hesabınıza giriş yaparak web sandığınızdaki rütbe ve eşyaları oyuna teslim edebilirsiniz.
+                  </p>
+                  <button
+                    onClick={() => onNavigate("login")}
+                    className="w-full py-2.5 bg-[#1b233a] hover:bg-[#253252] text-sky-400 border border-[#2b3a5c] font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                  >
+                    Hesaba Giriş Yap
+                  </button>
+                </div>
               )}
             </div>
-          </div>
+          </ScrollReveal>
+
+          {/* Widget: Son Alışverişler (Dynamic Rolling Recent Purchases) */}
+          <ScrollReveal delay={0.2} direction="left">
+            <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 font-sans">
+                <Flame className="w-4 h-4 text-cyan-400 animate-pulse" />
+                Son Alışverişler
+              </h3>
+              
+              <div className="space-y-3">
+                {recentPurchases.length === 0 ? (
+                  <div className="text-center py-4 text-xs text-slate-500 italic">
+                    Henüz bir alışveriş yapılmadı.
+                  </div>
+                ) : (
+                  recentPurchases.map((sale, idx) => {
+                    const date = new Date(sale.createdAt);
+                    const minutesAgo = Math.floor((Date.now() - date.getTime()) / (1000 * 60));
+                    let timeStr = "";
+                    if (isNaN(minutesAgo)) {
+                      timeStr = "Yeni";
+                    } else if (minutesAgo < 1) {
+                      timeStr = "Az önce";
+                    } else if (minutesAgo < 60) {
+                      timeStr = `${minutesAgo} dakika önce`;
+                    } else if (minutesAgo < 1440) {
+                      timeStr = `${Math.floor(minutesAgo / 60)} saat önce`;
+                    } else {
+                      timeStr = `${Math.floor(minutesAgo / 1440)} gün önce`;
+                    }
+
+                    return (
+                      <div key={idx} className="flex items-center justify-between bg-[#171f33]/60 border border-[#23304a]/45 rounded-2xl p-3 hover:bg-[#1c263f] hover:border-[#32456a] transition-all">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <LazyImage
+                            src={`https://mc-heads.net/avatar/${sale.username}/28`}
+                            alt={sale.username}
+                            className="w-7 h-7 rounded-lg border border-[#22304d]/40"
+                            containerClassName="w-7 h-7 shrink-0 rounded-lg"
+                          />
+                          <div className="min-w-0">
+                            <div className="text-xs font-black text-slate-200 truncate">{sale.username}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{sale.productName}</div>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[10px] font-black text-sky-400">{sale.price} Kr.</div>
+                          <div className="text-[9px] text-slate-500 font-bold">{timeStr}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </ScrollReveal>
 
           {/* Widget 3: Kredi Sıralaması (Top Credits Donators) */}
-          <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-              <Award className="w-4 h-4 text-sky-400" />
-              Zenginler Sıralaması
-            </h3>
+          <ScrollReveal delay={0.25} direction="left">
+            <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                <Award className="w-4 h-4 text-sky-400" />
+                Zenginler Sıralaması
+              </h3>
 
-            {topUsers.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">Sıralama verisi şu an boş.</p>
-            ) : (
-              <div className="space-y-2.5">
-                {topUsers.map((u) => (
-                  <div key={u.rank} className="flex items-center justify-between bg-[#171f33] border border-[#23304a] rounded-xl p-2.5">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {/* Rank badge */}
-                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
-                        u.rank === 1 ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
-                        u.rank === 2 ? "bg-slate-300/10 text-slate-300 border border-slate-300/20" :
-                        u.rank === 3 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-slate-800/20 text-slate-400"
-                      }`}>
-                        {u.rank}
+              {topUsers.length === 0 ? (
+                <p className="text-xs text-slate-500 italic">Sıralama verisi şu an boş.</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {topUsers.map((u) => (
+                    <div key={u.rank} className="flex items-center justify-between bg-[#171f33] border border-[#23304a] rounded-xl p-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
+                          u.rank === 1 ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
+                          u.rank === 2 ? "bg-slate-300/10 text-slate-300 border border-slate-300/20" :
+                          u.rank === 3 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-slate-800/20 text-slate-400"
+                        }`}>
+                          {u.rank}
+                        </span>
+                        
+                        <LazyImage
+                          src={`https://mc-heads.net/avatar/${u.username}/24`}
+                          alt={u.username}
+                          className="w-6 h-6 rounded-md border border-[#22304d]/40"
+                          containerClassName="w-6 h-6 shrink-0 rounded-md"
+                        />
+                        <span className="font-extrabold text-xs text-slate-300 truncate">{u.username}</span>
+                      </div>
+                      <span className="text-xs font-black text-sky-400 shrink-0 bg-[#0f1425] border border-[#22304d] px-2 py-0.5 rounded-lg">
+                        {u.credits} <span className="text-[9px] font-normal text-slate-500">Kr</span>
                       </span>
-                      
-                      {/* 2D Skin face avatar! */}
-                      <img
-                        src={`https://mc-heads.net/avatar/${u.username}/24`}
-                        alt={u.username}
-                        referrerPolicy="no-referrer"
-                        className="w-6 h-6 rounded-md border border-[#22304d]/40"
-                      />
-                      <span className="font-extrabold text-xs text-slate-300 truncate">{u.username}</span>
                     </div>
-                    <span className="text-xs font-black text-sky-400 shrink-0 bg-[#0f1425] border border-[#22304d] px-2 py-0.5 rounded-lg">
-                      {u.credits} <span className="text-[9px] font-normal text-slate-500">Kr</span>
-                    </span>
-                  </div>
-                ))}
-                
-                <button
-                  onClick={() => onNavigate("rankings")}
-                  className="w-full mt-2 py-2.5 bg-[#171f33] hover:bg-[#212c47] text-slate-300 hover:text-white border border-[#2b3a5a] rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1"
-                >
-                  Tüm Sıralamayı Gör
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
+                  ))}
+                  
+                  <button
+                    onClick={() => onNavigate("rankings")}
+                    className="w-full mt-2 py-2.5 bg-[#171f33] hover:bg-[#212c47] text-slate-300 hover:text-white border border-[#2b3a5a] rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    Tüm Sıralamayı Gör
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </ScrollReveal>
 
           {/* Widget 4: Discord Banner */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2] to-[#3a47d2] text-white p-6 shadow-lg space-y-4">
-            <div className="space-y-1.5 relative z-10">
-              <h3 className="text-sm font-black flex items-center gap-1.5">
-                <MessageSquare className="w-4 h-4 animate-bounce" />
-                Discord Topluluğumuz
-              </h3>
-              <p className="text-xs text-blue-100/80 leading-relaxed">
-                Etkinlikleri takip et, özel çekilişlere katıl ve sunucunun güncel sohbetlerine ortak ol!
-              </p>
+          <ScrollReveal delay={0.3} direction="left">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5865F2] to-[#3a47d2] text-white p-6 shadow-lg space-y-4">
+              <div className="space-y-1.5 relative z-10">
+                <h3 className="text-sm font-black flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 animate-bounce" />
+                  Discord Topluluğumuz
+                </h3>
+                <p className="text-xs text-blue-100/80 leading-relaxed">
+                  Etkinlikleri takip et, özel çekilişlere katıl ve sunucunun güncel sohbetlerine ortak ol!
+                </p>
+              </div>
+              <a
+                href="https://discord.gg/invite-placeholder"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-2.5 bg-white text-[#5865F2] font-extrabold text-center text-xs rounded-xl hover:bg-slate-50 transition-colors shadow-md relative z-10"
+              >
+                Topluluğa Katıl
+              </a>
             </div>
-            <a
-              href="https://discord.gg/invite-placeholder"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full py-2.5 bg-white text-[#5865F2] font-extrabold text-center text-xs rounded-xl hover:bg-slate-50 transition-colors shadow-md relative z-10"
-            >
-              Topluluğa Katıl
-            </a>
-          </div>
+          </ScrollReveal>
 
         </div>
 

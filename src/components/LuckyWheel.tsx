@@ -190,40 +190,113 @@ export default function LuckyWheel({ user, onUpdateCredits, onNavigate }: LuckyW
             <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[28px] border-t-amber-400 filter drop-shadow-[0_4px_10px_rgba(245,158,11,0.6)]" />
           </div>
 
-          {/* Wheel Disc */}
-          <div className="relative w-72 h-72 sm:w-80 sm:h-80 my-4 flex items-center justify-center">
+          {/* Wheel Disc (SVG) */}
+          <div className="relative w-80 h-80 sm:w-96 sm:h-96 my-4 flex items-center justify-center">
             <div
-              className="w-full h-full rounded-full border-4 border-amber-500/50 shadow-[0_0_50px_rgba(245,158,11,0.2)] overflow-hidden relative transition-transform duration-[4000ms] cubic-bezier(0.15, 0.9, 0.25, 1)"
+              className="w-full h-full transition-transform duration-[4000ms] cubic-bezier(0.15, 0.9, 0.25, 1) drop-shadow-[0_0_35px_rgba(245,158,11,0.25)]"
               style={{ transform: `rotate(${rotationDegrees}deg)` }}
             >
-              {WHEEL_SLICES.map((slice, idx) => {
-                const angle = 360 / WHEEL_SLICES.length;
-                const rotation = idx * angle;
-                return (
-                  <div
-                    key={idx}
-                    className="absolute w-1/2 h-1/2 top-0 right-0 origin-bottom-left flex items-start justify-center pt-6 text-white font-black text-xs sm:text-sm drop-shadow-md border-r border-slate-900/40"
-                    style={{
-                      transform: `rotate(${rotation}deg) skewY(-${90 - angle}deg)`,
-                      backgroundColor: slice.color
-                    }}
-                  >
-                    <span
-                      className="inline-block transform -skewY-0 rotate-45 text-center text-white uppercase tracking-wider font-extrabold"
-                      style={{
-                        transform: `skewY(${90 - angle}deg) rotate(${angle / 2}deg)`
-                      }}
-                    >
-                      {slice.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+              <svg viewBox="0 0 400 400" className="w-full h-full select-none">
+                <defs>
+                  {/* Wheel outer border gradient */}
+                  <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fbbf24" />
+                    <stop offset="50%" stopColor="#d97706" />
+                    <stop offset="100%" stopColor="#78350f" />
+                  </linearGradient>
+                  {/* Slice gradients */}
+                  <linearGradient id="grad-red" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ef4444" />
+                    <stop offset="100%" stopColor="#991b1b" />
+                  </linearGradient>
+                  <linearGradient id="grad-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#9a3412" />
+                  </linearGradient>
+                  <linearGradient id="grad-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#eab308" />
+                    <stop offset="100%" stopColor="#854d0e" />
+                  </linearGradient>
+                  <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#1e3a8a" />
+                  </linearGradient>
+                  <linearGradient id="grad-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#064e3b" />
+                  </linearGradient>
+                  <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#581c87" />
+                  </linearGradient>
+                </defs>
 
-            {/* Wheel Center Button / Emblem */}
-            <div className="absolute w-20 h-20 bg-[#0b101d] border-4 border-amber-400 rounded-full flex flex-col items-center justify-center shadow-2xl z-20">
-              <Gift className="w-7 h-7 text-amber-400" />
+                {/* Outer Golden Ring */}
+                <circle cx="200" cy="200" r="195" fill="url(#goldBorder)" />
+                <circle cx="200" cy="200" r="185" fill="#0f172a" />
+
+                {/* Slices */}
+                {WHEEL_SLICES.map((slice, idx) => {
+                  const numSlices = WHEEL_SLICES.length;
+                  const sliceAngle = 360 / numSlices;
+                  const startAngle = -90 + idx * sliceAngle;
+                  const endAngle = -90 + (idx + 1) * sliceAngle;
+
+                  const a1 = (startAngle * Math.PI) / 180;
+                  const a2 = (endAngle * Math.PI) / 180;
+
+                  const r = 182;
+                  const x1 = 200 + r * Math.cos(a1);
+                  const y1 = 200 + r * Math.sin(a1);
+                  const x2 = 200 + r * Math.cos(a2);
+                  const y2 = 200 + r * Math.sin(a2);
+
+                  const pathD = `M 200 200 L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+
+                  const gradIds = ["grad-red", "grad-orange", "grad-amber", "grad-blue", "grad-emerald", "grad-purple"];
+                  const fillGrad = `url(#${gradIds[idx % gradIds.length]})`;
+
+                  const midAngle = startAngle + sliceAngle / 2;
+                  const rotateGroupDeg = midAngle + 90;
+
+                  return (
+                    <g key={idx}>
+                      <path d={pathD} fill={fillGrad} stroke="#0f172a" strokeWidth="2.5" />
+                      <g transform={`rotate(${rotateGroupDeg}, 200, 200)`}>
+                        <text
+                          x="200"
+                          y="80"
+                          fill="#ffffff"
+                          fontSize="15"
+                          fontWeight="900"
+                          textAnchor="middle"
+                          className="font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                          style={{ fontFamily: 'sans-serif' }}
+                        >
+                          {slice.label}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
+
+                {/* Decorative Pins around outer rim */}
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const pAngle = (i * 30 * Math.PI) / 180;
+                  const px = 200 + 190 * Math.cos(pAngle);
+                  const py = 200 + 190 * Math.sin(pAngle);
+                  return <circle key={i} cx={px} cy={py} r="3.5" fill="#fef08a" stroke="#78350f" strokeWidth="1" />;
+                })}
+
+                {/* Center Hub */}
+                <circle cx="200" cy="200" r="42" fill="url(#goldBorder)" />
+                <circle cx="200" cy="200" r="36" fill="#0b101d" />
+              </svg>
+
+              {/* Center Icon */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <Gift className="w-9 h-9 text-amber-400 drop-shadow-[0_2px_8px_rgba(245,158,11,0.8)]" />
+              </div>
             </div>
           </div>
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Award, Trophy, Coins, Search, User, Sparkles, Snowflake, ArrowRight, X, HelpCircle, Check } from "lucide-react";
 import { motion } from "motion/react";
+import LazyImage from "./LazyImage";
+import ScrollReveal from "./ScrollReveal";
 
 interface RankUser {
   rank: number;
@@ -108,11 +110,11 @@ export default function Rankings() {
                   
                   {/* 3D Body Skin */}
                   <div className="h-44 flex items-center justify-center relative">
-                    <img
+                    <LazyImage
                       src={`https://mc-heads.net/body/${second.username}/110`}
                       alt={second.username}
-                      referrerPolicy="no-referrer"
                       className="h-full object-contain filter drop-shadow-[0_8px_16px_rgba(100,116,139,0.3)] hover:scale-105 transition-transform"
+                      containerClassName="h-full flex items-center justify-center"
                     />
                   </div>
 
@@ -141,11 +143,11 @@ export default function Rankings() {
                   
                   {/* 3D Body Skin (Larger for first place) */}
                   <div className="h-56 flex items-center justify-center relative">
-                    <img
+                    <LazyImage
                       src={`https://mc-heads.net/body/${first.username}/140`}
                       alt={first.username}
-                      referrerPolicy="no-referrer"
                       className="h-full object-contain filter drop-shadow-[0_12px_24px_rgba(245,158,11,0.35)] hover:scale-105 transition-transform"
+                      containerClassName="h-full flex items-center justify-center"
                     />
                     <div className="absolute top-0 right-2 bg-sky-500/10 border border-sky-500/25 text-sky-400 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider">
                       LİDER

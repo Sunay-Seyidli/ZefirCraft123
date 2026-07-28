@@ -36,6 +36,146 @@ interface QuizSettings {
   cooldownMinutes: number;
 }
 
+function AdBannerContainer({ code, placeholderText }: { code: string; placeholderText: string }) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    containerRef.current.innerHTML = "";
+    if (code && code.trim()) {
+      try {
+        const range = document.createRange();
+        const fragment = range.createContextualFragment(code);
+        containerRef.current.appendChild(fragment);
+      } catch (err) {
+        console.error("Ad code render error:", err);
+      }
+    }
+  }, [code]);
+
+  if (!code || !code.trim()) {
+    return (
+      <div className="h-20 sm:h-24 bg-[#111827] border border-dashed border-amber-500/30 rounded-xl flex items-center justify-center text-xs text-amber-400/80 font-bold p-3">
+        {placeholderText}
+      </div>
+    );
+  }
+
+  return <div ref={containerRef} className="overflow-hidden flex justify-center items-center my-2 min-h-[60px]" />;
+}
+
+// 1. Adsterra 728x90 Leaderboard Banner
+function AdsterraLeaderboard728x90() {
+  const srcDoc = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; background: transparent; }
+        </style>
+      </head>
+      <body>
+        <script type="text/javascript">
+          atOptions = {
+            'key' : '7bf0eedc9106ac59fcf3e2c0c807a58a',
+            'format' : 'iframe',
+            'height' : 90,
+            'width' : 728,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/7bf0eedc9106ac59fcf3e2c0c807a58a/invoke.js"></script>
+      </body>
+    </html>
+  `;
+
+  return (
+    <div className="w-full flex justify-center items-center overflow-x-auto py-2">
+      <iframe
+        title="Adsterra 728x90 Leaderboard"
+        srcDoc={srcDoc}
+        width="728"
+        height="90"
+        className="border-0 overflow-hidden shrink-0 max-w-full rounded-xl"
+        scrolling="no"
+      />
+    </div>
+  );
+}
+
+// 2. Adsterra 300x250 Medium Rectangle Box Banner
+function AdsterraBox300x250() {
+  const srcDoc = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; background: transparent; }
+        </style>
+      </head>
+      <body>
+        <script type="text/javascript">
+          atOptions = {
+            'key' : 'acde311fdaa34c41c807ca257b3755b1',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/acde311fdaa34c41c807ca257b3755b1/invoke.js"></script>
+      </body>
+    </html>
+  `;
+
+  return (
+    <div className="w-full flex justify-center items-center overflow-hidden py-2">
+      <iframe
+        title="Adsterra 300x250 Box"
+        srcDoc={srcDoc}
+        width="300"
+        height="250"
+        className="border-0 overflow-hidden shrink-0 rounded-xl"
+        scrolling="no"
+      />
+    </div>
+  );
+}
+
+// 3. Adsterra Native Banner
+function AdsterraNativeBanner() {
+  const srcDoc = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { margin: 0; padding: 0; background: transparent; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; }
+        </style>
+      </head>
+      <body>
+        <script async="async" data-cfasync="false" src="https://pl30574732.effectivecpmnetwork.com/5490d097914bd33005564511b1c45217/invoke.js"></script>
+        <div id="container-5490d097914bd33005564511b1c45217"></div>
+      </body>
+    </html>
+  `;
+
+  return (
+    <div className="w-full overflow-hidden my-3">
+      <iframe
+        title="Adsterra Native Banner"
+        srcDoc={srcDoc}
+        width="100%"
+        height="180"
+        className="border-0 overflow-hidden w-full rounded-2xl"
+        scrolling="no"
+      />
+    </div>
+  );
+}
+
 export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnCreditsProps) {
   const [activeTab, setActiveTab] = useState<"quiz" | "quests">("quiz");
 
@@ -45,7 +185,7 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
     bannerNotice: "Size ücretsiz kredi sağlayabilmek ve sunucu giderlerimizi karşılayabilmek için bu sayfada reklam alanları yer almaktadır. Anket çözerek hem bilginizi test edin hem de ücretsiz kredi kazanın!",
     adsenseCode: "",
     quizQuestionsPerRound: 10,
-    secondsPerQuestion: 10,
+    secondsPerQuestion: 30,
     creditsPerQuiz: 1,
     minCorrectToWin: 7,
     cooldownMinutes: 0
@@ -142,7 +282,7 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
         setQuestions(data.questions || []);
         setCurrentIdx(0);
         setSelectedAnswers([]);
-        setTimeLeft(data.secondsPerQuestion || settings.secondsPerQuestion || 10);
+        setTimeLeft(data.secondsPerQuestion || settings.secondsPerQuestion || 30);
         setQuizResult(null);
         setQuizStarted(true);
       } else {
@@ -166,7 +306,7 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
     if (currentIdx + 1 < questions.length) {
       // Move to next question
       setCurrentIdx(prev => prev + 1);
-      setTimeLeft(settings.secondsPerQuestion || 10);
+      setTimeLeft(settings.secondsPerQuestion || 30);
     } else {
       // Finished all questions! Submit to server
       submitQuizResults(newAnswers);
@@ -299,31 +439,81 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
         </div>
       </div>
 
-      {/* TOP ADSENSE BANNER PLACEHOLDER / SCRIPT CONTAINER */}
-      <div className="w-full bg-[#0a0f1d] border border-slate-800 rounded-2xl p-4 text-center shadow-md relative overflow-hidden">
-        <div className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1 flex items-center justify-center gap-1">
-          <Info className="w-3 h-3 text-slate-500" /> Sponsor Reklam Alanı (Google AdSense)
+      {/* TOP REKLAM BANNERLARI (Leaderboard & Smartlink) */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.35 }}
+        className="w-full bg-[#0a0f1d] border border-amber-500/30 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden space-y-3"
+      >
+        <div className="text-[10px] uppercase font-black tracking-widest text-amber-400 flex items-center justify-center gap-1">
+          <Info className="w-3.5 h-3.5 text-amber-400" /> Sponsor Reklam Alanı
         </div>
+        
+        {/* Leaderboard Banner */}
+        <AdsterraLeaderboard728x90 />
+
+        {/* Custom Admin Code if configured */}
         {settings.adsenseCode ? (
-          <div dangerouslySetInnerHTML={{ __html: settings.adsenseCode }} />
-        ) : (
-          <div className="h-20 sm:h-24 bg-[#111827] border border-dashed border-amber-500/30 rounded-xl flex items-center justify-center text-xs text-amber-400/80 font-bold p-3">
-            🎯 Google AdSense Reklam Bannerı (Bu Alanda Google Adsense veya Sponsor Bannerları Gösterilecektir)
+          <AdBannerContainer
+            code={settings.adsenseCode}
+            placeholderText=""
+          />
+        ) : null}
+      </motion.div>
+
+      {/* SMARTLINK SPONSOR CARD */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.35 }}
+        className="bg-gradient-to-r from-amber-950/60 via-amber-900/40 to-yellow-950/60 border border-amber-500/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-amber-500/20 border border-amber-400/30 rounded-xl shrink-0">
+            <Sparkles className="w-6 h-6 text-amber-400" />
           </div>
-        )}
-      </div>
+          <div className="text-center sm:text-left">
+            <h3 className="text-sm font-black text-amber-300 flex items-center justify-center sm:justify-start gap-1.5">
+              Sponsor Bağlantısı
+              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-black rounded-full uppercase">
+                Aktif
+              </span>
+            </h3>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Sponsor bağlantısını ziyaret ederek sunucumuza ve kredi sistemine destek olun.
+            </p>
+          </div>
+        </div>
+        <a
+          href="https://www.effectivecpmnetwork.com/cs5m4z1hd5?key=3c6909ed230acc836b43757f2fb49c9d"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer"
+        >
+          Sponsor Linkine Git <ArrowRight className="w-4 h-4" />
+        </a>
+      </motion.div>
 
       {/* Hero Stats Header */}
-      <div className="bg-[#0f1629] border border-[#202d4a] rounded-3xl p-5 sm:p-7 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.35 }}
+        className="bg-[#0f1629] border border-[#202d4a] rounded-3xl p-5 sm:p-7 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6"
+      >
         <div className="space-y-1 text-center md:text-left">
           <div className="inline-flex items-center gap-2 text-xs text-amber-400 font-bold uppercase tracking-wider">
             <Sparkles className="w-4 h-4 text-amber-400" />
             Minecraft Bilgi Testi & Anket Portalı
-            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black rounded-full uppercase tracking-wider ml-1">
-              Çok Yakında
+            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black rounded-full uppercase tracking-wider ml-1">
+              Canlı
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">Anket Çöz & Ücretsiz Kredi Kazan <span className="text-amber-400 text-sm font-extrabold">(Yakında)</span></h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-white">Anket Çöz & Ücretsiz Kredi Kazan</h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
             10 soruluk Minecraft bilgi yarışmasını tamamla. En az {settings.minCorrectToWin} doğruya ulaşınca +{settings.creditsPerQuiz} Kredin hesabına anında tanımlansın!
           </p>
@@ -347,7 +537,7 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-[#1d2a47] pb-2">
@@ -508,7 +698,7 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
                   <div className="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-800">
                     <div
                       className="bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(251,191,36,0.5)]"
-                      style={{ width: `${(timeLeft / (settings.secondsPerQuestion || 10)) * 100}%` }}
+                      style={{ width: `${(timeLeft / (settings.secondsPerQuestion || 30)) * 100}%` }}
                     />
                   </div>
 
@@ -535,6 +725,14 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
                         </span>
                       </button>
                     ))}
+                  </div>
+
+                  {/* Sponsor Ad Banner inside Quiz Active View */}
+                  <div className="pt-3 border-t border-[#1d2a47]">
+                    <div className="text-[10px] uppercase font-black tracking-widest text-amber-400/80 mb-1 text-center flex items-center justify-center gap-1">
+                      <Info className="w-3 h-3 text-amber-400" /> Sponsor Reklamı
+                    </div>
+                    <AdsterraLeaderboard728x90 />
                   </div>
                 </div>
               ) : null}
@@ -625,43 +823,35 @@ export default function EarnCredits({ user, onUpdateCredits, onNavigate }: EarnC
         {/* Right Sidebar Ad Space (1 Col) */}
         <div className="space-y-6">
           <div className="bg-[#0f1629] border border-[#202d4a] rounded-3xl p-5 space-y-4 shadow-xl">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
               <Megaphone className="w-4 h-4 text-amber-400" /> Sponsor Reklamlar
             </h3>
 
-            {/* Sidebar Ad Unit 1 */}
-            <div className="bg-[#090e1c] border border-slate-800 rounded-2xl p-4 text-center min-h-[200px] flex flex-col items-center justify-center space-y-2">
-              <div className="text-[10px] uppercase font-black tracking-widest text-slate-500">AdSense Kule Banner #1</div>
-              <p className="text-xs text-amber-300 font-bold">
-                🎯 Reklam Alanı
-              </p>
-              <span className="text-[10px] text-slate-500 leading-tight">
-                Anketler arasında Google AdSense veya sponsor bağlantıları yer almaktadır.
-              </span>
+            {/* Sidebar Ad Unit 1: Box Banner */}
+            <div className="bg-[#090e1c] border border-amber-500/30 rounded-2xl p-3 text-center overflow-hidden">
+              <div className="text-[10px] uppercase font-black tracking-widest text-amber-400/80 mb-2">
+                Sponsor Reklamı
+              </div>
+              <AdsterraBox300x250 />
             </div>
 
-            {/* Sidebar Ad Unit 2 */}
-            <div className="bg-[#090e1c] border border-slate-800 rounded-2xl p-4 text-center min-h-[200px] flex flex-col items-center justify-center space-y-2">
-              <div className="text-[10px] uppercase font-black tracking-widest text-slate-500">AdSense Kule Banner #2</div>
-              <p className="text-xs text-sky-300 font-bold">
-                📢 Sponsor Kutusu
-              </p>
-              <span className="text-[10px] text-slate-500 leading-tight">
-                Tüm reklamlardan elde edilen gelir sunucu bütçesine aktarılır.
-              </span>
+            {/* Sidebar Ad Unit 2: Native Banner */}
+            <div className="bg-[#090e1c] border border-amber-500/30 rounded-2xl p-3 text-center overflow-hidden">
+              <div className="text-[10px] uppercase font-black tracking-widest text-amber-400/80 mb-2">
+                Sponsorlu İçerik Reklamı
+              </div>
+              <AdsterraNativeBanner />
             </div>
           </div>
         </div>
       </div>
 
-      {/* BOTTOM ADSENSE BANNER PLACEHOLDER */}
-      <div className="w-full bg-[#0a0f1d] border border-slate-800 rounded-2xl p-4 text-center shadow-md relative overflow-hidden">
-        <div className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1">
-          Sponsor Reklam Alanı #3 (Alt Banner AdSense)
+      {/* BOTTOM SPONSOR BANNER */}
+      <div className="w-full bg-[#0a0f1d] border border-amber-500/30 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden space-y-2">
+        <div className="text-[10px] uppercase font-black tracking-widest text-amber-400 mb-1 flex items-center justify-center gap-1">
+          <Info className="w-3.5 h-3.5 text-amber-400" /> Alt Sponsor Banner Reklam Alanı
         </div>
-        <div className="h-20 sm:h-24 bg-[#111827] border border-dashed border-amber-500/30 rounded-xl flex items-center justify-center text-xs text-amber-400/80 font-bold p-3">
-          📢 Google AdSense Alt Banner Reklam Alanı
-        </div>
+        <AdsterraLeaderboard728x90 />
       </div>
     </div>
   );

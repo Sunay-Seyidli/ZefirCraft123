@@ -125,7 +125,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
   const [creditRatio, setCreditRatio] = useState(1);
 
   // Adsterra & Monlix & Earn Credits Settings
-  const [adsterraUrl, setAdsterraUrl] = useState("https://www.effectivecpmnetwork.com/hy1a37nm?key=f229c9fb555e4283383d0975228ae41b,https://www.effectivecpmnetwork.com/j6uybqniym?key=9d0844e67c078c270eb06d0ccfd3bfae");
+  const [adsterraUrl, setAdsterraUrl] = useState("https://www.effectivecpmnetwork.com/cs5m4z1hd5?key=3c6909ed230acc836b43757f2fb49c9d");
   const [monlixUrl, setMonlixUrl] = useState("https://monlix.com");
   const [adRewardCredits, setAdRewardCredits] = useState(1);
   const [adCooldownMinutes, setAdCooldownMinutes] = useState(10);
@@ -189,7 +189,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
     bannerNotice: "Size ücretsiz kredi sağlayabilmek ve sunucu giderlerimizi karşılayabilmek için bu sayfada reklam alanları yer almaktadır.",
     adsenseCode: "",
     quizQuestionsPerRound: 10,
-    secondsPerQuestion: 10,
+    secondsPerQuestion: 30,
     creditsPerQuiz: 1,
     minCorrectToWin: 7,
     cooldownMinutes: 0
@@ -2262,7 +2262,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                         <input
                           type="number"
                           value={adminQuizSettings.secondsPerQuestion}
-                          onChange={e => setAdminQuizSettings({ ...adminQuizSettings, secondsPerQuestion: parseInt(e.target.value) || 10 })}
+                          onChange={e => setAdminQuizSettings({ ...adminQuizSettings, secondsPerQuestion: parseInt(e.target.value) || 30 })}
                           className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-2.5 text-xs text-white"
                         />
                       </div>

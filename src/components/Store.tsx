@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import LazyImage from "./LazyImage";
+import ScrollReveal from "./ScrollReveal";
 import { 
   ShoppingCart, AlertCircle, CheckCircle, Clock, X, Database, Coins, 
   ArrowRightLeft, Sparkles, LogIn, ChevronRight, Check
@@ -317,23 +319,23 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
-            <motion.div
-              key={product._id}
-              whileHover={{ y: -4 }}
-              className="bg-[#111625]/75 rounded-2xl border border-[#1e2a40] overflow-hidden shadow-lg hover:border-sky-500/30 transition-all flex flex-col group"
-            >
-              <div className="h-44 relative bg-slate-900 overflow-hidden shrink-0">
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
-                />
-                <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#111625]/95 backdrop-blur-sm border border-[#2d3a5c] rounded-full text-[10px] font-black text-sky-400 uppercase tracking-wider">
-                  {product.category}
-                </span>
-              </div>
+          {filteredProducts.map((product, index) => (
+            <ScrollReveal key={product._id} delay={index * 0.05} direction="up">
+              <motion.div
+                whileHover={{ y: -4 }}
+                className="bg-[#111625]/75 rounded-2xl border border-[#1e2a40] overflow-hidden shadow-lg hover:border-sky-500/30 transition-all flex flex-col group h-full"
+              >
+                <div className="h-44 relative bg-slate-900 overflow-hidden shrink-0">
+                  <LazyImage
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
+                    containerClassName="w-full h-full"
+                  />
+                  <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#111625]/95 backdrop-blur-sm border border-[#2d3a5c] rounded-full text-[10px] font-black text-sky-400 uppercase tracking-wider z-20">
+                    {product.category}
+                  </span>
+                </div>
 
               <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                 <div className="space-y-1.5">
@@ -376,6 +378,7 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
                 </div>
               </div>
             </motion.div>
+          </ScrollReveal>
           ))}
         </div>
       )}

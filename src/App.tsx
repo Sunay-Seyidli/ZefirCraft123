@@ -20,6 +20,7 @@ import Friends from "./components/Friends";
 import UserProfileModal from "./components/UserProfileModal";
 import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
+import LuckyWheel from "./components/LuckyWheel";
 import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
@@ -41,7 +42,50 @@ export default function App() {
   const [adminRoleModalTarget, setAdminRoleModalTarget] = useState<string | null>(null);
   const [adminRoleModalOpen, setAdminRoleModalOpen] = useState<boolean>(false);
 
+  // Online Web Visitor Stats & Page Breakdown (100% Real-time)
+  const [visitorStats, setVisitorStats] = useState<{
+    total: number;
+    pages: { home: number; store: number; earn: number; wheel: number; chest: number; rankings: number; friends?: number; other: number };
+  }>({
+    total: 1,
+    pages: { home: 1, store: 0, earn: 0, wheel: 0, chest: 0, rankings: 0, friends: 0, other: 0 }
+  });
+  const [showVisitorModal, setShowVisitorModal] = useState(false);
+
   const serverIP = "zefircraft.mcsh.io";
+
+  // Heartbeat & Online Visitor Stats Polling
+  useEffect(() => {
+    let sessionId = sessionStorage.getItem("zefir_session_id");
+    if (!sessionId) {
+      sessionId = "sess_" + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem("zefir_session_id", sessionId);
+    }
+
+    const sendHeartbeatAndFetchStats = async () => {
+      try {
+        await fetch("/api/stats/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, page: currentPage })
+        });
+
+        const res = await fetch("/api/stats/online-visitors");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.total === "number") {
+            setVisitorStats(data);
+          }
+        }
+      } catch (err) {
+        // silent
+      }
+    };
+
+    sendHeartbeatAndFetchStats();
+    const interval = setInterval(sendHeartbeatAndFetchStats, 6000);
+    return () => clearInterval(interval);
+  }, [currentPage]);
 
   // Poll unread messages for navigation badge
   useEffect(() => {
@@ -74,7 +118,7 @@ export default function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "");
-      const validPages = ["home", "store", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+      const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
       if (hash && validPages.includes(hash)) {
         setCurrentPage(hash);
       }
@@ -259,6 +303,14 @@ export default function App() {
             onNavigate={changePageWithLoader}
           />
         );
+      case "wheel":
+        return (
+          <LuckyWheel
+            user={user}
+            onUpdateCredits={(newCr) => setUser(u => u ? { ...u, credits: newCr } : null)}
+            onNavigate={changePageWithLoader}
+          />
+        );
       case "chest":
         return <Chest />;
       case "earn":
@@ -343,7 +395,8 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Ana Sayfa", icon: <HomeIcon className="w-4 h-4" /> },
     { id: "store", label: "Mağaza", icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: "earn", label: "Kredi Kazan", tag: "Yakında", icon: <Coins className="w-4 h-4 text-amber-400 animate-pulse" /> },
+    { id: "wheel", label: "Çarkıfelek", icon: <Gift className="w-4 h-4 text-amber-400 animate-pulse" /> },
+    { id: "earn", label: "Kredi Kazan", icon: <Coins className="w-4 h-4 text-amber-400" /> },
     { id: "chest", label: "Web Sandığı", icon: <Inbox className="w-4 h-4" /> },
     { id: "rankings", label: "Sıralama", icon: <Award className="w-4 h-4" /> },
     { id: "friends", label: "Arkadaşlar", icon: <Users className="w-4 h-4" />, badge: unreadCount },
@@ -369,29 +422,108 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#070a14] flex flex-col text-slate-200 font-sans antialiased">
-      {/* Top Ambient Banner */}
-      <div className="bg-gradient-to-r from-sky-950/80 via-zinc-900 to-sky-950/80 border-[#1b3d54] border-sky-500/30 text-xs py-2 px-4 tracking-wider flex items-center justify-between gap-4 max-w-7xl w-full mx-auto rounded-b-2xl shadow-lg relative z-50">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
-          </span>
-          <span className="text-[11px] font-bold text-sky-200 flex items-center gap-1.5">
-            <Boxes className="w-3.5 h-3.5 text-sky-400 inline" />
-            ZefirCraft Sezon Açılışı Aktif!
-          </span>
-        </div>
-        <button
-          onClick={copyIp}
-          className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl px-3 py-1 font-mono text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-        >
-          <span>IP: {serverIP}</span>
-          {ipCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-        </button>
-      </div>
+      {/* Sticky Header Container (Top Ambient Banner + Main Glass Header) */}
+      <div className="sticky top-0 z-50 w-full bg-[#070a14]/95 backdrop-blur-md border-b border-[#232a3e]/80 shadow-2xl">
+        {/* Top Ambient Banner with Live Online Web Visitors */}
+        <div className="bg-gradient-to-r from-sky-950/90 via-slate-900 to-sky-950/90 border-x border-b border-sky-500/30 text-xs py-1.5 px-3 sm:px-4 tracking-wider flex flex-wrap items-center justify-between gap-2 max-w-7xl w-full mx-auto rounded-b-2xl shadow-lg relative z-50">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[11px] font-bold text-sky-200 flex items-center gap-1.5">
+              <Boxes className="w-3.5 h-3.5 text-sky-400 inline" />
+              ZefirCraft Towny Sezonu Aktif!
+            </span>
+            <span className="text-slate-700 hidden sm:inline">|</span>
 
-      {/* Main Glass Header */}
-      <header className="sticky top-0 z-50 bg-[#0d111d]/90 backdrop-blur-md border-[#1b3d54] border-[#232a3e]/80 shadow-xl mt-1">
+            {/* Real-time Web Online Visitor Counter Badge */}
+            <div className="relative">
+              <button
+                onClick={() => setShowVisitorModal(!showVisitorModal)}
+                className="bg-emerald-950/80 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-500/40 rounded-xl px-2.5 py-1 text-[11px] font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-emerald-950/40 group"
+                title="Tüm sayfalardaki anlık web ziyaretçi sayısını görmek için tıklayın"
+              >
+                <Users className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span>Sitede Aktif:</span>
+                <span className="bg-emerald-500/20 text-emerald-200 px-1.5 py-0.5 rounded-md font-black border border-emerald-400/30">
+                  {visitorStats.total} Web Ziyaretçisi
+                </span>
+                <span className="text-[9px] text-emerald-400/80 font-bold underline">(Detay)</span>
+              </button>
+
+              {/* Popover Breakdown Modal */}
+              <AnimatePresence>
+                {showVisitorModal && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute left-0 mt-2 w-72 bg-[#0c1222] border border-emerald-500/40 rounded-2xl p-4 shadow-2xl z-50 text-left space-y-3"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs uppercase tracking-wider">
+                        <Users className="w-4 h-4 text-emerald-400" /> Sitede Anlık Web Dağılımı
+                      </div>
+                      <button
+                        onClick={() => setShowVisitorModal(false)}
+                        className="text-slate-400 hover:text-white p-1"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="text-[11px] text-slate-300 space-y-2">
+                      <div className="flex justify-between items-center bg-[#131b30] p-2 rounded-xl border border-slate-800">
+                        <span className="flex items-center gap-1.5 font-bold"><HomeIcon className="w-3.5 h-3.5 text-sky-400" /> Ana Sayfa</span>
+                        <span className="font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">{visitorStats.pages.home} kişi</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-[#131b30] p-2 rounded-xl border border-slate-800">
+                        <span className="flex items-center gap-1.5 font-bold"><ShoppingBag className="w-3.5 h-3.5 text-amber-400" /> Mağaza</span>
+                        <span className="font-black text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">{visitorStats.pages.store} kişi</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-[#131b30] p-2 rounded-xl border border-slate-800">
+                        <span className="flex items-center gap-1.5 font-bold"><Coins className="w-3.5 h-3.5 text-yellow-400" /> Kredi Kazan (Anket/Test)</span>
+                        <span className="font-black text-yellow-300 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">{visitorStats.pages.earn} kişi</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-[#131b30] p-2 rounded-xl border border-slate-800">
+                        <span className="flex items-center gap-1.5 font-bold"><Gift className="w-3.5 h-3.5 text-purple-400" /> Çarkıfelek & Web Sandığı</span>
+                        <span className="font-black text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-lg border border-purple-500/20">{(visitorStats.pages.wheel || 0) + (visitorStats.pages.chest || 0)} kişi</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-[#131b30] p-2 rounded-xl border border-slate-800">
+                        <span className="flex items-center gap-1.5 font-bold"><Award className="w-3.5 h-3.5 text-emerald-400" /> Sıralama & Sosyal</span>
+                        <span className="font-black text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">{(visitorStats.pages.rankings || 0) + (visitorStats.pages.friends || 0)} kişi</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-[#131b30] p-2 rounded-xl border border-slate-800">
+                        <span className="flex items-center gap-1.5 font-bold"><HelpCircle className="w-3.5 h-3.5 text-cyan-400" /> Destek & Diğer Sayfalar</span>
+                        <span className="font-black text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-lg border border-cyan-500/20">{visitorStats.pages.other || 0} kişi</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                      <span>TOPLAM ANLIK WEB:</span>
+                      <span className="text-emerald-400 font-black text-xs">{visitorStats.total} ZİYARETÇİ</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={copyIp}
+              className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl px-3 py-1 font-mono text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <span className="text-slate-400">Sunucu IP:</span>
+              <span className="text-sky-200 font-black">{serverIP}</span>
+              {ipCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-sky-400" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Main Glass Header */}
+        <header className="bg-transparent">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
           
           {/* Logo Brand Area (Animated Floating Logo) */}
@@ -404,6 +536,8 @@ export default function App() {
               <img
                 src={logoSrc}
                 alt="ZefirCraft Logo"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain rounded-full border border-sky-500/40 relative z-10 filter drop-shadow-[0_0_12px_rgba(245,158,11,0.4)]"
               />
             </div>
@@ -471,6 +605,8 @@ export default function App() {
                   <img
                     src={`https://mc-heads.net/avatar/${user.username}/32`}
                     alt={user.username}
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                     className="w-8 h-8 rounded-lg border border-sky-950/30 group-hover:scale-105 transition-transform"
                   />
@@ -539,6 +675,7 @@ export default function App() {
           </button>
         </div>
       </header>
+      </div>
 
       {/* Right Mobile Drawer Menu */}
       <AnimatePresence>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import LazyImage from "./LazyImage";
+import ScrollReveal from "./ScrollReveal";
 import { 
   Inbox, Calendar, Play, Snowflake, Sparkles, CheckCircle, AlertCircle, 
   ChevronRight, ArrowRight, X, Clock, HelpCircle
@@ -188,54 +190,55 @@ export default function Chest() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {activeItems.map((item) => (
-                  <motion.div
-                    key={item._id}
-                    whileHover={{ y: -3 }}
-                    className="bg-[#111625]/75 border border-[#1e2a40] rounded-2xl p-4 shadow-lg flex flex-col justify-between gap-4 group"
-                  >
-                    <div className="flex gap-3">
-                      <div className="w-16 h-16 rounded-xl bg-slate-900 border border-[#23314a] p-1 shrink-0 flex items-center justify-center overflow-hidden">
-                        <img
-                          src={item.productImageUrl}
-                          alt={item.productName}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform"
-                        />
-                      </div>
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <h3 className="font-extrabold text-xs md:text-sm text-white truncate" title={item.productName}>
-                          {item.productName}
-                        </h3>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                          <Calendar className="w-3.5 h-3.5 shrink-0 text-sky-400" />
-                          <span>{new Date(item.createdAt).toLocaleDateString("tr-TR")}</span>
-                        </div>
-                        <div className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-md mt-1 border border-emerald-500/10 uppercase tracking-wider">
-                          <Sparkles className="w-3 h-3" />
-                          <span>Kullanıma Hazır</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      disabled={actionLoading === item._id}
-                      onClick={() => handleDeliver(item._id)}
-                      className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-900 text-white font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer border border-sky-500/10"
+                {activeItems.map((item, idx) => (
+                  <ScrollReveal key={item._id} delay={idx * 0.05} direction="up">
+                    <motion.div
+                      whileHover={{ y: -3 }}
+                      className="bg-[#111625]/75 border border-[#1e2a40] rounded-2xl p-4 shadow-lg flex flex-col justify-between gap-4 group h-full"
                     >
-                      {actionLoading === item._id ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin text-sky-400" />
-                          <span>Karaktere Aktarılıyor...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4" />
-                          <span>Oyuna Teslim Et</span>
-                        </>
-                      )}
-                    </button>
-                  </motion.div>
+                      <div className="flex gap-3">
+                        <div className="w-16 h-16 rounded-xl bg-slate-900 border border-[#23314a] p-1 shrink-0 flex items-center justify-center overflow-hidden">
+                          <LazyImage
+                            src={item.productImageUrl}
+                            alt={item.productName}
+                            className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform"
+                            containerClassName="w-full h-full"
+                          />
+                        </div>
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <h3 className="font-extrabold text-xs md:text-sm text-white truncate" title={item.productName}>
+                            {item.productName}
+                          </h3>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                            <Calendar className="w-3.5 h-3.5 shrink-0 text-sky-400" />
+                            <span>{new Date(item.createdAt).toLocaleDateString("tr-TR")}</span>
+                          </div>
+                          <div className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-md mt-1 border border-emerald-500/10 uppercase tracking-wider">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Kullanıma Hazır</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        disabled={actionLoading === item._id}
+                        onClick={() => handleDeliver(item._id)}
+                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-900 text-white font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer border border-sky-500/10"
+                      >
+                        {actionLoading === item._id ? (
+                          <>
+                            <Clock className="w-4 h-4 animate-spin text-sky-400" />
+                            <span>Karaktere Aktarılıyor...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-4 h-4" />
+                            <span>Oyuna Teslim Et</span>
+                          </>
+                        )}
+                      </button>
+                    </motion.div>
+                  </ScrollReveal>
                 ))}
               </div>
             )}

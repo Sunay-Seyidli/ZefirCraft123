@@ -1298,6 +1298,58 @@ app.get("/api/stats/server", async (req, res) => {
   }
 });
 
+// Active web visitor sessions memory map
+const activeVisitorSessions = new Map<string, { page: string; lastSeen: number }>();
+
+// POST /api/stats/heartbeat (Track active page)
+app.post("/api/stats/heartbeat", (req, res) => {
+  const { sessionId, page } = req.body || {};
+  if (sessionId) {
+    activeVisitorSessions.set(sessionId, {
+      page: page || "home",
+      lastSeen: Date.now()
+    });
+  }
+  return res.json({ success: true });
+});
+
+// GET /api/stats/online-visitors (Real-time web online visitor counter & page breakdown)
+app.get("/api/stats/online-visitors", (req, res) => {
+  const now = Date.now();
+  for (const [id, session] of activeVisitorSessions.entries()) {
+    if (now - session.lastSeen > 30000) {
+      activeVisitorSessions.delete(id);
+    }
+  }
+
+  const pageCounts: Record<string, number> = {
+    home: 0,
+    store: 0,
+    earn: 0,
+    wheel: 0,
+    chest: 0,
+    rankings: 0,
+    friends: 0,
+    other: 0
+  };
+
+  activeVisitorSessions.forEach((session) => {
+    const p = session.page || "home";
+    if (pageCounts[p] !== undefined) {
+      pageCounts[p]++;
+    } else {
+      pageCounts.other++;
+    }
+  });
+
+  const realTotal = activeVisitorSessions.size;
+
+  return res.json({
+    total: realTotal,
+    pages: pageCounts
+  });
+});
+
 // GET /api/purchases/recent (Dynamic list of recent purchases)
 app.get("/api/purchases/recent", async (req, res) => {
   try {
@@ -1461,7 +1513,7 @@ app.get("/api/earn/quiz/start", authenticateToken, enforceNoVpn, async (req: any
 
     return res.json({
       questions: selected,
-      secondsPerQuestion: settings.secondsPerQuestion || 10,
+      secondsPerQuestion: settings.secondsPerQuestion || 30,
       minCorrectToWin: settings.minCorrectToWin || 7
     });
   } catch (err) {
@@ -1652,7 +1704,7 @@ app.post("/api/admin/quiz/settings", authenticateAdmin, async (req, res) => {
       bannerNotice: String(bannerNotice || "").trim(),
       adsenseCode: String(adsenseCode || "").trim(),
       quizQuestionsPerRound: Number(quizQuestionsPerRound) || 10,
-      secondsPerQuestion: Number(secondsPerQuestion) || 10,
+      secondsPerQuestion: Number(secondsPerQuestion) || 30,
       creditsPerQuiz: Number(creditsPerQuiz) >= 0 ? Number(creditsPerQuiz) : 1,
       minCorrectToWin: Number(minCorrectToWin) || 7,
       cooldownMinutes: Number(cooldownMinutes) >= 0 ? Number(cooldownMinutes) : 0

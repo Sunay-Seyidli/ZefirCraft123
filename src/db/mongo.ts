@@ -183,20 +183,40 @@ const DB_FILE = path.join(DATA_DIR, "db.json");
 
 const DEFAULT_QUIZ_QUESTIONS: QuizQuestion[] = [
   { id: "q1", question: "Minecraft resmi olarak ilk kez hangi yılda tam sürüm olarak satışa sunulmuştur?", options: ["2009", "2011", "2013", "2015"], correctIndex: 1 },
-  { id: "q2", question: "Nether portalı oluşturmak için minimum kaç adet Obsidian (Obsidyen) bloğu gereklidir?", options: ["8", "10", "12", "14"], correctIndex: 1 },
-  { id: "q3", question: "Creepere şimşek çaktığında hangi forma dönüşür?", options: ["Ateşli Creeper", "Yüklü (Charged) Creeper", "Büyük Creeper", "Mavi Creeper"], correctIndex: 1 },
-  { id: "q4", question: "Ender Ejderhası (Ender Dragon) ilk kez yenildiğinde oyunculara ortalama kaç XP seviyesi kazandırır?", options: ["20 Seviye", "35 Seviye", "68 Seviye", "100 Seviye"], correctIndex: 2 },
-  { id: "q5", question: "Köylüler (Villagers) ile ticaret yaparken kullanılan temel değerli taş hangisidir?", options: ["Elmas", "Zümrüt", "Altın", "Kızıltaş"], correctIndex: 1 },
-  { id: "q6", question: "Büyü Masasında (Enchantment Table) 30. seviye büyü açmak için etrafına kaç Kitaplık yerleştirilmelidir?", options: ["12", "15", "18", "20"], correctIndex: 1 },
-  { id: "q7", question: "Elmas Kazma (Diamond Pickaxe) üretmek için kaç Elmas ve kaç Çubuk gereklidir?", options: ["2 Elmas, 3 Çubuk", "3 Elmas, 2 Çubuk", "3 Elmas, 3 Çubuk", "4 Elmas, 2 Çubuk"], correctIndex: 1 },
-  { id: "q8", question: "Aşağıdaki yaratıklardan hangisi Minecraft'ta oyuncu tarafından evcilleştirilemez?", options: ["Kurt (Wolf)", "Kedi (Cat)", "Papağan (Parrot)", "Örümcek (Spider)"], correctIndex: 3 },
-  { id: "q9", question: "Beacon (Fener) bloğunu aktifleştirmek için altındaki piramit hangi cevherden YAPILAMAZ?", options: ["Demir Bloğu", "Altın Bloğu", "Zümrüt Bloğu", "Kömür Bloğu"], correctIndex: 3 },
-  { id: "q10", question: "Phantom yaratığı oyuncunun kaç gün boyunca uyumaması durumunda saldırmaya başlar?", options: ["1 Gün", "2 Gün", "3 Gün", "5 Gün"], correctIndex: 2 },
+  { id: "q2", question: "Nether portalı (Cehennem Kapısı) oluşturmak için minimum kaç adet Obsidian (Obsidyen - 🧱 Mor/Siyah Sert Blok) gereklidir?", options: ["8 Adet", "10 Adet", "12 Adet", "14 Adet"], correctIndex: 1 },
+  { id: "q3", question: "Creeper (🟩 Yeşil Patlayan Yaratık) yaratığına şimşek çaktığında hangi güçlü forma dönüşür?", options: ["Ateşli Creeper", "⚡ Yüklü (Charged) Creeper", "Büyük Creeper", "Mavi Creeper"], correctIndex: 1 },
+  { id: "q4", question: "Ender Ejderhası (Ender Dragon - 🐉 Mor Gözlü Ejderha) ilk kez yenildiğinde kaç XP seviyesi kazandırır?", options: ["20 Seviye", "35 Seviye", "68 Seviye", "100 Seviye"], correctIndex: 2 },
+  { id: "q5", question: "Köylüler (Villagers - 🧑‍🌾) ile ticaret yaparken kullanılan temel değerli taş hangisidir?", options: ["💎 Elmas (Diamond)", "🟩 Zümrüt (Emerald)", "🟡 Altın (Gold)", "🔴 Kızıltaş (Redstone)"], correctIndex: 1 },
+  { id: "q6", question: "Büyü Masasında (Enchantment Table) 30. seviye büyü açmak için etrafına kaç Kitaplık yerleştirilmelidir?", options: ["12 Kitaplık", "15 Kitaplık", "18 Kitaplık", "20 Kitaplık"], correctIndex: 1 },
+  { id: "q7", question: "Elmas Kazma (Diamond Pickaxe - ⛏️) üretmek için kaç Elmas ve kaç Çubuk gereklidir?", options: ["2 Elmas, 3 Çubuk", "3 Elmas, 2 Çubuk", "3 Elmas, 3 Çubuk", "4 Elmas, 2 Çubuk"], correctIndex: 1 },
+  { id: "q8", question: "Aşağıdaki yaratıklardan hangisi Minecraft'ta oyuncu tarafından evcilleştirilemez?", options: ["🐺 Kurt (Wolf)", "🐱 Kedi (Cat)", "🦜 Papağan (Parrot)", "🕷️ Örümcek (Spider)"], correctIndex: 3 },
+  { id: "q9", question: "Beacon (Fener) bloğunu aktifleştirmek için altındaki piramit hangi cevherden YAPILAMAZ?", options: ["⬜ Demir Bloğu", "🟡 Altın Bloğu", "🟩 Zümrüt Bloğu", "⬛ Kömür Bloğu"], correctIndex: 3 },
+  { id: "q10", question: "Phantom (🦇 Gece Uçan Yaratık) oyuncunun kaç gün boyunca uyumaması durumunda saldırmaya başlar?", options: ["1 Gün", "2 Gün", "3 Gün", "5 Gün"], correctIndex: 2 },
   { id: "q11", question: "Wither boss yaratığını çağırmak için kaç Ruh Kumu ve kaç Wither İskelet Kafası gereklidir?", options: ["3 Ruh Kumu, 3 Kafa", "4 Ruh Kumu, 3 Kafa", "4 Ruh Kumu, 2 Kafa", "5 Ruh Kumu, 4 Kafa"], correctIndex: 1 },
-  { id: "q12", question: "Aşağıdaki eşyalardan hangisi Kızıltaş sinyalini tersine çevirmek (Invert) için kullanılır?", options: ["Kızıltaş Meşalesi", "Yineleyici (Repeater)", "Karşılaştırıcı (Comparator)", "Piston"], correctIndex: 0 },
+  { id: "q12", question: "Aşağıdaki eşyalardan hangisi Kızıltaş sinyalini tersine çevirmek (Invert) için kullanılır?", options: ["🔥 Kızıltaş Meşalesi", "⏱️ Yineleyici (Repeater)", "🔍 Karşılaştırıcı (Comparator)", "🧱 Piston"], correctIndex: 0 },
   { id: "q13", question: "Minecraft'ta tam bir gündüz ve gece döngüsü gerçek hayatta kaç dakika sürer?", options: ["10 Dakika", "15 Dakika", "20 Dakika", "30 Dakika"], correctIndex: 2 },
-  { id: "q14", question: "Kurtları iyileştirmek veya çiftleştirmek için ne verilmelidir?", options: ["Kemik", "Çiğ veya Pişmiş Et", "Elma", "Buğday"], correctIndex: 1 },
-  { id: "q15", question: "Hayatta kalma (Survival) modunda kırılamayan katman kayası bloğu hangisidir?", options: ["Obsidian", "Bedrock", "Netherite Bloğu", "Derin Taş"], correctIndex: 1 }
+  { id: "q14", question: "Kurtları (Wolf - 🐺) iyileştirmek veya çiftleştirmek için ne verilmelidir?", options: ["🦴 Kemik", "🥩 Çiğ veya Pişmiş Et", "🍎 Elma", "🌾 Buğday"], correctIndex: 1 },
+  { id: "q15", question: "Hayatta kalma (Survival) modunda kırılamayan katman kayası bloğu hangisidir?", options: ["🧱 Obsidyen", "🪨 Bedrock (Katman Kayası)", "🔥 Netherite Bloğu", "🌑 Derin Taş"], correctIndex: 1 },
+  { id: "q16", question: "Netherite (Siyah Güçlü Maden - 🖤) zırh yapmak için hangi eşya geliştirilir?", options: ["Demir Zırh", "Altın Zırh", "💎 Elmas Zırh", "Zümrüt Zırh"], correctIndex: 2 },
+  { id: "q17", question: "Enderman (💜 Mor Gözlü Uzun Yaratık) oyuncuya ne zaman saldırır?", options: ["Yalınayak yüründüğünde", "Gözlerinin içine bakıldığında", "Gece olduğunda", "Suya girdiğinde"], correctIndex: 1 },
+  { id: "q18", question: "Alex ve Steve karakterlerinin varsayılan kol genişlikleri sırasıyla kaç pikseldir?", options: ["3 Piksel / 4 Piksel", "4 Piksel / 4 Piksel", "2 Piksel / 3 Piksel", "3 Piksel / 3 Piksel"], correctIndex: 0 },
+  { id: "q19", question: "Köylüleri zombiye dönüştükten sonra iyileştirmek için hangi iksir ve meyve kullanılır?", options: ["Görünmezlik İksiri & Elma", "Zayıflık İksiri & 🟡 Altın Elma", "Güç İksiri & Havuç", "İyileşme İksiri & Karpuz"], correctIndex: 1 },
+  { id: "q20", question: "Aşağıdaki iksir malzemelerinden hangisi Hız İksiri (Swiftness) yapmak için gereklidir?", options: ["Magma Kremi", "⚡ Şeker", "Örümcek Gözü", "Işık Taşı Tozu"], correctIndex: 1 },
+  { id: "q21", question: "Minecraft'ta Kediler (Cats) hangi yaratığı korkutup kaçırır?", options: ["🧟 Zombi", "🟩 Creeper", "💀 İskelet", "🕷️ Örümcek"], correctIndex: 1 },
+  { id: "q22", question: "Kurtları evcilleştirmek için hangi eşya kullanılır?", options: ["🥩 Çiğ Et", "🦴 Kemik", "🐟 Balık", "🌾 Buğday"], correctIndex: 1 },
+  { id: "q23", question: "Kedileri evcilleştirmek için hangi yiyecek verilmelidir?", options: ["🦴 Kemik", "🐟 Çiğ Morina veya Somon Balığı", "🥩 Çiğ Tavuk", "🍎 Elma"], correctIndex: 1 },
+  { id: "q24", question: "Aşağıdakilerden hangisi Nether boyutunda doğal olarak yetişen mantar türlerinden biridir?", options: ["Kırmızı Mantar", "🔥 Çarpık (Warped) Mantar", "Sarı Mantar", "Yeşil Mantar"], correctIndex: 1 },
+  { id: "q25", question: "Su altında nefes almayı sağlayan kask büyüsü hangisidir?", options: ["Derinlik Koşucusu", "Solunum (Respiration)", "Sudakı Lütuf", "Su Koruması"], correctIndex: 1 },
+  { id: "q26", question: "Deniz Kabuğu (Nautilus Shell) ve Deniz Kalbi (Heart of the Sea) birleştirilerek hangi blok yapılır?", options: ["Beacon (Fener)", "🌊 Oluk (Conduit)", "Sünger", "Deniz Feneri"], correctIndex: 1 },
+  { id: "q27", question: "Büyülü Altın Elma (Enchanted Golden Apple) oyuncuya aşağıdaki efektlerden hangisini VERMEZ?", options: ["Yenilenme II", "Direnç I", "Ateş Direnci", "⚡ Görünmezlik"], correctIndex: 3 },
+  { id: "q28", question: "Ender Gözü (Eye of Ender) üretmek için hangi iki eşya birleştirilir?", options: ["Ender İnci & 🔥 Blaze Tozu", "Ender İnci & Elmas", "Ender İnci & Barut", "Göz & Işık Taşı"], correctIndex: 0 },
+  { id: "q29", question: "Demir Golem (Iron Golem - 🤖) oluşturmak için kaç Demir Bloğu ve kaç Oyulmuş Balkabağı gerekir?", options: ["3 Demir Bloğu, 1 Balkabağı", "4 Demir Bloğu, 1 Balkabağı", "4 Demir Bloğu, 2 Balkabağı", "5 Demir Bloğu, 1 Balkabağı"], correctIndex: 1 },
+  { id: "q30", question: "Minecraft'ta Müzik Kutusu (Jukebox) üretmek için merkezde hangi değerli eşya kullanılır?", options: ["🟡 Altın", "🟩 Zümrüt", "💎 Elmas", "🔴 Kızıltaş"], correctIndex: 2 },
+  { id: "q31", question: "Kılıç üzerine koyulabilen ve yaratıklardan daha fazla eşya/ganimet düşmesini sağlayan büyü hangisidir?", options: ["Keskinlik (Sharpness)", "Ganimet (Looting)", "Savurma (Knockback)", "Darbe (Smite)"], correctIndex: 1 },
+  { id: "q32", question: "Kazma üzerine atıldığında blokları eritilmiş/pişirilmiş haliyle çıkartan büyü hangisidir?", options: ["İpeksi Dokunuş (Silk Touch)", "Servet (Fortune)", "🔥 İpeksi Pişirme / Servet", "İpeksi Dokunuş"], correctIndex: 0 },
+  { id: "q33", question: "Minecraft boyutları arasında kaç adet ana boyut bulunmaktadır?", options: ["2 Boyut", "3 Boyut (Dünya, Nether, End)", "4 Boyut", "5 Boyut"], correctIndex: 1 },
+  { id: "q34", question: "Nether portalından geçerken 1 blok Mesafe Dünya'da kaç bloğa denk gelir?", options: ["3 Blok", "5 Blok", "8 Blok", "10 Blok"], correctIndex: 2 },
+  { id: "q35", question: "Sniffer (Koklayıcı - 🌺) yaratığı yumurtadan çıkarıldıktan sonra hangi nadir tohumları bulabilir?", options: ["Buğday Tohumu", "🌺 Meşale Çiçeği & Sürahi Tohumu", "Karpuz Tohumu", "Balkabağı Tohumu"], correctIndex: 1 }
 ];
 
 const DEFAULT_QUIZ_QUESTS: QuizQuest[] = [
@@ -209,7 +229,7 @@ const DEFAULT_QUIZ_SETTINGS: EarnQuizSettings = {
   bannerNotice: "Size ücretsiz kredi sağlayabilmek ve sunucu giderlerimizi karşılayabilmek için bu sayfada reklam alanları yer almaktadır. Anket ve Minecraft bilgi testlerini çözerek hem bilginizi test edin hem de mağazamızda harcayabileceğiniz ücretsiz krediler kazanın!",
   adsenseCode: "<!-- Google AdSense / Reklam Kodu -->",
   quizQuestionsPerRound: 10,
-  secondsPerQuestion: 10,
+  secondsPerQuestion: 30,
   creditsPerQuiz: 1,
   minCorrectToWin: 7,
   cooldownMinutes: 0
@@ -663,7 +683,7 @@ export class Database {
 
   static async getEarnSettings(): Promise<EarnSettings> {
     const defaultSettings: EarnSettings = {
-      adsterraUrl: "https://www.effectivecpmnetwork.com/hy1a37nm?key=f229c9fb555e4283383d0975228ae41b,https://www.effectivecpmnetwork.com/j6uybqniym?key=9d0844e67c078c270eb06d0ccfd3bfae",
+      adsterraUrl: "https://www.effectivecpmnetwork.com/cs5m4z1hd5?key=3c6909ed230acc836b43757f2fb49c9d",
       monlixUrl: "https://monlix.com",
       adRewardCredits: 1,
       adCooldownMinutes: 10,
@@ -713,13 +733,14 @@ export class Database {
     const mongo = await getMongoClient();
     if (mongo) {
       const list = (await mongo.db.collection("quiz_questions").find({}).toArray()) as QuizQuestion[];
-      if (list.length === 0) {
+      if (list.length < 10) {
+        await mongo.db.collection("quiz_questions").deleteMany({});
         await mongo.db.collection("quiz_questions").insertMany(DEFAULT_QUIZ_QUESTIONS as any);
         return DEFAULT_QUIZ_QUESTIONS;
       }
       return list;
     } else {
-      if (!mockDbState.quizQuestions || mockDbState.quizQuestions.length === 0) {
+      if (!mockDbState.quizQuestions || mockDbState.quizQuestions.length < 10) {
         mockDbState.quizQuestions = [...DEFAULT_QUIZ_QUESTIONS];
         saveMockDb();
       }
