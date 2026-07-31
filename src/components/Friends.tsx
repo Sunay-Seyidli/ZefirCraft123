@@ -39,6 +39,7 @@ export default function Friends({
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Initial load
   useEffect(() => {
@@ -59,18 +60,13 @@ export default function Friends({
   useEffect(() => {
     if (!user || !activeChatFriend) return;
 
-    fetchConversation(activeChatFriend);
+    fetchConversation(activeChatFriend, false);
     const interval = setInterval(() => {
       fetchConversation(activeChatFriend, true);
     }, 3500);
 
     return () => clearInterval(interval);
   }, [user, activeChatFriend]);
-
-  // Scroll chat to bottom when messages update
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
 
   const getAuthToken = () => {
     return localStorage.getItem("zefir_token") || localStorage.getItem("koli_token") || "";
@@ -109,8 +105,27 @@ export default function Friends({
         headers: { "Authorization": `Bearer ${getAuthToken()}` }
       });
       if (res.ok) {
-        const msgs = await res.json();
-        setChatMessages(msgs);
+        const msgs: DirectMessage[] = await res.json();
+
+        setChatMessages(prev => {
+          const isDifferent = msgs.length !== prev.length || (msgs.length > 0 && msgs[msgs.length - 1]?._id !== prev[prev.length - 1]?._id);
+          if (!isDifferent) return prev;
+
+          setTimeout(() => {
+            if (chatContainerRef.current) {
+              const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+              const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+              if (!silent || isNearBottom) {
+                chatContainerRef.current.scrollTo({
+                  top: chatContainerRef.current.scrollHeight,
+                  behavior: silent ? "smooth" : "auto"
+                });
+              }
+            }
+          }, 60);
+
+          return msgs;
+        });
       }
     } catch (err) {
       console.error("Fetch messages error:", err);
@@ -141,8 +156,16 @@ export default function Friends({
       });
 
       if (res.ok) {
-        await fetchConversation(activeChatFriend, true);
+        await fetchConversation(activeChatFriend, false);
         fetchSocialData(); // Refresh friends list last message preview
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTo({
+              top: chatContainerRef.current.scrollHeight,
+              behavior: "smooth"
+            });
+          }
+        }, 60);
       }
     } catch (err) {
       console.error("Send message error:", err);
@@ -501,7 +524,7 @@ export default function Friends({
                     </div>
 
                     {/* Messages Container */}
-                    <div className="flex-1 overflow-y-auto pr-2 space-y-3 mb-4">
+                    <div ref={chatContainerRef} className="flex-1 overflow-y-auto pr-2 space-y-3 mb-4 scroll-smooth">
                       {chatLoading ? (
                         <div className="py-12 text-center text-sky-400 font-bold flex flex-col items-center gap-2">
                           <Sparkles className="w-6 h-6 animate-spin" />

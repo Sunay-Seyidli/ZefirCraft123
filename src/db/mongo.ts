@@ -50,6 +50,7 @@ export interface EarnQuizSettings {
   creditsPerQuiz: number;
   minCorrectToWin: number;
   cooldownMinutes: number;
+  enabled?: boolean;
 }
 
 export interface EarnSettings {
@@ -58,6 +59,7 @@ export interface EarnSettings {
   adRewardCredits: number;
   adCooldownMinutes: number;
   dailyBonusCredits: number;
+  enabled?: boolean;
 }
 
 export interface Friendship {
@@ -182,7 +184,7 @@ const DATA_DIR = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), ".data")
 const DB_FILE = path.join(DATA_DIR, "db.json");
 
 const DEFAULT_QUIZ_QUESTIONS: QuizQuestion[] = [
-  { id: "q1", question: "Minecraft resmi olarak ilk kez hangi yılda tam sürüm olarak satışa sunulmuştur?", options: ["2009", "2011", "2013", "2015"], correctIndex: 1 },
+  { id: "q1", question: "Minecraft resmi olarak ilk kez hangi yılda tam sürüm olarak satışa sunulmıştır?", options: ["2009", "2011", "2013", "2015"], correctIndex: 1 },
   { id: "q2", question: "Nether portalı (Cehennem Kapısı) oluşturmak için minimum kaç adet Obsidian (Obsidyen - 🧱 Mor/Siyah Sert Blok) gereklidir?", options: ["8 Adet", "10 Adet", "12 Adet", "14 Adet"], correctIndex: 1 },
   { id: "q3", question: "Creeper (🟩 Yeşil Patlayan Yaratık) yaratığına şimşek çaktığında hangi güçlü forma dönüşür?", options: ["Ateşli Creeper", "⚡ Yüklü (Charged) Creeper", "Büyük Creeper", "Mavi Creeper"], correctIndex: 1 },
   { id: "q4", question: "Ender Ejderhası (Ender Dragon - 🐉 Mor Gözlü Ejderha) ilk kez yenildiğinde kaç XP seviyesi kazandırır?", options: ["20 Seviye", "35 Seviye", "68 Seviye", "100 Seviye"], correctIndex: 2 },
@@ -213,16 +215,84 @@ const DEFAULT_QUIZ_QUESTIONS: QuizQuestion[] = [
   { id: "q29", question: "Demir Golem (Iron Golem - 🤖) oluşturmak için kaç Demir Bloğu ve kaç Oyulmuş Balkabağı gerekir?", options: ["3 Demir Bloğu, 1 Balkabağı", "4 Demir Bloğu, 1 Balkabağı", "4 Demir Bloğu, 2 Balkabağı", "5 Demir Bloğu, 1 Balkabağı"], correctIndex: 1 },
   { id: "q30", question: "Minecraft'ta Müzik Kutusu (Jukebox) üretmek için merkezde hangi değerli eşya kullanılır?", options: ["🟡 Altın", "🟩 Zümrüt", "💎 Elmas", "🔴 Kızıltaş"], correctIndex: 2 },
   { id: "q31", question: "Kılıç üzerine koyulabilen ve yaratıklardan daha fazla eşya/ganimet düşmesini sağlayan büyü hangisidir?", options: ["Keskinlik (Sharpness)", "Ganimet (Looting)", "Savurma (Knockback)", "Darbe (Smite)"], correctIndex: 1 },
-  { id: "q32", question: "Kazma üzerine atıldığında blokları eritilmiş/pişirilmiş haliyle çıkartan büyü hangisidir?", options: ["İpeksi Dokunuş (Silk Touch)", "Servet (Fortune)", "🔥 İpeksi Pişirme / Servet", "İpeksi Dokunuş"], correctIndex: 0 },
+  { id: "q32", question: "Kazma ile cevher kırıldığında bloğun kendisini doğrudan düşüren büyü hangisidir?", options: ["İpeksi Dokunuş (Silk Touch)", "Servet (Fortune)", "Kırılmazlık", "Verimlilik"], correctIndex: 0 },
   { id: "q33", question: "Minecraft boyutları arasında kaç adet ana boyut bulunmaktadır?", options: ["2 Boyut", "3 Boyut (Dünya, Nether, End)", "4 Boyut", "5 Boyut"], correctIndex: 1 },
   { id: "q34", question: "Nether portalından geçerken 1 blok Mesafe Dünya'da kaç bloğa denk gelir?", options: ["3 Blok", "5 Blok", "8 Blok", "10 Blok"], correctIndex: 2 },
-  { id: "q35", question: "Sniffer (Koklayıcı - 🌺) yaratığı yumurtadan çıkarıldıktan sonra hangi nadir tohumları bulabilir?", options: ["Buğday Tohumu", "🌺 Meşale Çiçeği & Sürahi Tohumu", "Karpuz Tohumu", "Balkabağı Tohumu"], correctIndex: 1 }
+  { id: "q35", question: "Sniffer (Koklayıcı - 🌺) yaratığı yumurtadan çıkarıldıktan sonra hangi nadir tohumları bulabilir?", options: ["Buğday Tohumu", "🌺 Meşale Çiçeği & Sürahi Tohumu", "Karpuz Tohumu", "Balkabağı Tohumu"], correctIndex: 1 },
+  { id: "q36", question: "Minecraft'ta Tavuklar hangi yiyecekle beslenip çiftleştirilir?", options: ["🌾 Buğday", "🌽 Tohumlar (Seeds)", "🥕 Havuç", "🍎 Elma"], correctIndex: 1 },
+  { id: "q37", question: "İnekler ve Koyunlar hangi ürünle beslenip çiftleştirilir?", options: ["🌾 Buğday", "🥕 Havuç", "🥔 Patates", "🍎 Elma"], correctIndex: 0 },
+  { id: "q38", question: "Domuzları (Pigs) sürmek ve yönlendirmek için oltanın ucuna ne takılır?", options: ["🌾 Buğday", "🥕 Havuç", "🍎 Elma", "🍞 Ekmek"], correctIndex: 1 },
+  { id: "q39", question: "Atları çiftleştirmek için kullanılan en etkili altın yiyecek hangisidir?", options: ["🟡 Altın Elma veya Altın Havuç", "Çiğ Et", "Buğday", "Şeker"], correctIndex: 0 },
+  { id: "q40", question: "Lama (Llama) yaratıkları eşya taşımak için sırtlarına ne takılmasına izin verir?", options: ["Çanta", "📦 Sandık (Chest)", "Fırın", "Varil"], correctIndex: 1 },
+  { id: "q41", question: "Nether'da bulunan Ghast (Uçan Beyaz Yaratık) öldüğünde hangi değerli malzemeyi düşürür?", options: ["💧 Ghast Gözyaşı", "Ruh Kumu", "Blaze Çubuğu", "Işık Taşı"], correctIndex: 0 },
+  { id: "q42", question: "Blaze yaratığı öldürüldüğünde ne düşürür?", options: ["🔥 Blaze Çubuğu", "Ateş Topu", "Kızıltaş", "Lav Kovası"], correctIndex: 0 },
+  { id: "q43", question: "İskeletler ve Zombiler gündüz güneşe maruz kaldığında ne olur?", options: ["Patlar", "🔥 Alev alıp yanarlar", "Işınlanırlar", "Büyürler"], correctIndex: 1 },
+  { id: "q44", question: "Örümcekler gündüz vakti ışık seviyesi yüksekken oyuncuya nasıl davranırlar?", options: ["Doğrudan saldırırlar", "😴 Tarafsızdırlar (Saldırmazlar)", "Kaçarlar", "Ölürler"], correctIndex: 1 },
+  { id: "q45", question: "Minecraft'ta Olta ile tutulabilen en nadir hazine büyü kitabı büyüsü hangisidir?", options: ["Kırılmazlık III", "✨ Tamir (Mending)", "Keskinlik I", "Koruma I"], correctIndex: 1 },
+  { id: "q46", question: "Tamir (Mending) büyüsü eşyaları ne kullanarak otomatik tamir eder?", options: ["Demir", "✨ XP (Deneyim Puanı)", "Elmas", "Örs"], correctIndex: 1 },
+  { id: "q47", question: "Örs (Anvil) yapmak için kaç Demir Külçesi ve kaç Demir Bloğu gereklidir?", options: ["3 Demir Bloğu, 4 Demir Külçesi", "4 Demir Bloğu, 3 Demir Külçesi", "2 Demir Bloğu, 5 Demir Külçesi", "5 Demir Bloğu, 2 Demir Külçesi"], correctIndex: 0 },
+  { id: "q48", question: "Minecraft'ta deniz feneri görevi gören ve su altı yaratıklarına saldıran yapı hangisidir?", options: ["Beacon", "🌊 Oluk (Conduit)", "Sünger", "Mercan"], correctIndex: 1 },
+  { id: "q49", question: "Shulker Kutusu (Shulker Box) üretmek için ne gereklidir?", options: ["📦 2 Shulker Kabuğu + 1 Sandık", "4 Shulker Kabuğu", "2 Sandık", "1 Shulker Kabuğu + 2 Demir"], correctIndex: 0 },
+  { id: "q50", question: "Elytra (Süzülme Kanatları) nerede bulunur?", options: ["Nether Kalesinde", "🐉 End Gemisinde (End Ship)", "Maden Tünelinde", "Okyanus Tapınağında"], correctIndex: 1 },
+  { id: "q51", question: "Elytra ile uçarken havada hızlanmak için elinizde ne kullanırsınız?", options: ["Tüy", "🚀 Havai Fişek", "Rüzgar Küresi", "Ateş Yükü"], correctIndex: 1 },
+  { id: "q52", question: "Slime (Yeşil Zıpzıp) yaratığı öldüğünde ne düşürür?", options: ["🟢 Slime Topu", "Yapışkan Piston", "Bal Topu", "Yeşil Boya"], correctIndex: 0 },
+  { id: "q53", question: "Yapışkan Piston (Sticky Piston) yapmak için normal pistona ne eklenir?", options: ["Bal Bloğu", "🟢 Slime Topu", "Kızıltaş", "İp"], correctIndex: 1 },
+  { id: "q54", question: "Bal Arıları (Bees) kovanından bal toplarken saldırmamaları için kovanın altına ne koyulur?", options: ["Su", "🔥 Kamp Ateşi (Campfire)", "Meşale", "Çiçek"], correctIndex: 1 },
+  { id: "q55", question: "Aksolotl (Axolotl) savaşa götürüldüğünde oyuncuya hangi desteği verir?", options: ["✨ Yenilenme (Regeneration)", "⚡ Hız", "💪 Güç", "Görünmezlik"], correctIndex: 0 },
+  { id: "q56", question: "Kurbağalar (Frogs) küçük magma küplerini yediklerinde ne üretirler?", options: ["Magma Kremi", "🐸 Kurbağa Işığı (Froglight)", "Işık Taşı", "Balçık"], correctIndex: 1 },
+  { id: "q57", question: "Warden (Kör Muhafız) yaratığı hangi biyom ve yapıda ortaya çıkar?", options: ["Nether Kalesi", "🏛️ Derin Karanlık (Deep Dark / Antik Şehir)", "Maden Tüneli", "Çöl Tapınağı"], correctIndex: 1 },
+  { id: "q58", question: "Warden yaratığı oyuncunun varlığını nasıl tespit eder?", options: ["Gözleriyle bakarak", "🔊 Titreşim ve Sesleri algılayarak", "Kokusunu alarak", "Işığa bakarak"], correctIndex: 1 },
+  { id: "q59", question: "Sculk Sensör (Sculk Sensor) bloğu neye duyarlıdır?", options: ["Işığa", "🔊 Ses ve Titreşimlere", "Ateşe", "Suya"], correctIndex: 1 },
+  { id: "q60", question: "Netherite Külçesi (Netherite Ingot) yapmak için kaç Netherite Hurdası ve Altın Külçesi gerekir?", options: ["4 Netherite Hurdası, 4 Altın Külçesi", "2 Netherite Hurdası, 2 Altın Külçesi", "3 Netherite Hurdası, 3 Altın Külçesi", "5 Netherite Hurdası, 5 Altın Külçesi"], correctIndex: 0 },
+  { id: "q61", question: "Minecraft'ta Pusula (Compass) ibresi varsayılan olarak nereyi gösterir?", options: ["Kuzey Yönünü", "🏠 Doğuş Noktasını (World Spawn)", "En Yakın Köyü", "Madenleri"], correctIndex: 1 },
+  { id: "q62", question: "Mıknatıs Taşı (Lodestone) ile etkileşime giren pusula neyi göstermeye başlar?", options: ["Doğuş Noktasını", "🧲 Mıknatıs Taşının Konumunu", "Kuzeyi", "Elmasları"], correctIndex: 1 },
+  { id: "q63", question: "Saat (Clock) üretmek için kızıltaşın etrafına hangi maden külçesi dizilir?", options: ["Demir", "🟡 Altın Külçesi", "Elmas", "Bakır"], correctIndex: 1 },
+  { id: "q64", question: "Süzme İksir (Splash Potion) yapmak için normal iksire ne eklenir?", options: ["💥 Barut", "Işık Taşı Tozu", "Kızıltaş", "Ejderha Nefesi"], correctIndex: 0 },
+  { id: "q65", question: "Kalıcı İksir (Lingering Potion) yapmak için süzme iksire ne eklenir?", options: ["🐲 Ejderha Nefesi", "Barut", "Magma Kremi", "Göz"], correctIndex: 0 },
+  { id: "q66", question: "Minecraft'ta Trident (Üçlü Mızrak) hangi yaratık öldürüldüğünde düşebilir?", options: ["🧟 Boğulmuş (Drowned)", "İskelet", "Zombi", "Gardiyan"], correctIndex: 0 },
+  { id: "q67", question: "Trident mızrağına 'Sadakat' (Loyalty) büyüsü basıldığında ne olur?", options: ["Mızrak alev alır", "🎯 Fırlatıldıktan sonra sahibine geri döner", "Yıldırım çaktırır", "Suda hızlı yüzdürür"], correctIndex: 1 },
+  { id: "q68", question: "Trident mızrağına 'Yıldırım' (Channeling) büyüsü basıldığında ne zaman yıldırım çakar?", options: ["Her zaman", "🌩️ Fırtınalı havalarda", "Gece vakti", "Nether'da"], correctIndex: 1 },
+  { id: "q69", question: "Trident ile suyun içinden fırlayarak uçmayı sağlayan büyü hangisidir?", options: ["🌊 Girdap (Riptide)", "Sadakat", "Savurma", "Mızrak Darbesi"], correctIndex: 0 },
+  { id: "q70", question: "Minecraft'ta Papağanlar müzik kutusu çaldığında ne yaparlar?", options: ["Kaçarlar", "💃 Dans ederler", "Uykulara dalarlar", "Öterler"], correctIndex: 1 },
+  { id: "q71", question: "Aşağıdaki renklerden hangisi Minecraft'ta mürekkep kesesinden elde edilir?", options: ["Kırmızı", "Sarı", "Mavi", "⬛ Siyah"], correctIndex: 3 },
+  { id: "q72", question: "Gözlemci (Observer) bloğu ne işe yarar?", options: ["Işık saçar", "🔍 Önündeki blok değişimini algılayıp sinyal verir", "Kameralı görünüm sağlar", "Sesi yükseltir"], correctIndex: 1 },
+  { id: "q73", question: "Kızıltaş Karşılaştırıcı (Comparator) arkasındaki sandığın neyini ölçer?", options: ["Ağırlığını", "📦 İçindeki eşya doluluk oranını", "Sandık türünü", "Sıcaklığını"], correctIndex: 1 },
+  { id: "q74", question: "Minecraft'ta Islak Sünger (Wet Sponge) fırında pişirilirse ne olur?", options: ["Yanar", "🧽 Kuru Sünger olur", "Taş olur", "Kaybolur"], correctIndex: 1 },
+  { id: "q75", question: "Okyanus Tapınağı (Ocean Monument) koruyucusu ana boss yaratık hangisidir?", options: ["Muhafız", "👁️ Yaşlı Muhafız (Elder Guardian)", "Boğulmuş", "Aksolotl"], correctIndex: 1 },
+  { id: "q76", question: "Yaşlı Muhafız oyuncuya hangi kötü efekti verir?", options: ["Körlük", "⛏️ Madenci Yorgunluğu (Mining Fatigue)", "Zehir", "Yavaşlık"], correctIndex: 1 },
+  { id: "q77", question: "Süt Kovası (Bucket of Milk) içildiğinde ne olur?", options: ["Can tazeler", "✨ Tüm aktif efektleri (iyi ve kötü) temizler", "Açlığı doyurur", "Hızlandırır"], correctIndex: 1 },
+  { id: "q78", question: "Bal Kovanından Makas (Shears) ile ne toplanır?", options: ["Bal Şişesi", "🐝 Petek (Honeycomb)", "Çiçek", "Bal Kütlesi"], correctIndex: 1 },
+  { id: "q79", question: "Minecraft'ta Yıldırım Siperi (Lightning Rod) hangi madenden yapılır?", options: ["Demir", "🥉 Bakır (Copper)", "Altın", "Kızıltaş"], correctIndex: 1 },
+  { id: "q80", question: "Bakır blokları zamanla açık havada kaldığında ne renk alır?", options: ["Siyah", "🟩 Yeşile döner (Oksitlenir)", "Mavi", "Kırmızı"], correctIndex: 1 },
+  { id: "q81", question: "Bakır blokların oksitlenmesini durdurmak için üzerine ne sürülür?", options: ["Slime", "🐝 Bal mumu (Waxed / Petek)", "Yağ", "Su"], correctIndex: 1 },
+  { id: "q82", question: "Aşağıdaki büyülerden hangisi Olta (Fishing Rod) için kullanılır?", options: ["Keskinlik", "🎣 Deniz Lütfu (Luck of the Sea)", "Ganimet", "Güç"], correctIndex: 1 },
+  { id: "q83", question: "Yay (Bow) silahına 'Sonsuzluk' (Infinity) büyüsü basıldığında çantada kaç ok olması yeterlidir?", options: ["0 Ok", "🎯 1 Adet Ok", "10 Ok", "64 Ok"], correctIndex: 1 },
+  { id: "q84", question: "Sonsuzluk (Infinity) büyüsü ile hangi büyü aynı yaya BİRLİKTE basılamaz?", options: ["Güç", "✨ Tamir (Mending)", "Kırılmazlık", "Alev"], correctIndex: 1 },
+  { id: "q85", question: "Fırlatıcı (Dispenser) ile Bırakıcı (Dropper) arasındaki temel fark nedir?", options: ["Ağırlığı", "🏹 Fırlatıcı oku fırlatır/zırhı giydirir, Bırakıcı eşyayı yere atar", "Hiçbir fark yoktur", "Kapasitesi"], correctIndex: 1 },
+  { id: "q86", question: "TNT patlayıcısı üretmek için kaç Kum ve kaç Barut gereklidir?", options: ["4 Barut, 5 Kum", "💥 5 Barut, 4 Kum", "3 Barut, 6 Kum", "6 Barut, 3 Kum"], correctIndex: 1 },
+  { id: "q87", question: "Minecraft'ta Kamp Ateşi (Campfire) üzerinde aynı anda kaç adet yemek pişirilebilir?", options: ["2 Yemek", "3 Yemek", "🥩 4 Yemek", "6 Yemek"], correctIndex: 2 },
+  { id: "q88", question: "Maden Arabası (Minecart) için Hızlı Ray (Powered Rail) çalıştırmak ne gerektirir?", options: ["Kömür", "⚡ Kızıltaş Sinyali (Redstone)", "Ateş", "Demir"], correctIndex: 1 },
+  { id: "q89", question: "Çöl Tapınağındaki (Desert Pyramid) gizli sandık odasının ortasında ne tuzağı bulunur?", options: ["Lav", "💥 TNT Tuzağı ve Basınç Plakası", "Aptal Zombi", "Ok Fırlatıcı"], correctIndex: 1 },
+  { id: "q90", question: "Orman Tapınağındaki (Jungle Temple) bulmaca sandığına ulaşmak için ne çözülür?", options: ["Şifreli Kapı", "🕹️ Şalter / Kol Kombinasyonu", "Parkur", "Soru"], correctIndex: 1 },
+  { id: "q91", question: "Minecraft'ta Bir Harita (Map) büyütülmek istenirse Kartograf Masasında ne ile birleştirilir?", options: ["İp", "📜 Kağıt", "Mürekkep", "Deri"], correctIndex: 1 },
+  { id: "q92", question: "Pusula ve Harita birleştirilerek ne elde edilir?", options: ["Büyük Harita", "📍 Konum Gösteren Harita", "Hazine Haritası", "Duvar Haritası"], correctIndex: 1 },
+  { id: "q93", question: "Minecraft'ta Tilkiler (Foxes) ağızlarında ne taşıyabilirler?", options: ["Sadece Et", "🦊 Eşya/Silah/Yiyecek tutabilirler", "Sadece Odun", "Hiçbir şey"], correctIndex: 1 },
+  { id: "q94", question: "Aksolotllar (Axolotls) hangi yiyecek canlı kovayla beslenip çiftleştirilir?", options: ["Çiğ Balık", "🪣 Kovadaki Tropikal Balık", "Solucan", "Yosun"], correctIndex: 1 },
+  { id: "q95", question: "Dev Mantar ağaçları (Mushroom Trees) büyütmek için küçük mantarın üzerine ne dökülür?", options: ["Su", "🦴 Kemik Tozu", "Gübre", "İksir"], correctIndex: 1 },
+  { id: "q96", question: "Minecraft'ta 'Bad Omen' (Kötü Kehanet) efekti hangi yaratık öldürüldüğünde kazanılır?", options: ["Zombi", "🏹 Bayraklı Yağmacı Kaptanı (Raid Captain)", "Enderman", "Cadı"], correctIndex: 1 },
+  { id: "q97", question: "Bad Omen efektiyle bir köye girildiğinde ne başlar?", options: ["Festival", "⚔️ Yağma (Raid / Baskın)", "Köylüler kaçar", "Gece olur"], correctIndex: 1 },
+  { id: "q98", question: "Yağma (Raid) etkinliği başarıyla tamamlandığında oyuncuya hangi unvan/efekt verilir?", options: ["Köyün Kralı", "🛡️ Köyün Kahramanı (Hero of the Village)", "Zengin Köylü", "Savaşçı"], correctIndex: 1 },
+  { id: "q99", question: "Köyün Kahramanı efekti aktifken köylüler oyuncuya nasıl davranır?", options: ["Korkarlar", "🎁 İndirim yapar ve hediye fırlatırlar", "Evlerini kilitlerler", "Ücretsiz elmas verirler"], correctIndex: 1 },
+  { id: "q100", question: "Allay (Mavi Süzülen Peri) oyuncudan eline verilen eşyayı alınca ne yapar?", options: ["Eşyayı yer", "💎 Etraftan aynı eşyadan bulup oyuncuya getirir", "Saldırır", "Işınlanır"], correctIndex: 1 }
 ];
 
 const DEFAULT_QUIZ_QUESTS: QuizQuest[] = [
-  { id: "quest_1", title: "3 Anket Tamamla", description: "Toplamda 3 adet Minecraft bilgi testini başarıyla tamamla.", targetCount: 3, rewardCredits: 5 },
-  { id: "quest_2", title: "5 Anket Tamamla", description: "Toplamda 5 adet Minecraft bilgi testini başarıyla tamamla.", targetCount: 5, rewardCredits: 10 },
-  { id: "quest_3", title: "10 Anket Tamamla", description: "Toplamda 10 adet Minecraft bilgi testini başarıyla tamamla.", targetCount: 10, rewardCredits: 25 }
+  { id: "quest_1", title: "1 Anket Tamamla", description: "Haftalık Görev: En az 1 adet Minecraft bilgi testini başarıyla tamamla.", targetCount: 1, rewardCredits: 2 },
+  { id: "quest_2", title: "3 Anket Tamamla (1 Günlük Hak)", description: "Haftalık Görev: Toplamda 3 adet anket tamamlayarak günlük haklarını doldur.", targetCount: 3, rewardCredits: 5 },
+  { id: "quest_3", title: "7 Anket Tamamla", description: "Haftalık Görev: Haftalık sürecinde toplam 7 adet anketi başarıyla tamamla.", targetCount: 7, rewardCredits: 12 },
+  { id: "quest_4", title: "12 Anket Tamamla", description: "Haftalık Görev: Toplamda 12 adet Minecraft testini başarıyla çöz.", targetCount: 12, rewardCredits: 20 },
+  { id: "quest_5", title: "15 Anket Maratonu", description: "Haftalık Görev: 15 adet anket çözerek Minecraft bilgi ustalığını kanıtla.", targetCount: 15, rewardCredits: 30 },
+  { id: "quest_6", title: "21 Anket (Haftalık Şampiyon)", description: "Haftalık Görev: Haftanın tüm 21 anket hakkını başarıyla tamamla ve büyük ödülü kap!", targetCount: 21, rewardCredits: 50 }
 ];
 
 const DEFAULT_QUIZ_SETTINGS: EarnQuizSettings = {
@@ -232,7 +302,8 @@ const DEFAULT_QUIZ_SETTINGS: EarnQuizSettings = {
   secondsPerQuestion: 30,
   creditsPerQuiz: 1,
   minCorrectToWin: 7,
-  cooldownMinutes: 0
+  cooldownMinutes: 0,
+  enabled: true
 };
 
 export interface QueuedCommand {
@@ -261,6 +332,17 @@ interface MockSchema {
   quizQuestions?: QuizQuestion[];
   quizQuests?: QuizQuest[];
   quizSettings?: EarnQuizSettings;
+  wheelSettings?: { enabled: boolean; price: number; multiplier: number };
+  quiz_daily_logs?: { date: string; username: string; ip: string; deviceId: string; count: number }[];
+  pluginSettings?: {
+    secretKey: string;
+    requireOnlineForPurchase: boolean;
+    serverIp: string;
+    serverPort: number;
+    lastHeartbeat: Date | null;
+    serverVersion?: string;
+    maxPlayers?: number;
+  };
 }
 
 // In-Memory & File-based DB state for fallback
@@ -280,7 +362,9 @@ let mockDbState: MockSchema = {
   friendships: [],
   direct_messages: [],
   quizQuestions: [],
-  quizQuests: []
+  quizQuests: [],
+  wheelSettings: { enabled: true, price: 0, multiplier: 1 },
+  quiz_daily_logs: []
 };
 
 // Seed helper functions
@@ -699,7 +783,8 @@ export class Database {
           monlixUrl: doc.monlixUrl || defaultSettings.monlixUrl,
           adRewardCredits: doc.adRewardCredits ?? defaultSettings.adRewardCredits,
           adCooldownMinutes: doc.adCooldownMinutes ?? defaultSettings.adCooldownMinutes,
-          dailyBonusCredits: doc.dailyBonusCredits ?? defaultSettings.dailyBonusCredits
+          dailyBonusCredits: doc.dailyBonusCredits ?? defaultSettings.dailyBonusCredits,
+          enabled: doc.enabled !== false
         };
       }
       return defaultSettings;
@@ -733,14 +818,14 @@ export class Database {
     const mongo = await getMongoClient();
     if (mongo) {
       const list = (await mongo.db.collection("quiz_questions").find({}).toArray()) as QuizQuestion[];
-      if (list.length < 10) {
+      if (list.length < DEFAULT_QUIZ_QUESTIONS.length) {
         await mongo.db.collection("quiz_questions").deleteMany({});
         await mongo.db.collection("quiz_questions").insertMany(DEFAULT_QUIZ_QUESTIONS as any);
         return DEFAULT_QUIZ_QUESTIONS;
       }
       return list;
     } else {
-      if (!mockDbState.quizQuestions || mockDbState.quizQuestions.length < 10) {
+      if (!mockDbState.quizQuestions || mockDbState.quizQuestions.length < DEFAULT_QUIZ_QUESTIONS.length) {
         mockDbState.quizQuestions = [...DEFAULT_QUIZ_QUESTIONS];
         saveMockDb();
       }
@@ -850,7 +935,8 @@ export class Database {
           secondsPerQuestion: doc.secondsPerQuestion ?? DEFAULT_QUIZ_SETTINGS.secondsPerQuestion,
           creditsPerQuiz: doc.creditsPerQuiz ?? DEFAULT_QUIZ_SETTINGS.creditsPerQuiz,
           minCorrectToWin: doc.minCorrectToWin ?? DEFAULT_QUIZ_SETTINGS.minCorrectToWin,
-          cooldownMinutes: doc.cooldownMinutes ?? DEFAULT_QUIZ_SETTINGS.cooldownMinutes
+          cooldownMinutes: doc.cooldownMinutes ?? DEFAULT_QUIZ_SETTINGS.cooldownMinutes,
+          enabled: doc.enabled !== false
         };
       }
       return DEFAULT_QUIZ_SETTINGS;
@@ -1093,6 +1179,11 @@ export class Database {
     } else {
       return [...mockDbState.purchase_requests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
+  }
+
+  static async getPendingPurchases(): Promise<PurchaseRequest[]> {
+    const all = await Database.getAllPurchaseRequests();
+    return all.filter(p => p.status === "pending");
   }
 
   static async createPurchaseRequest(req: Omit<PurchaseRequest, "_id">): Promise<PurchaseRequest> {
@@ -1505,11 +1596,49 @@ export class Database {
     }
   }
 
-  // ONLINE STATUS TRACKING (In-Memory for real-time sync)
+  // ONLINE STATUS TRACKING & PLUGIN INTEGRATION
   private static onlinePlayers: Set<string> = new Set<string>();
+  private static pluginLastHeartbeat: Date | null = null;
 
   static isPlayerOnline(username: string): boolean {
     return this.onlinePlayers.has(username.toLowerCase());
+  }
+
+  static async isPlayerOnlineCheck(username: string): Promise<boolean> {
+    const lower = username.toLowerCase();
+    if (this.onlinePlayers.has(lower)) {
+      return true;
+    }
+
+    const mongo = await getMongoClient();
+    if (mongo) {
+      const doc = await mongo.db.collection("online_players").findOne({
+        $or: [
+          { username_lower: lower },
+          { username: new RegExp(`^${username}$`, "i") }
+        ]
+      });
+      if (doc) {
+        this.onlinePlayers.add(lower);
+        return true;
+      }
+
+      // Check users collection in case plugin updates user status or isOnline flag
+      const userDoc = await mongo.db.collection("users").findOne({
+        $or: [
+          { username_lower: lower, isOnline: true },
+          { username: new RegExp(`^${username}$`, "i"), isOnline: true },
+          { username_lower: lower, online: true },
+          { username: new RegExp(`^${username}$`, "i"), online: true }
+        ]
+      });
+
+      if (userDoc) {
+        this.onlinePlayers.add(lower);
+        return true;
+      }
+    }
+    return false;
   }
 
   static setPlayerOnline(username: string, isOnline: boolean): void {
@@ -1527,6 +1656,127 @@ export class Database {
   static setOnlinePlayersList(players: string[]): void {
     this.onlinePlayers.clear();
     players.forEach(p => this.onlinePlayers.add(p.toLowerCase()));
+  }
+
+  static isPluginConnected(): boolean {
+    if (!Database.pluginLastHeartbeat) return false;
+    return (Date.now() - new Date(Database.pluginLastHeartbeat).getTime()) < 180000;
+  }
+
+  static async getPluginSettings(): Promise<{
+    secretKey: string;
+    requireOnlineForPurchase: boolean;
+    serverIp: string;
+    serverPort: number;
+    lastHeartbeat: Date | null;
+    serverVersion?: string;
+    maxPlayers?: number;
+  }> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      const doc = await mongo.db.collection("plugin_settings").findOne({});
+      if (doc) {
+        return {
+          secretKey: doc.secretKey || "zefir_sec_982374829374",
+          requireOnlineForPurchase: Boolean(doc.requireOnlineForPurchase),
+          serverIp: doc.serverIp || "zefircraft.mcsh.io",
+          serverPort: doc.serverPort || 25565,
+          lastHeartbeat: Database.pluginLastHeartbeat || doc.lastHeartbeat || null,
+          serverVersion: doc.serverVersion || "1.20.4",
+          maxPlayers: doc.maxPlayers || 100
+        };
+      }
+      return {
+        secretKey: "zefir_sec_982374829374",
+        requireOnlineForPurchase: false,
+        serverIp: "zefircraft.mcsh.io",
+        serverPort: 25565,
+        lastHeartbeat: Database.pluginLastHeartbeat,
+        serverVersion: "1.20.4",
+        maxPlayers: 100
+      };
+    } else {
+      if (!mockDbState.pluginSettings) {
+        mockDbState.pluginSettings = {
+          secretKey: "zefir_sec_982374829374",
+          requireOnlineForPurchase: false,
+          serverIp: "zefircraft.mcsh.io",
+          serverPort: 25565,
+          lastHeartbeat: Database.pluginLastHeartbeat,
+          serverVersion: "1.20.4",
+          maxPlayers: 100
+        };
+      }
+      return {
+        ...mockDbState.pluginSettings,
+        lastHeartbeat: Database.pluginLastHeartbeat || mockDbState.pluginSettings.lastHeartbeat || null
+      };
+    }
+  }
+
+  static async updatePluginSettings(settings: Partial<{
+    secretKey: string;
+    requireOnlineForPurchase: boolean;
+    serverIp: string;
+    serverPort: number;
+  }>): Promise<any> {
+    const mongo = await getMongoClient();
+    const current = await Database.getPluginSettings();
+    const updated = { ...current, ...settings };
+
+    if (mongo) {
+      await mongo.db.collection("plugin_settings").updateOne({}, { $set: updated }, { upsert: true });
+    } else {
+      mockDbState.pluginSettings = updated;
+      saveMockDb();
+    }
+    return updated;
+  }
+
+  static async recordPluginHeartbeat(players: string[], version?: string, maxPlayers?: number): Promise<void> {
+    const now = new Date();
+    Database.pluginLastHeartbeat = now;
+    Database.setOnlinePlayersList(players);
+
+    const mongo = await getMongoClient();
+    if (mongo) {
+      await mongo.db.collection("plugin_settings").updateOne(
+        {},
+        {
+          $set: {
+            lastHeartbeat: now,
+            onlineCount: players.length,
+            ...(version ? { serverVersion: version } : {}),
+            ...(maxPlayers ? { maxPlayers } : {})
+          }
+        },
+        { upsert: true }
+      );
+
+      await mongo.db.collection("online_players").deleteMany({});
+      if (players.length > 0) {
+        await mongo.db.collection("online_players").insertMany(
+          players.map(p => ({ username: p, username_lower: p.toLowerCase(), joinedAt: now }))
+        );
+      }
+    } else {
+      if (!mockDbState.pluginSettings) {
+        mockDbState.pluginSettings = {
+          secretKey: "zefir_sec_982374829374",
+          requireOnlineForPurchase: true,
+          serverIp: "zefircraft.mcsh.io",
+          serverPort: 25565,
+          lastHeartbeat: now,
+          serverVersion: version || "1.20.4",
+          maxPlayers: maxPlayers || 100
+        };
+      } else {
+        mockDbState.pluginSettings.lastHeartbeat = now;
+        if (version) mockDbState.pluginSettings.serverVersion = version;
+        if (maxPlayers) mockDbState.pluginSettings.maxPlayers = maxPlayers;
+      }
+      saveMockDb();
+    }
   }
 
   // SUPPORT TICKETS CRUD
@@ -1663,6 +1913,147 @@ export class Database {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, limit);
     }
+  }
+
+  // WHEEL SETTINGS (ENABLE/DISABLE, PRICE, MULTIPLIER)
+  static async getWheelSettings(): Promise<{ enabled: boolean; price: number; multiplier: number }> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      const doc = await mongo.db.collection("wheel_settings").findOne({});
+      if (doc) {
+        return {
+          enabled: doc.enabled !== false,
+          price: doc.price ?? 0,
+          multiplier: doc.multiplier ?? 1
+        };
+      }
+      return { enabled: true, price: 0, multiplier: 1 };
+    } else {
+      if (!mockDbState.wheelSettings) {
+        mockDbState.wheelSettings = { enabled: true, price: 0, multiplier: 1 };
+      }
+      return mockDbState.wheelSettings;
+    }
+  }
+
+  static async updateWheelSettings(settings: Partial<{ enabled: boolean; price: number; multiplier: number }>): Promise<{ enabled: boolean; price: number; multiplier: number }> {
+    const mongo = await getMongoClient();
+    const current = await Database.getWheelSettings();
+    const updated = { ...current, ...settings };
+
+    if (mongo) {
+      await mongo.db.collection("wheel_settings").updateOne({}, { $set: updated }, { upsert: true });
+    } else {
+      mockDbState.wheelSettings = updated;
+      saveMockDb();
+    }
+    return updated;
+  }
+
+  // DAILY QUIZ ATTEMPT & ANTI-ABUSE TRACKER (USER, IP, DEVICE FINGERPRINT)
+  static async getQuizDailyCount(username: string, ip: string, deviceId: string): Promise<number> {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const mongo = await getMongoClient();
+
+    let maxCount = 0;
+
+    if (mongo) {
+      const docs = await mongo.db.collection("quiz_daily_logs").find({
+        date: todayStr,
+        $or: [
+          { username_lower: username.toLowerCase() },
+          ...(ip && ip !== "::1" && ip !== "127.0.0.1" ? [{ ip }] : []),
+          ...(deviceId && deviceId.length > 5 ? [{ deviceId }] : [])
+        ]
+      }).toArray();
+
+      for (const d of docs) {
+        if ((d.count || 0) > maxCount) maxCount = d.count;
+      }
+    } else {
+      if (!mockDbState.quiz_daily_logs) mockDbState.quiz_daily_logs = [];
+      const userLower = username.toLowerCase();
+
+      for (const item of mockDbState.quiz_daily_logs) {
+        if (item.date === todayStr) {
+          const matchUser = item.username.toLowerCase() === userLower;
+          const matchIp = ip && ip !== "::1" && ip !== "127.0.0.1" && item.ip === ip;
+          const matchDev = deviceId && deviceId.length > 5 && item.deviceId === deviceId;
+
+          if (matchUser || matchIp || matchDev) {
+            if (item.count > maxCount) maxCount = item.count;
+          }
+        }
+      }
+    }
+
+    return maxCount;
+  }
+
+  static async recordQuizDailyAttempt(username: string, ip: string, deviceId: string): Promise<number> {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const mongo = await getMongoClient();
+    const userLower = username.toLowerCase();
+
+    const current = await Database.getQuizDailyCount(username, ip, deviceId);
+    const newCount = current + 1;
+
+    if (mongo) {
+      await mongo.db.collection("quiz_daily_logs").updateOne(
+        { date: todayStr, username_lower: userLower },
+        {
+          $set: {
+            date: todayStr,
+            username,
+            username_lower: userLower,
+            ip: ip || "",
+            deviceId: deviceId || "",
+            count: newCount,
+            updatedAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+
+      if (ip && ip !== "::1" && ip !== "127.0.0.1") {
+        await mongo.db.collection("quiz_daily_logs").updateOne(
+          { date: todayStr, ip },
+          { $set: { count: newCount, updatedAt: new Date() } },
+          { upsert: true }
+        );
+      }
+
+      if (deviceId && deviceId.length > 5) {
+        await mongo.db.collection("quiz_daily_logs").updateOne(
+          { date: todayStr, deviceId },
+          { $set: { count: newCount, updatedAt: new Date() } },
+          { upsert: true }
+        );
+      }
+    } else {
+      if (!mockDbState.quiz_daily_logs) mockDbState.quiz_daily_logs = [];
+
+      let found = false;
+      for (const item of mockDbState.quiz_daily_logs) {
+        if (item.date === todayStr && (item.username.toLowerCase() === userLower || (ip && item.ip === ip) || (deviceId && item.deviceId === deviceId))) {
+          item.count = newCount;
+          found = true;
+        }
+      }
+
+      if (!found) {
+        mockDbState.quiz_daily_logs.push({
+          date: todayStr,
+          username,
+          ip: ip || "",
+          deviceId: deviceId || "",
+          count: newCount
+        });
+      }
+      saveMockDb();
+    }
+
+    return newCount;
   }
 
   // USER ROLE & PERMISSIONS UPDATE

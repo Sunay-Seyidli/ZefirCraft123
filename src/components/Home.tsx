@@ -5,7 +5,7 @@ import ScrollReveal from "./ScrollReveal";
 import {
   Copy, Users, Shield, Server, Award, Sparkles, Check, ChevronRight,
   Calendar, Eye, Trash2, PlusCircle, Volume2, Package, Inbox, HelpCircle, 
-  ArrowRight, MessageSquare, AlertCircle, CheckCircle, X, ShoppingBag, Gamepad2, Flame, Boxes, ExternalLink
+  ArrowRight, MessageSquare, AlertCircle, CheckCircle, X, ShoppingBag, Gamepad2, Flame, Boxes, ExternalLink, Coins
 } from "lucide-react";
 const logoSrc = "/logo.png";
 
@@ -26,9 +26,11 @@ interface TopUser {
 
 interface HomeProps {
   onNavigate: (page: string) => void;
+  wheelEnabled?: boolean;
+  earnEnabled?: boolean;
 }
 
-export default function Home({ onNavigate }: HomeProps) {
+export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = true }: HomeProps) {
   const [copied, setCopied] = useState(false);
   const [serverStats, setServerStats] = useState({
     online: true,
@@ -296,41 +298,49 @@ export default function Home({ onNavigate }: HomeProps) {
               {/* Server IP Copy Capsule */}
               <button
                 onClick={handleCopyIp}
-                className={`flex-1 group relative flex items-center justify-between gap-2.5 p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer shadow-lg hover:shadow-sky-950/50 ${
+                className={`flex-1 group relative flex flex-col justify-between gap-3 p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer shadow-xl hover:shadow-sky-950/50 min-w-0 ${
                   copied
                     ? "bg-emerald-500/10 border-emerald-500/40"
-                    : "bg-[#0b0f1d]/90 hover:bg-[#12182b] border-[#223152]"
+                    : "bg-[#0b0f1d]/95 hover:bg-[#12182b] border-[#223152]"
                 }`}
               >
-                {/* Left status dot and IP */}
-                <div className="flex items-center gap-2.5 min-w-0 shrink-0">
-                  <div className="relative flex h-3 w-3 shrink-0">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${copied ? "bg-emerald-400" : "bg-sky-400"}`}></span>
-                    <span className={`relative inline-flex rounded-full h-3 w-3 ${copied ? "bg-emerald-500" : "bg-sky-500"}`}></span>
-                  </div>
-                  
+                {/* Top Row: IP Details & Copy Action Button */}
+                <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
                   {/* IP Details */}
-                  <div className="text-left leading-tight shrink-0">
-                    <span className="text-[9px] text-slate-500 block font-extrabold uppercase tracking-wider">SUNUCU ADRESİ</span>
-                    <span className="font-mono text-xs sm:text-sm text-slate-200 font-extrabold tracking-wide group-hover:text-sky-400 transition-colors whitespace-nowrap">
+                  <div className="text-left leading-tight min-w-0 flex-1">
+                    <span className="text-[10px] text-slate-400 block font-black uppercase tracking-widest">SUNUCU ADRESİ</span>
+                    <span className="font-mono text-xs xs:text-sm sm:text-base md:text-lg text-slate-100 font-black tracking-wide sm:tracking-wider group-hover:text-sky-400 transition-colors break-all select-all block mt-0.5">
                       {ip}
                     </span>
                   </div>
+
+                  {/* Copy Button Badge (Icon Only) */}
+                  <div 
+                    title={copied ? "Kopyalandı!" : "IP Adresini Kopyala"}
+                    className={`p-2.5 sm:p-3 rounded-xl transition-all flex items-center justify-center shrink-0 border ${
+                      copied
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 scale-105"
+                        : "bg-slate-800/90 text-slate-200 group-hover:text-white group-hover:bg-sky-500/20 group-hover:border-sky-500/40 border-slate-700/80"
+                    }`}
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
+                    )}
+                  </div>
                 </div>
 
-                {/* Right interactive button / Copy badge */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl whitespace-nowrap flex items-center gap-1 shadow-sm" title="Tüm sayfalarda anlık gezinen web ziyaretçileri">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>{webVisitorsCount} Web</span>
+                {/* Bottom Row (Under IP Address): Online Counters */}
+                <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-slate-800/80 w-full">
+                  <span className="text-[11px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-xl whitespace-nowrap flex items-center gap-1.5 shadow-sm" title="Tüm sayfalarda anlık gezinen web ziyaretçileri">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>{webVisitorsCount} Web Aktif</span>
                   </span>
-                  <span className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl whitespace-nowrap flex items-center gap-1 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                    <span>{loadingStats ? "..." : `${serverStats.players.online}/${serverStats.players.max} Oyuncu`}</span>
+                  <span className="text-[11px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30 px-2.5 py-1 rounded-xl whitespace-nowrap flex items-center gap-1.5 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-sky-400"></span>
+                    <span>{loadingStats ? "..." : `${serverStats.players.online} / ${serverStats.players.max} Oyuncu Aktif`}</span>
                   </span>
-                  <div className={`p-1.5 sm:p-2 rounded-xl transition-colors shrink-0 ${copied ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800/60 text-slate-300 group-hover:text-white group-hover:bg-slate-800"}`}>
-                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  </div>
                 </div>
               </button>
 
@@ -339,7 +349,7 @@ export default function Home({ onNavigate }: HomeProps) {
                 href="https://minecraft-mp.com/server/361439/vote/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-5 py-3.5 sm:py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs rounded-2xl shadow-xl hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-300/40 shrink-0"
+                className="px-6 py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-xl hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-300/40 shrink-0"
               >
                 <Flame className="w-4 h-4 text-slate-950 fill-slate-950 animate-bounce" />
                 <span className="uppercase tracking-wider whitespace-nowrap font-black">OY VER</span>
@@ -362,7 +372,7 @@ export default function Home({ onNavigate }: HomeProps) {
           </div>
 
           {/* Glowing Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 w-full max-w-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 w-full max-w-md">
             <button
               onClick={() => onNavigate("store")}
               className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-sky-950/40 hover:shadow-sky-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-sky-500/35"
@@ -370,13 +380,24 @@ export default function Home({ onNavigate }: HomeProps) {
               <ShoppingBag className="w-4 h-4" />
               MAĞAZAYI KEŞFET
             </button>
-            <button
-              onClick={() => onNavigate("wheel")}
-              className="w-full py-3 bg-[#172035]/80 hover:bg-[#1f2b48] border border-[#2d3e64] hover:border-sky-500/30 text-slate-200 hover:text-white font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
-            >
-              <Sparkles className="w-4 h-4 text-sky-400 animate-pulse" />
-              ŞANS ÇARKINI ÇEVİR!
-            </button>
+            {wheelEnabled && (
+              <button
+                onClick={() => onNavigate("wheel")}
+                className="w-full py-3 bg-[#172035]/80 hover:bg-[#1f2b48] border border-[#2d3e64] hover:border-sky-500/30 text-slate-200 hover:text-white font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <Sparkles className="w-4 h-4 text-sky-400 animate-pulse" />
+                ŞANS ÇARKINI ÇEVİR!
+              </button>
+            )}
+            {earnEnabled && (
+              <button
+                onClick={() => onNavigate("earn")}
+                className="w-full py-3 bg-[#172035]/80 hover:bg-[#1f2b48] border border-[#2d3e64] hover:border-amber-500/30 text-amber-300 hover:text-amber-200 font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <Coins className="w-4 h-4 text-amber-400 animate-pulse" />
+                KREDİ KAZAN
+              </button>
+            )}
           </div>
         </div>
       </div>

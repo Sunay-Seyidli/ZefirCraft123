@@ -51,8 +51,31 @@ export default function App() {
     pages: { home: 1, store: 0, earn: 0, wheel: 0, chest: 0, rankings: 0, friends: 0, other: 0 }
   });
   const [showVisitorModal, setShowVisitorModal] = useState(false);
+  const [wheelEnabled, setWheelEnabled] = useState(true);
+  const [earnEnabled, setEarnEnabled] = useState(true);
 
   const serverIP = "zefircraft.mcsh.io";
+
+  // Check Wheel & Earn Enabled status
+  useEffect(() => {
+    fetch("/api/lucky-wheel/settings")
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.enabled === "boolean") {
+          setWheelEnabled(data.enabled);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/earn/quiz/status")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.settings && typeof data.settings.enabled === "boolean") {
+          setEarnEnabled(data.settings.enabled);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Heartbeat & Online Visitor Stats Polling
   useEffect(() => {
@@ -294,7 +317,7 @@ export default function App() {
   const renderPage = () => {
     switch (currentPage) {
       case "home":
-        return <Home onNavigate={changePageWithLoader} />;
+        return <Home onNavigate={changePageWithLoader} wheelEnabled={wheelEnabled} earnEnabled={earnEnabled} />;
       case "store":
         return (
           <Store
@@ -304,6 +327,25 @@ export default function App() {
           />
         );
       case "wheel":
+        if (!wheelEnabled) {
+          return (
+            <div className="max-w-2xl mx-auto my-12 p-8 bg-[#0f1629] border border-amber-500/30 rounded-3xl text-center space-y-5 shadow-2xl">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400">
+                <Gift className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-black text-white">Şans Çarkı Geçici Olarak Kapalıdır</h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Şans Çarkı modülü yönetici tarafından devredışı bırakılmıştır. Mağazamızı veya ana sayfamızı ziyaret edebilirsiniz!
+              </p>
+              <button
+                onClick={() => changePageWithLoader("home")}
+                className="px-6 py-3 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                Ana Sayfaya Dön
+              </button>
+            </div>
+          );
+        }
         return (
           <LuckyWheel
             user={user}
@@ -314,6 +356,25 @@ export default function App() {
       case "chest":
         return <Chest />;
       case "earn":
+        if (!earnEnabled) {
+          return (
+            <div className="max-w-2xl mx-auto my-12 p-8 bg-[#0f1629] border border-amber-500/30 rounded-3xl text-center space-y-5 shadow-2xl">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400">
+                <Coins className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-black text-white">Kredi Kazanma Sistemi Geçici Olarak Kapalıdır</h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Kredi Kazanma ve Anket modülü yönetici tarafından bakıma alınmış veya devredışı bırakılmıştır. Lütfen daha sonra tekrar ziyaret ediniz.
+              </p>
+              <button
+                onClick={() => changePageWithLoader("home")}
+                className="px-6 py-3 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                Ana Sayfaya Dön
+              </button>
+            </div>
+          );
+        }
         return (
           <EarnCredits
             user={user}
@@ -405,7 +466,11 @@ export default function App() {
     { id: "apply", label: "Başvuru", icon: <UserCheck className="w-4 h-4" /> }
   ];
 
-  const activeNavItems = navItems;
+  const activeNavItems = navItems.filter(item => {
+    if (item.id === "wheel" && !wheelEnabled) return false;
+    if (item.id === "earn" && !earnEnabled) return false;
+    return true;
+  });
 
   if (sessionLoading) {
     return (
@@ -459,7 +524,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute left-0 mt-2 w-72 bg-[#0c1222] border border-emerald-500/40 rounded-2xl p-4 shadow-2xl z-50 text-left space-y-3"
+                    className="absolute left-0 mt-2 w-72 max-w-[calc(100vw-2rem)] bg-[#0c1222] border border-emerald-500/40 rounded-2xl p-4 shadow-2xl z-50 text-left space-y-3"
                   >
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                       <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs uppercase tracking-wider">
@@ -513,11 +578,12 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={copyIp}
-              className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl px-3 py-1 font-mono text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              title={ipCopied ? "Kopyalandı!" : "IP Adresini Kopyala"}
+              className="bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl px-2.5 sm:px-3 py-1 font-mono text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm max-w-full"
             >
-              <span className="text-slate-400">Sunucu IP:</span>
-              <span className="text-sky-200 font-black">{serverIP}</span>
-              {ipCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-sky-400" />}
+              <span className="text-slate-400 hidden xs:inline">IP:</span>
+              <span className="text-sky-200 font-black tracking-tight select-all">{serverIP}</span>
+              {ipCopied ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
             </button>
           </div>
         </div>

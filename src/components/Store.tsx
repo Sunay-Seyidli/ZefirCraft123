@@ -4,7 +4,7 @@ import LazyImage from "./LazyImage";
 import ScrollReveal from "./ScrollReveal";
 import { 
   ShoppingCart, AlertCircle, CheckCircle, Clock, X, Database, Coins, 
-  ArrowRightLeft, Sparkles, LogIn, ChevronRight, Check
+  ArrowRightLeft, Sparkles, LogIn, ChevronRight, Check, RefreshCw
 } from "lucide-react";
 import { Product, PurchaseRequest } from "../types";
 
@@ -54,43 +54,48 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
     }
   };
 
+  const [refreshingStatus, setRefreshingStatus] = useState(false);
+  const [serverStatusInfo, setServerStatusInfo] = useState<{
+    isPluginConnected: boolean;
+    onlineCount: number;
+    serverIp: string;
+  }>({
+    isPluginConnected: false,
+    onlineCount: 0,
+    serverIp: "zefircraft.mcsh.io"
+  });
+
   const fetchOnlineStatus = async () => {
     const token = localStorage.getItem("koli_token") || localStorage.getItem("zefir_token");
-    if (!token) return;
+    setRefreshingStatus(true);
     try {
-      const res = await fetch("/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const [userRes, serverRes] = await Promise.all([
+        token ? fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } }) : null,
+        fetch("/api/server-status")
+      ]);
+
+      if (userRes && userRes.ok) {
+        const data = await userRes.json();
         setIsOnline(!!data.isOnline);
+      }
+
+      if (serverRes && serverRes.ok) {
+        const statusData = await serverRes.json();
+        setServerStatusInfo({
+          isPluginConnected: !!statusData.isPluginConnected,
+          onlineCount: statusData.onlineCount || 0,
+          serverIp: statusData.serverIp || "zefircraft.mcsh.io"
+        });
       }
     } catch (err) {
       console.error("Failed to fetch online status:", err);
+    } finally {
+      setRefreshingStatus(false);
     }
   };
 
-  const handleToggleOnline = async () => {
-    const token = localStorage.getItem("koli_token") || localStorage.getItem("zefir_token");
-    if (!token) return;
-    try {
-      const res = await fetch("/api/auth/me/toggle-online", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setIsOnline(data.isOnline);
-        if (data.isOnline) {
-          setSuccess("Minecraft sunucusuna başarıyla giriş yaptınız!");
-          setError(null);
-        } else {
-          setSuccess("Minecraft sunucusundan çıkış yaptınız.");
-        }
-      }
-    } catch (err) {
-      console.error("Failed to toggle online status:", err);
-    }
+  const handleRefreshStatus = async () => {
+    await fetchOnlineStatus();
   };
 
   const fetchProducts = async () => {
@@ -212,27 +217,25 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
 
               <div className="border-l border-[#22304d]/40 h-8 mx-1"></div>
 
-              {/* Server connection indicator and interactive join simulation */}
+              {/* Server connection indicator with real plugin verification */}
               <div className="flex flex-col gap-0.5 text-left shrink-0">
-                <span className="text-slate-500 block text-[9px] font-bold uppercase">Sunucu Durumu</span>
+                <span className="text-slate-500 block text-[9px] font-bold uppercase">Hesap Durumunuz</span>
                 <div className="flex items-center gap-1.5">
                   <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}></span>
-                  <span className={`text-xs font-black uppercase ${isOnline ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}`}>
-                    {isOnline ? "Oyunda" : "Bağlı Değil"}
+                  <span className={`text-xs font-black uppercase ${isOnline ? "text-emerald-400" : "text-red-400"}`}>
+                    {isOnline ? "Oyunda (Doğrulandı)" : "Çevrimdışı (Oyunda Değil)"}
                   </span>
                 </div>
               </div>
 
               <button
-                onClick={handleToggleOnline}
-                className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer transition-all border shrink-0 ${
-                  isOnline
-                    ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20"
-                    : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
-                }`}
-                title={isOnline ? "Sunucudan çıkış yap" : "Sunucuya giriş yap"}
+                onClick={handleRefreshStatus}
+                disabled={refreshingStatus}
+                className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all border bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border-sky-500/20 flex items-center gap-1.5 shrink-0"
+                title="Sunucudaki canlı durumunuzu kontrol edin"
               >
-                {isOnline ? "Çıkış Yap" : "Sunucuya Gir"}
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshingStatus ? "animate-spin" : ""}`} />
+                <span>Durumu Yenile</span>
               </button>
             </div>
           </div>
@@ -250,6 +253,26 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
           </div>
         )}
       </div>
+
+      {/* Automatic Delivery Informative Banner */}
+      {user && (
+        <div className="bg-sky-950/30 border border-sky-500/25 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-sky-200">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle className="w-5 h-5 text-sky-400 shrink-0" />
+            <span>
+              <strong>⚡ Otomatik Teslimat Sistemi:</strong> Mağazadan satın aldığınız tüm ürünler ve komutlar sunucuya anında otomatik aktarılır. Oyunda olsanız da olmasanız da siparişleriniz güvenle hesabınıza tanımlanır!
+            </span>
+          </div>
+          <button
+            onClick={handleRefreshStatus}
+            disabled={refreshingStatus}
+            className="px-3 py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold rounded-xl text-[11px] whitespace-nowrap shrink-0 transition-all cursor-pointer flex items-center gap-1 border border-sky-500/30"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshingStatus ? "animate-spin" : ""}`} />
+            <span>Durumu Yenile</span>
+          </button>
+        </div>
+      )}
 
       {/* Notifications */}
       <AnimatePresence>
@@ -507,28 +530,15 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
               </div>
 
               {/* Live Connection Status Check Indicator */}
-              <div className={`p-3.5 rounded-2xl border text-left text-xs leading-relaxed flex items-start gap-2.5 transition-all ${
-                isOnline 
-                  ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400"
-                  : "bg-red-500/5 border-red-500/20 text-red-400 animate-pulse"
-              }`}>
-                {isOnline ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5 animate-bounce" />
-                    <div>
-                      <strong className="block text-[11px] font-black uppercase text-emerald-300">Sunucu Bağlantısı Aktif</strong>
-                      Siparişiniz onaylandığı anda oyun sunucusundaki teslimat sistemi tarafından anında hesabınıza teslim edilecektir.
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
-                    <div>
-                      <strong className="block text-[11px] font-black uppercase text-red-300">Sunucuda Değilsiniz!</strong>
-                      Satın alım yapabilmek için Minecraft sunucusuna giriş yapmış olmalısınız. Mağaza sayfasındaki <strong>"Sunucuya Gir"</strong> butonuna basarak sunucu durumunuzu güncelleyebilirsiniz.
-                    </div>
-                  </>
-                )}
+              <div className="p-3.5 rounded-2xl border text-left text-xs leading-relaxed flex items-start gap-2.5 transition-all bg-sky-500/10 border-sky-500/25 text-sky-300">
+                <CheckCircle className="w-4 h-4 shrink-0 text-sky-400 mt-0.5" />
+                <div>
+                  <strong className="block text-[11px] font-black uppercase text-sky-200">Otomatik Teslimat Hazır</strong>
+                  {isOnline 
+                    ? "Sunucudasınız! Siparişiniz onaylandığı an oyun içi komutlar saniyeler içinde karakterinize uygulanacaktır."
+                    : "Sipariş komutları anında otomatik teslimat kuyruğuna eklenecektir. Oyuna girdiğiniz an eklenti tarafından otomatik teslim edilir."
+                  }
+                </div>
               </div>
 
               {/* Actions */}

@@ -83,10 +83,46 @@ interface AdminPanelProps {
 export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
   // Global Admin panel States
   const [activeTab, setActiveTab] = useState<SubMenuId>("dashboard");
+  const [selectedCategory, setSelectedCategory] = useState<string>("general");
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Categories & Modules definition for organized admin interface
+  const adminCategories = [
+    { id: "general", label: "Genel & Analiz", icon: <LayoutDashboard className="w-4 h-4 text-sky-400" /> },
+    { id: "players", label: "Oyuncular & Destek", icon: <Users className="w-4 h-4 text-blue-400" />, badge: stats?.pendingApps },
+    { id: "store", label: "Mağaza & Ekonomi", icon: <ShoppingBag className="w-4 h-4 text-emerald-400" />, badge: stats?.pendingPurchases },
+    { id: "earn", label: "Etkinlik & Kredi", icon: <Coins className="w-4 h-4 text-amber-400" /> },
+    { id: "system", label: "Sistem & Konsol", icon: <Settings className="w-4 h-4 text-slate-400" /> }
+  ];
+
+  const adminModulesList = [
+    { id: "dashboard" as SubMenuId, category: "general", label: "Genel İstatistikler", desc: "Oyuncu, gelir ve aktiflik grafikleri", icon: <LayoutDashboard className="w-4 h-4 text-sky-400" />, keywords: ["istatistik", "genel", "analiz", "gelir", "bakiye", "dashboard", "grafik"] },
+    { id: "players-list" as SubMenuId, category: "players", label: "Oyuncu Yönetimi", desc: "Kullanıcı hesapları, bakiye ekle/çıkar, yetki & şifre", icon: <Users className="w-4 h-4 text-blue-400" />, keywords: ["oyuncu", "kullanıcı", "bakiye", "yetki", "şifre", "hesap", "sil", "kredi"] },
+    { id: "bans" as SubMenuId, category: "players", label: "Yasaklı Listesi (Ban)", desc: "Cezalı ve engellenmiş oyuncu kayıtları", icon: <UserX className="w-4 h-4 text-red-400" />, keywords: ["ban", "yasak", "ceza", "engelle", "küfür", "hile"] },
+    { id: "apps" as SubMenuId, category: "players", label: "Yetkili Başvuruları", desc: "Aday yetkili başvuru formları ve mülakat masası", icon: <FileCheck className="w-4 h-4 text-purple-400" />, badge: stats?.pendingApps, keywords: ["başvuru", "yetkili", "mülakat", "rehber", "mimar", "admin", "onay"] },
+    { id: "support-tickets" as SubMenuId, category: "players", label: "Destek Talepleri", desc: "Kullanıcı destek ve teknik bilet yanıt merkezi", icon: <Megaphone className="w-4 h-4 text-amber-400" />, keywords: ["destek", "ticket", "bilet", "yardım", "talep", "şikayet"] },
+    { id: "categories" as SubMenuId, category: "store", label: "Mağaza Kategorileri", desc: "Rütbe, Eşya, VIP gibi ürün grupları düzenleme", icon: <Award className="w-4 h-4 text-amber-400" />, keywords: ["kategori", "mağaza", "grup", "vip", "eşya", "rütbe"] },
+    { id: "products-list" as SubMenuId, category: "store", label: "Ürün Kataloğu & Fiyat", desc: "Mağaza eşya fiyatları, simgeleri ve sunucu komutları", icon: <ShoppingBag className="w-4 h-4 text-emerald-400" />, keywords: ["ürün", "fiyat", "komut", "eşya", "katalog", "satış", "mağaza"] },
+    { id: "orders" as SubMenuId, category: "store", label: "Sipariş Geçmişi", desc: "Sunucuya gönderilen sipariş ve bakiye geçmişi", icon: <History className="w-4 h-4 text-cyan-400" />, badge: stats?.pendingPurchases, keywords: ["sipariş", "geçmiş", "satın alma", "teslimat", "ödeme"] },
+    { id: "quiz-settings" as SubMenuId, category: "earn", label: "Kredi Kazan & Anketler", desc: "Sistem durumunu aç/kapa, anket soruları, AdSense & reklam linkleri", icon: <HelpCircle className="w-4 h-4 text-amber-400" />, keywords: ["anket", "kredi", "kazan", "adsense", "reklam", "soru", "devre dışı", "aç", "kapat", "açık", "kapalı", "bakım"] },
+    { id: "wheel-settings" as SubMenuId, category: "earn", label: "Şans Çarkı (Çarkıfelek)", desc: "Çarkıfelek aç/kapa, ödül oranları ve bilet bedelleri", icon: <Gift className="w-4 h-4 text-pink-400" />, keywords: ["çark", "çarkıfelek", "şans", "ödül", "oran", "kredi", "aç", "kapat"] },
+    { id: "wheel-logs" as SubMenuId, category: "earn", label: "Çark Kazanım Logları", desc: "Çarkıfelek kazanan oyuncuların detaylı günlüğü", icon: <Coins className="w-4 h-4 text-[#ff2200]" />, keywords: ["çark", "kazanım", "günlük", "log", "ödül"] },
+    { id: "news" as SubMenuId, category: "system", label: "Duyuru & Haber Paylaşımı", desc: "Ana sayfa duyuru ve güncelleme panosu", icon: <FileText className="w-4 h-4 text-sky-400" />, keywords: ["duyuru", "haber", "güncelleme", "yazı", "paylaş"] },
+    { id: "console" as SubMenuId, category: "system", label: "Canlı Web Konsolu", desc: "Minecraft sunucusuna doğrudan RCON/Web komutu gönderme", icon: <Terminal className="w-4 h-4 text-emerald-400" />, keywords: ["konsol", "komut", "rcon", "canlı", "minecraft", "sunucu"] },
+    { id: "sys-settings" as SubMenuId, category: "system", label: "Sistem Ayarları & Kurallar", desc: "Sunucu IP, Discord Webhook, Gizli Anahtar ve Sunucu Kuralları", icon: <Settings className="w-4 h-4 text-slate-400" />, keywords: ["sistem", "ayar", "ip", "webhook", "discord", "kural", "kurallar", "secret", "anahtar"] }
+  ];
+
+  // Auto-sync activeTab with selectedCategory
+  useEffect(() => {
+    const mod = adminModulesList.find(m => m.id === activeTab);
+    if (mod) {
+      setSelectedCategory(mod.category);
+    }
+  }, [activeTab]);
 
   // Admin Role & Permission Modal State
   const [roleModalOpen, setRoleModalOpen] = useState(false);
@@ -123,6 +159,8 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
   const [discordWebhook, setDiscordWebhook] = useState("https://discord.com/api/webhooks/...");
   const [seasonalMode, setSeasonalMode] = useState(true);
   const [creditRatio, setCreditRatio] = useState(1);
+  const [requireOnlineForPurchase, setRequireOnlineForPurchase] = useState(true);
+  const [pluginStatusInfo, setPluginStatusInfo] = useState<{ isConnected: boolean; lastHeartbeat: string | null; onlineCount: number }>({ isConnected: false, lastHeartbeat: null, onlineCount: 0 });
 
   // Adsterra & Monlix & Earn Credits Settings
   const [adsterraUrl, setAdsterraUrl] = useState("https://www.effectivecpmnetwork.com/cs5m4z1hd5?key=3c6909ed230acc836b43757f2fb49c9d");
@@ -130,6 +168,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
   const [adRewardCredits, setAdRewardCredits] = useState(1);
   const [adCooldownMinutes, setAdCooldownMinutes] = useState(10);
   const [dailyBonusCredits, setDailyBonusCredits] = useState(10);
+  const [earnSystemEnabled, setEarnSystemEnabled] = useState(true);
   const [rulesList, setRulesList] = useState([
     "Sunucuda hile kullanımı, X-Ray ve avantaj sağlayan modlar kesinlikle yasaktır.",
     "Sohbette reklam yapmak, küfür, hakaret ve taciz edici kelimeler kullanmak yasaktır.",
@@ -165,6 +204,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
   const [newsForm, setNewsForm] = useState({ title: "", content: "", imageUrl: "" });
 
   // Lucky Wheel Settings States
+  const [wheelEnabled, setWheelEnabled] = useState(true);
   const [wheelPrice, setWheelPrice] = useState(0); // 0 means daily free
   const [wheelMultiplier, setWheelMultiplier] = useState(1);
   const [wheelLogs, setWheelLogs] = useState<{ id: string; username: string; reward: string; date: string }[]>([]);
@@ -351,9 +391,11 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
       if (earnRes.ok) {
         const earnData = await earnRes.json();
         if (earnData.adsterraUrl) setAdsterraUrl(earnData.adsterraUrl);
+        if (earnData.monlixUrl) setMonlixUrl(earnData.monlixUrl);
         if (earnData.adRewardCredits) setAdRewardCredits(earnData.adRewardCredits);
         if (earnData.adCooldownMinutes) setAdCooldownMinutes(earnData.adCooldownMinutes);
         if (earnData.dailyBonusCredits) setDailyBonusCredits(earnData.dailyBonusCredits);
+        if (earnData.enabled !== undefined) setEarnSystemEnabled(earnData.enabled !== false);
       }
 
       // Load all purchases request history
@@ -372,7 +414,15 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
         setTickets(tixData);
       }
 
-      // 9) Wheel logs
+      // 9) Wheel logs & settings
+      const wheelSettingsRes = await fetch("/api/lucky-wheel/settings");
+      if (wheelSettingsRes.ok) {
+        const wData = await wheelSettingsRes.json();
+        setWheelEnabled(wData.enabled !== false);
+        setWheelPrice(wData.price || 0);
+        setWheelMultiplier(wData.multiplier || 1);
+      }
+
       const wheelLogsRes = await fetch("/api/lucky-wheel/logs");
       if (wheelLogsRes.ok) {
         const wheelData = await wheelLogsRes.json();
@@ -717,7 +767,8 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
           monlixUrl,
           adRewardCredits,
           adCooldownMinutes,
-          dailyBonusCredits
+          dailyBonusCredits,
+          enabled: earnSystemEnabled
         })
       });
       if (res.ok) {
@@ -1037,17 +1088,27 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
     e.preventDefault();
     try {
       const token = localStorage.getItem("zefir_admin_token") || localStorage.getItem("zefir_token");
-      const res = await fetch("/api/admin/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ secretKey })
-      });
+      const [res1, res2] = await Promise.all([
+        fetch("/api/admin/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ secretKey })
+        }),
+        fetch("/api/admin/plugin/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ secretKey, requireOnlineForPurchase, serverIp: serverIP })
+        })
+      ]);
 
-      if (res.ok) {
-        triggerNotification("Eklenti Entegrasyon anahtarı başarıyla kaydedildi!");
+      if (res1.ok || res2.ok) {
+        triggerNotification("Eklenti ve sunucu ayarları başarıyla kaydedildi!");
       } else {
         triggerNotification("Ayarlar kaydedilirken hata oluştu.", false);
       }
@@ -1153,6 +1214,129 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
             <Network className="w-4 h-4" />
             <span>Yenile</span>
           </button>
+        </div>
+      </div>
+
+      {/* ORGANIZED TOP NAVIGATION & SEARCH BAR */}
+      <div className="bg-[#111625] border border-[#1e293b] rounded-3xl p-5 mb-6 space-y-4 shadow-xl">
+        {/* Quick Search Bar */}
+        <div className="relative">
+          <div className="relative flex items-center">
+            <Search className="w-4 h-4 text-sky-400 absolute left-4 pointer-events-none" />
+            <input
+              type="text"
+              value={adminSearchQuery}
+              onChange={(e) => setAdminSearchQuery(e.target.value)}
+              placeholder="🔍 Modül veya ayar ara... (ör: anket, çark, bakiye, başvuru, kural, ürün, konsol)"
+              className="w-full bg-[#0a0d18] border border-[#27355a] focus:border-sky-500 rounded-2xl pl-11 pr-10 py-3 text-xs font-bold text-white placeholder-slate-500 focus:outline-none transition-all shadow-inner"
+            />
+            {adminSearchQuery && (
+              <button
+                onClick={() => setAdminSearchQuery("")}
+                className="absolute right-3 p-1 text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Instant Search Results Dropdown */}
+          {adminSearchQuery.trim().length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#0d1222] border border-sky-500/40 rounded-2xl p-3 z-30 shadow-2xl space-y-2 max-h-80 overflow-y-auto backdrop-blur-xl">
+              <span className="text-[10px] text-sky-400 font-black uppercase tracking-wider block px-2">
+                Arama Sonuçları ({adminModulesList.filter(m => m.label.toLowerCase().includes(adminSearchQuery.toLowerCase()) || m.desc.toLowerCase().includes(adminSearchQuery.toLowerCase()) || m.keywords.some(k => k.includes(adminSearchQuery.toLowerCase()))).length})
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {adminModulesList
+                  .filter(m => 
+                    m.label.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                    m.desc.toLowerCase().includes(adminSearchQuery.toLowerCase()) || 
+                    m.keywords.some(k => k.includes(adminSearchQuery.toLowerCase()))
+                  )
+                  .map(mod => (
+                    <button
+                      key={mod.id}
+                      onClick={() => {
+                        setActiveTab(mod.id);
+                        setAdminSearchQuery("");
+                      }}
+                      className="text-left p-3 rounded-xl bg-[#141b2d] hover:bg-sky-950/50 border border-[#27355a] hover:border-sky-500/50 transition-all flex items-start gap-3 cursor-pointer group"
+                    >
+                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 group-hover:border-sky-500/40 shrink-0">
+                        {mod.icon}
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-white group-hover:text-sky-300 block">
+                          {mod.label}
+                        </span>
+                        <p className="text-[11px] text-slate-400 line-clamp-1">{mod.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Top Main Category Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-t border-[#1e293b]/60 pt-3">
+          {adminCategories.map(cat => {
+            const isCatActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  const firstMod = adminModulesList.find(m => m.category === cat.id);
+                  if (firstMod) setActiveTab(firstMod.id);
+                }}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer border shrink-0 ${
+                  isCatActive
+                    ? "bg-gradient-to-r from-sky-600 to-blue-600 text-white border-sky-400 shadow-lg shadow-sky-950/50 scale-[1.02]"
+                    : "bg-[#0a0d18] text-slate-400 hover:text-white border-[#27355a] hover:bg-[#141b2d]"
+                }`}
+              >
+                {cat.icon}
+                <span>{cat.label}</span>
+                {cat.badge && cat.badge > 0 ? (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">
+                    {cat.badge}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sub-Module Pills for Selected Category */}
+        <div className="flex flex-wrap items-center gap-2 bg-[#090d19] p-2.5 rounded-2xl border border-[#1e293b]/80">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 hidden sm:inline-block">
+            Modüller:
+          </span>
+          {adminModulesList
+            .filter(m => m.category === selectedCategory)
+            .map(mod => {
+              const isActive = activeTab === mod.id;
+              return (
+                <button
+                  key={mod.id}
+                  onClick={() => setActiveTab(mod.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border ${
+                    isActive
+                      ? "bg-sky-500/20 text-sky-300 border-sky-500/60 font-black shadow-md shadow-sky-950/50"
+                      : "bg-[#111625] text-slate-400 hover:text-white border-[#222f4c] hover:bg-[#172035]"
+                  }`}
+                >
+                  {mod.icon}
+                  <span>{mod.label}</span>
+                  {mod.badge && mod.badge > 0 ? (
+                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-md bg-amber-500 text-slate-950">
+                      {mod.badge}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
         </div>
       </div>
 
@@ -2097,14 +2281,36 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                 <div className="space-y-6">
                   <div className="border-[#1b3d54] border-[#1e293b] pb-4">
                     <h2 className="text-lg font-black text-white uppercase tracking-wider">Şans Çarkı (Lucky Wheel) Ayarları</h2>
-                    <p className="text-xs text-slate-400">Günlük ücretsiz çarkıfelek oyununun ödül çarpıcılarını ve çevirme koşullarını yapılandırın.</p>
+                    <p className="text-xs text-slate-400">Çarkıfelek oyununu tamamen açıp kapatın veya ödül çarpanlarını ve çevirme koşullarını yapılandırın.</p>
                   </div>
 
-                  <div className="bg-[#171e32] border border-[#27355a] rounded-2xl p-5 space-y-4 max-w-xl">
-                    <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1">
+                  <div className="bg-[#171e32] border border-[#27355a] rounded-2xl p-5 space-y-5 max-w-xl">
+                    <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
                       <Gift className="w-4 h-4 text-sky-400" />
-                      Çark Çevrim Dinamikleri
+                      Çark Durumu & Çevrim Dinamikleri
                     </h3>
+
+                    {/* Wheel Enabled Toggle Switch */}
+                    <div className="flex items-center justify-between p-3.5 bg-[#111625] border border-[#27355a] rounded-xl">
+                      <div>
+                        <span className="text-xs font-black text-white block">Şans Çarkı Durumu</span>
+                        <span className="text-[10px] text-slate-400 block">
+                          {wheelEnabled ? "Çark tüm menülerde görünür ve aktiftir." : "Çark tamamen kapalıdır (Menülerden ve anasayfadan gizlenir)."}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setWheelEnabled(!wheelEnabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                          wheelEnabled ? "bg-emerald-500" : "bg-slate-700"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            wheelEnabled ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
 
                     <div className="space-y-4">
                       <div className="space-y-1.5">
@@ -2132,8 +2338,31 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                     </div>
 
                     <button
-                      onClick={() => triggerNotification("Şans Çarkı ayarları başarıyla güncellendi!")}
-                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-black text-xs rounded-xl cursor-pointer"
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem("zefir_token") || localStorage.getItem("koli_token");
+                          const res = await fetch("/api/admin/wheel/settings", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                              enabled: wheelEnabled,
+                              price: wheelPrice,
+                              multiplier: wheelMultiplier
+                            })
+                          });
+                          if (res.ok) {
+                            triggerNotification(`Şans Çarkı ayarları başarıyla kaydedildi! (${wheelEnabled ? 'AÇIK' : 'KAPALI'})`);
+                          } else {
+                            triggerNotification("Ayarlar kaydedilirken hata oluştu.");
+                          }
+                        } catch (err) {
+                          triggerNotification("Bağlantı hatası oluştu.");
+                        }
+                      }}
+                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-black text-xs rounded-xl cursor-pointer transition-colors shadow-lg"
                     >
                       Ayarları Güncelle
                     </button>
@@ -3040,6 +3269,27 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
 
                         <div className="flex items-center justify-between bg-[#111625] p-3 rounded-xl border border-[#27355a]/30">
                           <div className="space-y-0.5">
+                            <span className="text-[11px] font-black text-white block">Satın Alımda Oyunda Olma Zorunluluğu</span>
+                            <span className="text-[9px] text-slate-400">Aktifse, oyuncuların mağazadan alışveriş yapabilmesi için oyunda olmaları doğrulanır.</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRequireOnlineForPurchase(!requireOnlineForPurchase);
+                              triggerNotification(`Oyunda olma zorunluluğu ${!requireOnlineForPurchase ? "aktif edildi" : "kapatıldı"}.`);
+                            }}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              requireOnlineForPurchase
+                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {requireOnlineForPurchase ? "Zorunlu (Aktif)" : "Serbest (Pasif)"}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between bg-[#111625] p-3 rounded-xl border border-[#27355a]/30">
+                          <div className="space-y-0.5">
                             <span className="text-[11px] font-black text-white block">Survival Sezon 2 Özel Modu</span>
                             <span className="text-[9px] text-slate-500">Özel efektler ve Sezon 2 arayüz efektlerini aktifleştirir.</span>
                           </div>
@@ -3053,6 +3303,28 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                           >
                             {seasonalMode ? "Aktif" : "Pasif"}
                           </button>
+                        </div>
+
+                        {/* Spigot Plugin Config YAML Snippet Box */}
+                        <div className="bg-[#111625] p-3.5 rounded-xl border border-sky-500/30 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-sky-400 uppercase tracking-wider">Spigot / Paper Plugin Config (plugins/ZefirCraft/config.yml)</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(`api-url: "https://${window.location.host}/api/plugin"\nsecret-key: "${secretKey}"\nheartbeat-interval: 30`);
+                                triggerNotification("Plugin konfigürasyonu panoya kopyalandı!");
+                              }}
+                              className="px-2 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded text-[9px] font-bold"
+                            >
+                              Kopyala
+                            </button>
+                          </div>
+                          <pre className="text-[10px] font-mono text-slate-300 bg-slate-950/80 p-2.5 rounded-lg overflow-x-auto leading-relaxed border border-slate-800">
+{`api-url: "https://${window.location.host}/api/plugin"
+secret-key: "${secretKey || "zefir_sec_982374829374"}"
+heartbeat-interval: 30`}
+                          </pre>
                         </div>
 
                         <button
@@ -3072,6 +3344,35 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                       </h3>
 
                       <form onSubmit={handleSaveEarnSettings} className="space-y-4">
+                        {/* Earn System Enable/Disable Toggle Card */}
+                        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all ${
+                          earnSystemEnabled
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                            : "bg-red-500/10 border-red-500/30 text-red-300"
+                        }`}>
+                          <div className="space-y-1">
+                            <span className="text-xs font-black uppercase tracking-wider block">
+                              ⚡ Kredi Kazanma & Anket Sistemi Durumu
+                            </span>
+                            <p className="text-[11px] opacity-80 leading-relaxed">
+                              {earnSystemEnabled
+                                ? "Sistem şu an AKTİF. Oyuncular anket çözebilir, reklam izleyebilir ve görev yapabilir."
+                                : "Sistem KAPALI (Devre Dışı). Oyuncular 'Kredi Kazan' sayfasında bakım uyarısı görür ve anket çözemez."
+                              }
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEarnSystemEnabled(!earnSystemEnabled)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all cursor-pointer shadow-md ${
+                              earnSystemEnabled
+                                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                                : "bg-red-500 hover:bg-red-400 text-white"
+                            }`}
+                          >
+                            {earnSystemEnabled ? "AÇIK (Aktif)" : "KAPALI (Devre Dışı)"}
+                          </button>
+                        </div>
                         <div className="space-y-1.5">
                           <label className="text-[10px] text-slate-400 font-extrabold uppercase">Adsterra Direct Link / Yönlendirme URL'si</label>
                           <input

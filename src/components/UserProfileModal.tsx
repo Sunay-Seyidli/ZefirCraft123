@@ -87,7 +87,7 @@ export default function UserProfileModal({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-md bg-[#0c101d] border border-sky-500/30 rounded-3xl p-6 shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md bg-[#0c101d] border border-sky-500/30 rounded-3xl p-5 sm:p-6 shadow-2xl overflow-y-auto max-h-[85vh] my-auto"
         >
           {/* Top ambient glow */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-sky-500/20 rounded-full blur-3xl pointer-events-none" />

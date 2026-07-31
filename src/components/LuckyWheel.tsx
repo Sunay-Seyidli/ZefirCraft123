@@ -183,7 +183,7 @@ export default function LuckyWheel({ user, onUpdateCredits, onNavigate }: LuckyW
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Col: Interactive Wheel (7 cols) */}
-        <div className="lg:col-span-7 bg-[#0f1629] border border-[#202d4a] rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl relative min-h-[500px]">
+        <div className="lg:col-span-7 bg-[#0f1629] border border-[#202d4a] rounded-3xl p-4 sm:p-8 flex flex-col items-center justify-center shadow-xl relative min-h-[440px] sm:min-h-[500px] overflow-hidden w-full">
           
           {/* Wheel Pointer Indicator */}
           <div className="z-30 -mb-5 flex flex-col items-center">
@@ -191,7 +191,7 @@ export default function LuckyWheel({ user, onUpdateCredits, onNavigate }: LuckyW
           </div>
 
           {/* Wheel Disc (SVG) */}
-          <div className="relative w-80 h-80 sm:w-96 sm:h-96 my-4 flex items-center justify-center">
+          <div className="relative w-[280px] h-[280px] xs:w-80 xs:h-80 sm:w-96 sm:h-96 max-w-full my-4 flex items-center justify-center">
             <div
               className="w-full h-full transition-transform duration-[4000ms] cubic-bezier(0.15, 0.9, 0.25, 1) drop-shadow-[0_0_35px_rgba(245,158,11,0.25)]"
               style={{ transform: `rotate(${rotationDegrees}deg)` }}

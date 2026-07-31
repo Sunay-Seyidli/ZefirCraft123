@@ -131,7 +131,7 @@ export default function AdminRoleModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-xl bg-[#0d1222] border border-sky-500/40 rounded-3xl p-6 shadow-2xl my-8"
+          className="relative w-full max-w-xl bg-[#0d1222] border border-sky-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl my-auto max-h-[85vh] overflow-y-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">

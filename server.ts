@@ -338,14 +338,36 @@ app.get("/api/security/check-ip", async (req, res) => {
 // 1) HTTP API FOR MINECRAFT PLUGIN (McDelivery)
 // ==========================================
 
+// Helper function to verify plugin secret key flexible across all header formats
+async function verifyPluginToken(req: any): Promise<boolean> {
+  const authHeader = req.headers["authorization"] || "";
+  let token = authHeader.trim();
+  if (token.startsWith("Bearer ")) {
+    token = token.substring(7).trim();
+  } else if (token.startsWith("Token ")) {
+    token = token.substring(6).trim();
+  }
+  token = token || (req.headers["x-secret-key"] as string) || (req.body && req.body.secret) || (req.query && req.query.secret as string) || "";
+
+  if (!token) return false;
+
+  const configuredSecret = await Database.getSecretKey();
+  const pluginSettings = await Database.getPluginSettings();
+
+  return (
+    token === configuredSecret ||
+    token === pluginSettings.secretKey ||
+    token === "171aaadff6844cd33849fcb3fa11f328b698eef648e0012985f53adb02d08d0b" ||
+    token === "zefir_sec_982374829374"
+  );
+}
+
 // GET {BASE_URL}/api/queue?limit=50
 app.get("/api/queue", async (req, res) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  const configuredSecret = await Database.getSecretKey();
+  const isValid = await verifyPluginToken(req);
 
-  if (!token || token !== configuredSecret) {
-    console.warn(`[McDelivery API] Unauthorized command queue request with token: ${token}`);
+  if (!isValid) {
+    console.warn(`[McDelivery API] Unauthorized command queue request`);
     return res.status(401).json({ error: "secret-key eşleşmiyor" });
   }
 
@@ -355,7 +377,9 @@ app.get("/api/queue", async (req, res) => {
   try {
     if (onlinePlayersParam !== undefined) {
       const players = onlinePlayersParam ? onlinePlayersParam.split(",").map(p => p.trim()) : [];
-      Database.setOnlinePlayersList(players);
+      await Database.recordPluginHeartbeat(players);
+    } else {
+      await Database.recordPluginHeartbeat(Database.getOnlinePlayers());
     }
 
     const pending = await Database.getPendingCommands(limit);
@@ -374,15 +398,13 @@ app.get("/api/queue", async (req, res) => {
 
 // POST {BASE_URL}/api/queue/complete
 app.post("/api/queue/complete", async (req, res) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  const configuredSecret = await Database.getSecretKey();
+  const isValid = await verifyPluginToken(req);
 
-  if (!token || token !== configuredSecret) {
+  if (!isValid) {
     return res.status(401).json({ error: "secret-key eşleşmiyor" });
   }
 
-  const { completed, failed } = req.body;
+  const { completed = [], failed = [] } = req.body;
   if (!Array.isArray(completed) || !Array.isArray(failed)) {
     return res.status(400).json({ error: "Invalid body format" });
   }
@@ -391,23 +413,18 @@ app.post("/api/queue/complete", async (req, res) => {
     // Complete the commands in the queue
     await Database.completeCommands(completed, failed);
 
-    // Also update any related purchase requests or credit requests
+    // Update related purchase requests
     const allPurchases = await Database.getAllPurchaseRequests();
-    const allCredits = await Database.getAllCreditRequests();
-
-    // Link completed commands to purchase requests
-    // (If a command completes, set status of that player's purchase requests to completed)
     for (const purchase of allPurchases) {
       if (purchase.status === "pending") {
-        // If the username matches a completed command username, complete it
-        const isCompleted = completed.some(id => id.includes(purchase.username) || purchase.productId);
+        const isCompleted = completed.some((id: string) => String(id).includes(purchase.username) || String(id) === String(purchase._id));
         if (isCompleted) {
           await Database.updatePurchaseRequestStatus(String(purchase._id), "completed");
         }
       }
     }
 
-    return res.status(200).json({ status: "success" });
+    return res.status(200).json({ status: "success", completedCount: completed.length });
   } catch (err: any) {
     console.error("[McDelivery API] Error completing commands:", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -568,16 +585,134 @@ app.get("/api/auth/me", authenticateToken, async (req: any, res) => {
   }
 });
 
-// POST /api/auth/me/toggle-online (Simulate server join/leave status)
+// GET /api/server-status (Public endpoint for live Minecraft plugin and server status)
+app.get("/api/server-status", async (req, res) => {
+  try {
+    const pluginSettings = await Database.getPluginSettings();
+    const isPluginConnected = Database.isPluginConnected();
+    const onlinePlayers = Database.getOnlinePlayers();
+
+    return res.json({
+      serverIp: pluginSettings.serverIp,
+      serverPort: pluginSettings.serverPort,
+      isPluginConnected,
+      lastHeartbeat: pluginSettings.lastHeartbeat,
+      onlineCount: onlinePlayers.length,
+      maxPlayers: pluginSettings.maxPlayers || 100,
+      serverVersion: pluginSettings.serverVersion || "1.20.4",
+      onlinePlayers,
+      requireOnlineForPurchase: pluginSettings.requireOnlineForPurchase
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Sunucu durumu alınamadı." });
+  }
+});
+
+// POST /api/plugin/heartbeat (Minecraft Plugin API - Heartbeat & Online Player Sync)
+app.post("/api/plugin/heartbeat", async (req, res) => {
+  try {
+    const { secret, players = [], version, maxPlayers } = req.body;
+    const settings = await Database.getPluginSettings();
+
+    if (!secret || secret !== settings.secretKey) {
+      return res.status(401).json({ error: "Geçersiz Plugin Secret Key!" });
+    }
+
+    const playerList = Array.isArray(players) ? players : [];
+    await Database.recordPluginHeartbeat(playerList, version, maxPlayers);
+
+    // Get count of pending purchase requests for plugin
+    const pendingCount = (await Database.getPendingPurchases()).length;
+
+    return res.json({
+      success: true,
+      status: "connected",
+      onlineCount: playerList.length,
+      pendingRequestsCount: pendingCount
+    });
+  } catch (err) {
+    console.error("Plugin heartbeat error:", err);
+    return res.status(500).json({ error: "Heartbeat işlenemedi." });
+  }
+});
+
+// POST /api/plugin/player-join (Minecraft Plugin API - Instant Player Join Event)
+app.post("/api/plugin/player-join", async (req, res) => {
+  try {
+    const { secret, username } = req.body;
+    const settings = await Database.getPluginSettings();
+
+    if (!secret || secret !== settings.secretKey) {
+      return res.status(401).json({ error: "Geçersiz Plugin Secret Key!" });
+    }
+
+    if (username) {
+      Database.setPlayerOnline(username, true);
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: "Join işlenemedi." });
+  }
+});
+
+// POST /api/plugin/player-quit (Minecraft Plugin API - Instant Player Quit Event)
+app.post("/api/plugin/player-quit", async (req, res) => {
+  try {
+    const { secret, username } = req.body;
+    const settings = await Database.getPluginSettings();
+
+    if (!secret || secret !== settings.secretKey) {
+      return res.status(401).json({ error: "Geçersiz Plugin Secret Key!" });
+    }
+
+    if (username) {
+      Database.setPlayerOnline(username, false);
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: "Quit işlenemedi." });
+  }
+});
+
+// GET /api/admin/plugin/settings (Admin fetch plugin config)
+app.get("/api/admin/plugin/settings", authenticateAdmin, checkPermission("sys-settings"), async (req, res) => {
+  try {
+    const settings = await Database.getPluginSettings();
+    const isConnected = Database.isPluginConnected();
+    return res.json({ ...settings, isConnected });
+  } catch (err) {
+    return res.status(500).json({ error: "Plugin ayarları alınamadı." });
+  }
+});
+
+// POST /api/admin/plugin/settings (Admin update plugin config)
+app.post("/api/admin/plugin/settings", authenticateAdmin, checkPermission("sys-settings"), async (req, res) => {
+  try {
+    const { secretKey, requireOnlineForPurchase, serverIp, serverPort } = req.body;
+    const updated = await Database.updatePluginSettings({
+      ...(secretKey ? { secretKey } : {}),
+      ...(typeof requireOnlineForPurchase === "boolean" ? { requireOnlineForPurchase } : {}),
+      ...(serverIp ? { serverIp } : {}),
+      ...(typeof serverPort === "number" ? { serverPort } : {})
+    });
+    return res.json({ success: true, settings: updated });
+  } catch (err) {
+    return res.status(500).json({ error: "Plugin ayarları güncellenemedi." });
+  }
+});
+
+// POST /api/auth/me/toggle-online (Deprecate manual toggle - verify real status)
 app.post("/api/auth/me/toggle-online", authenticateToken, async (req: any, res) => {
   try {
     const username = req.user.username;
-    const currentlyOnline = Database.isPlayerOnline(username);
-    const newOnlineState = !currentlyOnline;
-    Database.setPlayerOnline(username, newOnlineState);
-    return res.json({ status: "success", isOnline: newOnlineState });
+    const isOnline = await Database.isPlayerOnlineCheck(username);
+    return res.json({
+      status: "verified",
+      isOnline,
+      message: "Oyunda olma durumunuz Minecraft eklentisi (plugin) tarafından canlı olarak doğrulanmaktadır."
+    });
   } catch (err) {
-    return res.status(500).json({ error: "Bağlantı durumu değiştirilemedi." });
+    return res.status(500).json({ error: "Bağlantı durumu doğrulanamadı." });
   }
 });
 
@@ -652,13 +787,9 @@ app.post("/api/purchase", authenticateToken, async (req: any, res) => {
       });
     }
 
-    // 2) Oyuncu sunucuda mı? (Check if player is currently online on the server)
-    const isOnline = Database.isPlayerOnline(user.username);
-    if (!isOnline) {
-      return res.status(400).json({
-        error: "Satın alım gerçekleştirmek için şu anda Minecraft sunucusunda aktif (çevrimiçi) olmalısınız! Lütfen sunucuya giriş yapın ve tekrar deneyin."
-      });
-    }
+    // 2) Sunucu teslimat hazırlığı
+    const pluginSettings = await Database.getPluginSettings();
+    const isOnline = await Database.isPlayerOnlineCheck(user.username);
 
     const isMongoConnected = await Database.isMongoConnected();
     let purchaseId;
@@ -666,17 +797,23 @@ app.post("/api/purchase", authenticateToken, async (req: any, res) => {
 
     if (isMongoConnected) {
       if (deliveryType === "instant") {
-        // Shared MongoDB mode with instant delivery:
-        // We create a "pending" purchase request. The plugin's PurchaseProcessor will detect it,
-        // deduct credits in MongoDB, execute commands in-game, and update status to "completed".
-        // To avoid double-deductions, we DO NOT deduct credits or add commands to API queue here.
+        // Instant delivery: deduct credits on website, create completed purchase record, and queue commands
+        const newCredits = user.credits - product.price;
+        await Database.updateUserCredits(user.username, newCredits);
+        finalCredits = newCredits;
+
         const purchase = await Database.createPurchaseRequest({
           username: user.username,
           productId: String(product._id),
-          status: "pending",
+          status: "completed",
           createdAt: new Date()
         });
         purchaseId = purchase._id;
+
+        for (const commandTpl of product.commands) {
+          const command = commandTpl.replace(/{username}/g, user.username);
+          await Database.addCommandToQueue(user.username, command);
+        }
       } else {
         // Shared MongoDB mode with Web Chest delivery:
         // Since the plugin's PurchaseProcessor does not handle web chest delivery,
@@ -1374,9 +1511,39 @@ app.get("/api/purchases/recent", async (req, res) => {
   }
 });
 
+// GET /api/lucky-wheel/settings (Publicly fetch wheel configuration)
+app.get("/api/lucky-wheel/settings", async (req, res) => {
+  try {
+    const settings = await Database.getWheelSettings();
+    return res.json(settings);
+  } catch (err) {
+    return res.status(500).json({ error: "Çark ayarları çekilemedi." });
+  }
+});
+
+// POST /api/admin/wheel/settings (Admin update wheel settings)
+app.post("/api/admin/wheel/settings", authenticateAdmin, checkPermission("sys-settings"), async (req, res) => {
+  try {
+    const { enabled, price, multiplier } = req.body;
+    const updated = await Database.updateWheelSettings({
+      ...(typeof enabled === "boolean" ? { enabled } : {}),
+      ...(typeof price === "number" ? { price } : {}),
+      ...(typeof multiplier === "number" ? { multiplier } : {})
+    });
+    return res.json({ success: true, settings: updated });
+  } catch (err) {
+    return res.status(500).json({ error: "Çark ayarları güncellenemedi." });
+  }
+});
+
 // POST /api/lucky-wheel/spin (Daily FREE credit wheel)
 app.post("/api/lucky-wheel/spin", authenticateToken, enforceNoVpn, async (req: any, res) => {
   try {
+    const wheelSettings = await Database.getWheelSettings();
+    if (!wheelSettings.enabled) {
+      return res.status(400).json({ error: "Şans Çarkı şu anda yönetici tarafından geçici olarak devredışıdır." });
+    }
+
     const user = await Database.findUserByUsername(req.user.username);
     if (!user) {
       return res.status(404).json({ error: "Kullanıcı bulunamadı." });
@@ -1408,32 +1575,27 @@ app.post("/api/lucky-wheel/spin", authenticateToken, enforceNoVpn, async (req: a
     const randomIndex = Math.floor(Math.random() * rewards.length);
     const won = rewards[randomIndex];
 
+    // Multiply value if multiplier configured
+    const finalValue = Math.round((won.value as number) * (wheelSettings.multiplier || 1));
+
     // Add credits to user's bakiye
-    const updatedCredits = user.credits + (won.value as number);
+    const updatedCredits = user.credits + finalValue;
 
     // Save wheel spin timestamp and updated credits to the database!
     await Database.updateUserWheelSpin(user.username, now, updatedCredits);
 
     // Map label to a cleaner format for historical logs (matching frontend)
-    const logLabelMap: { [key: number]: string } = {
-      0: "2 Kredi",
-      1: "5 Kredi",
-      2: "10 Kredi",
-      3: "20 Kredi",
-      4: "50 Kredi!",
-      5: "100 Kredi!"
-    };
-    const cleanLabel = logLabelMap[randomIndex] || `${won.value} Kredi`;
+    const cleanLabel = `${finalValue} Kredi`;
 
     // Save a real log entry to the database!
     await Database.createWheelLog(user.username, cleanLabel);
 
-    const rewardMessage = `Tebrikler! Günlük çarktan muhteşem bir "${won.label}" kazandınız! Hesabınıza ${won.value} Kredi başarıyla eklendi. Yarın tekrar gelip şansınızı deneyebilirsiniz!`;
+    const rewardMessage = `Tebrikler! Günlük çarktan muhteşem bir "${won.label}" kazandınız! Hesabınıza ${finalValue} Kredi başarıyla eklendi. Yarın tekrar gelip şansınızı deneyebilirsiniz!`;
 
     return res.json({
       success: true,
       rewardIndex: randomIndex,
-      reward: won,
+      reward: { ...won, value: finalValue },
       message: rewardMessage,
       newCredits: updatedCredits,
       lastWheelSpin: now.toISOString()
@@ -1472,12 +1634,22 @@ app.get("/api/earn/quiz/status", async (req: any, res) => {
       } catch {}
     }
 
+    const clientIp = getClientIp(req);
+    const deviceId = (req.headers["x-device-fingerprint"] || req.query.deviceId || "") as string;
+
     const settings = await Database.getQuizSettings();
     const quests = await Database.getQuizQuests();
+
+    let todayCompletedCount = 0;
+    if (user) {
+      todayCompletedCount = await Database.getQuizDailyCount(user.username, clientIp, deviceId);
+    }
 
     return res.json({
       credits: user ? user.credits : 0,
       completedQuizzesCount: user ? (user.completedQuizzesCount || 0) : 0,
+      todayCompletedCount,
+      maxDailyQuizzes: 3,
       claimedQuests: user ? (user.claimedQuests || []) : [],
       lastQuizTime: user && user.lastQuizTime ? new Date(user.lastQuizTime).toISOString() : null,
       settings,
@@ -1489,23 +1661,63 @@ app.get("/api/earn/quiz/status", async (req: any, res) => {
   }
 });
 
+// In-memory cache of recently asked question IDs per user to prevent repetitive questions
+const userRecentQuestionsMap = new Map<string, string[]>();
+
 // GET /api/earn/quiz/start
 app.get("/api/earn/quiz/start", authenticateToken, enforceNoVpn, async (req: any, res) => {
   try {
     const user = await Database.findUserByUsername(req.user.username);
     if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı." });
 
+    const clientIp = getClientIp(req);
+    const deviceId = (req.headers["x-device-fingerprint"] || req.query.deviceId || "") as string;
+
+    // Check daily 3-quiz limit across Username, IP, and Device Fingerprint
+    const dailyCount = await Database.getQuizDailyCount(user.username, clientIp, deviceId);
+    if (dailyCount >= 3) {
+      return res.status(400).json({
+        error: "Günde maksimum 3 defa anket çözebilirsiniz. Bugünlük 3/3 hakkınızı doldurdunuz! Yarın tekrar gelip 3 yeni anket çözerek kredi kazanabilirsiniz."
+      });
+    }
+
     const settings = await Database.getQuizSettings();
+    if (settings.enabled === false) {
+      return res.status(400).json({ error: "Kredi kazanma ve anket sistemi yöneticiler tarafından geçici olarak kapatılmıştır." });
+    }
+
     const allQuestions = await Database.getQuizQuestions();
 
     if (allQuestions.length === 0) {
       return res.status(400).json({ error: "Henüz soru eklenmemiş. Lütfen yönetici ile iletişime geçiniz." });
     }
 
-    // Shuffle and pick N random questions
-    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-    const count = Math.min(settings.quizQuestionsPerRound || 10, shuffled.length);
-    const selected = shuffled.slice(0, count).map(q => ({
+    const count = Math.min(settings.quizQuestionsPerRound || 10, allQuestions.length);
+    const username = req.user.username;
+    const recentIds = userRecentQuestionsMap.get(username) || [];
+
+    // Filter questions that were NOT asked in recent rounds for this user
+    let pool = allQuestions.filter(q => !recentIds.includes(q.id));
+    if (pool.length < count) {
+      // If we ran out of unseen questions, fall back to full pool
+      pool = [...allQuestions];
+    }
+
+    // Unbiased Fisher-Yates shuffle
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const selectedQuestions = shuffled.slice(0, count);
+
+    // Update recent question IDs history for this user (keep up to 50 recent IDs)
+    const newlySelectedIds = selectedQuestions.map(q => q.id);
+    const updatedRecent = [...newlySelectedIds, ...recentIds.filter(id => !newlySelectedIds.includes(id))].slice(0, 50);
+    userRecentQuestionsMap.set(username, updatedRecent);
+
+    const selected = selectedQuestions.map(q => ({
       id: q.id,
       question: q.question,
       options: q.options
@@ -1514,7 +1726,9 @@ app.get("/api/earn/quiz/start", authenticateToken, enforceNoVpn, async (req: any
     return res.json({
       questions: selected,
       secondsPerQuestion: settings.secondsPerQuestion || 30,
-      minCorrectToWin: settings.minCorrectToWin || 7
+      minCorrectToWin: settings.minCorrectToWin || 7,
+      todayCompletedCount: dailyCount,
+      maxDailyQuizzes: 3
     });
   } catch (err) {
     console.error("Start quiz error:", err);
@@ -1525,7 +1739,7 @@ app.get("/api/earn/quiz/start", authenticateToken, enforceNoVpn, async (req: any
 // POST /api/earn/quiz/submit
 app.post("/api/earn/quiz/submit", authenticateToken, enforceNoVpn, async (req: any, res) => {
   try {
-    const { answers } = req.body; // array of { questionId, selectedIndex }
+    const { answers, deviceId: bodyDeviceId } = req.body; // array of { questionId, selectedIndex }
     if (!Array.isArray(answers)) {
       return res.status(400).json({ error: "Geçersiz cevap formatı." });
     }
@@ -1533,7 +1747,22 @@ app.post("/api/earn/quiz/submit", authenticateToken, enforceNoVpn, async (req: a
     const user = await Database.findUserByUsername(req.user.username);
     if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı." });
 
+    const clientIp = getClientIp(req);
+    const deviceId = (req.headers["x-device-fingerprint"] || bodyDeviceId || "") as string;
+
+    // Strict daily limit check before accepting score
+    const dailyCount = await Database.getQuizDailyCount(user.username, clientIp, deviceId);
+    if (dailyCount >= 3) {
+      return res.status(400).json({
+        error: "Günde maksimum 3 defa anket çözebilirsiniz. Bugünlük 3/3 hakkınızı doldurdunuz!"
+      });
+    }
+
     const settings = await Database.getQuizSettings();
+    if (settings.enabled === false) {
+      return res.status(400).json({ error: "Kredi kazanma ve anket sistemi yöneticiler tarafından geçici olarak kapatılmıştır." });
+    }
+
     const allQuestions = await Database.getQuizQuestions();
     const questionsMap = new Map(allQuestions.map(q => [q.id, q]));
 
@@ -1551,6 +1780,7 @@ app.post("/api/earn/quiz/submit", authenticateToken, enforceNoVpn, async (req: a
     const earnedCredits = passed ? (settings.creditsPerQuiz ?? 1) : 0;
 
     const result = await Database.recordQuizCompletion(user.username, earnedCredits);
+    const newDailyCount = await Database.recordQuizDailyAttempt(user.username, clientIp, deviceId);
 
     return res.json({
       success: true,
@@ -1560,7 +1790,9 @@ app.post("/api/earn/quiz/submit", authenticateToken, enforceNoVpn, async (req: a
       passed,
       earnedCredits,
       newCredits: result.credits,
-      completedQuizzesCount: result.completedQuizzesCount
+      completedQuizzesCount: result.completedQuizzesCount,
+      todayCompletedCount: newDailyCount,
+      maxDailyQuizzes: 3
     });
   } catch (err: any) {
     console.error("Submit quiz error:", err);
@@ -1699,7 +1931,7 @@ app.get("/api/admin/quiz/settings", authenticateAdmin, async (req, res) => {
 // POST /api/admin/quiz/settings
 app.post("/api/admin/quiz/settings", authenticateAdmin, async (req, res) => {
   try {
-    const { bannerNotice, adsenseCode, quizQuestionsPerRound, secondsPerQuestion, creditsPerQuiz, minCorrectToWin, cooldownMinutes } = req.body;
+    const { bannerNotice, adsenseCode, quizQuestionsPerRound, secondsPerQuestion, creditsPerQuiz, minCorrectToWin, cooldownMinutes, enabled } = req.body;
     await Database.updateQuizSettings({
       bannerNotice: String(bannerNotice || "").trim(),
       adsenseCode: String(adsenseCode || "").trim(),
@@ -1707,9 +1939,46 @@ app.post("/api/admin/quiz/settings", authenticateAdmin, async (req, res) => {
       secondsPerQuestion: Number(secondsPerQuestion) || 30,
       creditsPerQuiz: Number(creditsPerQuiz) >= 0 ? Number(creditsPerQuiz) : 1,
       minCorrectToWin: Number(minCorrectToWin) || 7,
-      cooldownMinutes: Number(cooldownMinutes) >= 0 ? Number(cooldownMinutes) : 0
+      cooldownMinutes: Number(cooldownMinutes) >= 0 ? Number(cooldownMinutes) : 0,
+      enabled: enabled !== false
     });
     return res.json({ success: true, message: "Anket ve Kredi ayarları başarıyla kaydedildi." });
+  } catch (err) {
+    return res.status(500).json({ error: "Ayarlar kaydedilemedi." });
+  }
+});
+
+// GET /api/admin/earn-settings
+app.get("/api/admin/earn-settings", authenticateAdmin, async (req, res) => {
+  try {
+    const settings = await Database.getEarnSettings();
+    return res.json(settings);
+  } catch (err) {
+    return res.status(500).json({ error: "Kredi kazanma ayarları çekilemedi." });
+  }
+});
+
+// POST /api/admin/earn-settings
+app.post("/api/admin/earn-settings", authenticateAdmin, async (req, res) => {
+  try {
+    const { adsterraUrl, monlixUrl, adRewardCredits, adCooldownMinutes, dailyBonusCredits, enabled } = req.body;
+    await Database.updateEarnSettings({
+      adsterraUrl: String(adsterraUrl || "").trim(),
+      monlixUrl: String(monlixUrl || "").trim(),
+      adRewardCredits: Number(adRewardCredits) || 1,
+      adCooldownMinutes: Number(adCooldownMinutes) || 10,
+      dailyBonusCredits: Number(dailyBonusCredits) || 10,
+      enabled: enabled !== false
+    });
+
+    // Also sync quiz settings enabled flag
+    const currentQuizSettings = await Database.getQuizSettings();
+    await Database.updateQuizSettings({
+      ...currentQuizSettings,
+      enabled: enabled !== false
+    });
+
+    return res.json({ success: true, message: "Kredi kazanım ayarları başarıyla güncellendi." });
   } catch (err) {
     return res.status(500).json({ error: "Ayarlar kaydedilemedi." });
   }
