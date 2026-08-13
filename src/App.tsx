@@ -23,12 +23,10 @@ import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
 import LuckyWheel from "./components/LuckyWheel";
 import { Users } from "lucide-react";
-import bgEarth from "./assets/images/bg-earth.jpg";
-import bgEarthMobile from "./assets/images/bg-earth-mobile.jpg";
 
 const logoSrc = "/logo.png";
-const bgEarthSrc = typeof bgEarth === "string" ? bgEarth : (bgEarth as any)?.src || "/bg-earth.jpg";
-const bgEarthMobileSrc = typeof bgEarthMobile === "string" ? bgEarthMobile : (bgEarthMobile as any)?.src || "/bg-earth-mobile.jpg";
+const bgEarthSrc = "/bg-earth.jpg";
+const bgEarthMobileSrc = "/bg-earth-mobile.jpg";
 
 // Gentle modern notification sound synthesis (Web Audio API)
 function playMessageNotificationChime() {
