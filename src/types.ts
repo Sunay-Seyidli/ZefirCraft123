@@ -25,6 +25,7 @@ export interface DirectMessage {
   recipient: string;
   message: string;
   read: boolean;
+  readAt?: string;
   createdAt: string;
 }
 

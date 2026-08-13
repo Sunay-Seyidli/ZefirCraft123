@@ -810,8 +810,16 @@ app.post("/api/purchase", authenticateToken, async (req: any, res) => {
         });
         purchaseId = purchase._id;
 
+        const formatCmd = (tpl: string) => tpl
+          .replace(/{player}/gi, user.username)
+          .replace(/{username}/gi, user.username)
+          .replace(/{user}/gi, user.username)
+          .replace(/%player%/gi, user.username)
+          .replace(/%username%/gi, user.username)
+          .replace(/%user%/gi, user.username);
+
         for (const commandTpl of product.commands) {
-          const command = commandTpl.replace(/{username}/g, user.username);
+          const command = formatCmd(commandTpl);
           await Database.addCommandToQueue(user.username, command);
         }
       } else {
@@ -832,12 +840,20 @@ app.post("/api/purchase", authenticateToken, async (req: any, res) => {
         });
         purchaseId = purchase._id;
 
+        const formatCmd = (tpl: string) => tpl
+          .replace(/{player}/gi, user.username)
+          .replace(/{username}/gi, user.username)
+          .replace(/{user}/gi, user.username)
+          .replace(/%player%/gi, user.username)
+          .replace(/%username%/gi, user.username)
+          .replace(/%user%/gi, user.username);
+
         await Database.addChestItem({
           username: user.username,
           productId: String(product._id),
           productName: product.name,
           productImageUrl: product.imageUrl,
-          commands: product.commands.map(tpl => tpl.replace(/{username}/g, user.username))
+          commands: product.commands.map(tpl => formatCmd(tpl))
         });
       }
     } else {
@@ -856,10 +872,18 @@ app.post("/api/purchase", authenticateToken, async (req: any, res) => {
       });
       purchaseId = purchase._id;
 
+      const formatCmd = (tpl: string) => tpl
+        .replace(/{player}/gi, user.username)
+        .replace(/{username}/gi, user.username)
+        .replace(/{user}/gi, user.username)
+        .replace(/%player%/gi, user.username)
+        .replace(/%username%/gi, user.username)
+        .replace(/%user%/gi, user.username);
+
       if (deliveryType === "instant") {
         // For local demo, we simulate queueing commands for the API endpoint
         for (const commandTpl of product.commands) {
-          const command = commandTpl.replace(/{username}/g, user.username);
+          const command = formatCmd(commandTpl);
           await Database.addCommandToQueue(user.username, command);
         }
       } else {
@@ -869,7 +893,7 @@ app.post("/api/purchase", authenticateToken, async (req: any, res) => {
           productId: String(product._id),
           productName: product.name,
           productImageUrl: product.imageUrl,
-          commands: product.commands.map(tpl => tpl.replace(/{username}/g, user.username))
+          commands: product.commands.map(tpl => formatCmd(tpl))
         });
       }
     }
@@ -2215,6 +2239,34 @@ app.post("/api/social/messages/send", authenticateToken, async (req: any, res) =
     return res.json({ success: true, message: newMsg });
   } catch (err: any) {
     return res.status(400).json({ error: err.message || "Mesaj gönderilemedi." });
+  }
+});
+
+// POST /api/social/messages/read (Explicitly mark conversation as read)
+app.post("/api/social/messages/read", authenticateToken, async (req: any, res) => {
+  const { friendUsername } = req.body;
+  if (!friendUsername) {
+    return res.status(400).json({ error: "Arkadaş kullanıcı adı zorunludur." });
+  }
+  try {
+    await Database.markMessagesAsRead(req.user.username, friendUsername);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: "Okundu bilgisi güncellenemedi." });
+  }
+});
+
+// GET /api/social/latest-unread (Get recent unread messages with sender metadata for desktop/toast notifications)
+app.get("/api/social/latest-unread", authenticateToken, async (req: any, res) => {
+  try {
+    const unreadMsgs = await Database.getRecentUnreadMessages(req.user.username, 10);
+    const count = await Database.getUnreadMessageCount(req.user.username);
+    return res.json({
+      unreadCount: count,
+      messages: unreadMsgs
+    });
+  } catch (err) {
+    return res.status(500).json({ unreadCount: 0, messages: [] });
   }
 });
 

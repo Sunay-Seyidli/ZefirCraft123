@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Package, Coins, Sparkles, Menu, X, LogOut, ShieldCheck,
   Home as HomeIcon, ShoppingBag, HelpCircle, FileText, UserCheck, LogIn,
-  Inbox, Gift, Award, User as UserIcon, Copy, Check, Boxes
+  Inbox, Gift, Award, User as UserIcon, Copy, Check, CheckCheck, Boxes,
+  MessageSquare, Bell, ArrowRight, MessageCircle, ExternalLink
 } from "lucide-react";
 
 import Home from "./components/Home";
@@ -24,6 +25,54 @@ import LuckyWheel from "./components/LuckyWheel";
 import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
+
+export interface MessageToast {
+  id: string;
+  sender: string;
+  message: string;
+  createdAt: string;
+  expiresAt: number;
+}
+
+// Gentle modern notification sound synthesis (Web Audio API)
+function playMessageNotificationChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    const now = ctx.currentTime;
+
+    // First bell chime (880Hz -> 1320Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(880, now);
+    osc1.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+    gain1.gain.setValueAtTime(0.18, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Second harmonic shimmer
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(1760, now + 0.08);
+    gain2.gain.setValueAtTime(0.12, now + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.45);
+  } catch (e) {
+    // Silent fail if audio blocked by browser policy
+  }
+}
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<string>("home");
@@ -110,31 +159,122 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentPage]);
 
-  // Poll unread messages for navigation badge
+  // Real-time YouTube-style Message Toast Notifications
+  const [messageToasts, setMessageToasts] = useState<MessageToast[]>([]);
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const initialUnreadLoadedRef = useRef<boolean>(false);
+
+  // Request browser notification permission politely
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        const handleUserAction = () => {
+          Notification.requestPermission().catch(() => {});
+          window.removeEventListener("click", handleUserAction);
+        };
+        window.addEventListener("click", handleUserAction, { once: true });
+      }
+    }
+  }, []);
+
+  // Poll latest unread messages for real-time YouTube-style desktop & web toast notifications
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);
+      setMessageToasts([]);
+      seenMessageIdsRef.current.clear();
+      initialUnreadLoadedRef.current = false;
       return;
     }
 
-    const fetchUnread = async () => {
+    const checkLatestUnread = async () => {
       try {
         const token = localStorage.getItem("zefir_token") || localStorage.getItem("koli_token");
-        const res = await fetch("/api/social/unread-count", {
+        if (!token) return;
+
+        const res = await fetch("/api/social/latest-unread", {
           headers: { "Authorization": `Bearer ${token}` }
         });
+
         if (res.ok) {
           const data = await res.json();
-          setUnreadCount(data.unreadCount || 0);
+          const count = typeof data.unreadCount === "number" ? data.unreadCount : 0;
+          setUnreadCount(count);
+
+          const messages: Array<{ _id?: string; sender: string; message: string; createdAt: string }> = data.messages || [];
+
+          // On first run, mark existing unread messages as seen to avoid flood on fresh login
+          if (!initialUnreadLoadedRef.current) {
+            messages.forEach(m => {
+              const mId = m._id ? m._id.toString() : `${m.sender}_${m.createdAt}`;
+              seenMessageIdsRef.current.add(mId);
+            });
+            initialUnreadLoadedRef.current = true;
+            return;
+          }
+
+          // Check for brand new incoming messages
+          const newMessages = messages.filter(m => {
+            const mId = m._id ? m._id.toString() : `${m.sender}_${m.createdAt}`;
+            return !seenMessageIdsRef.current.has(mId) && m.sender.toLowerCase() !== user.username.toLowerCase();
+          });
+
+          if (newMessages.length > 0) {
+            // Play harmonious audio chime
+            playMessageNotificationChime();
+
+            const newToasts: MessageToast[] = newMessages.map(m => {
+              const mId = m._id ? m._id.toString() : `${m.sender}_${m.createdAt}`;
+              seenMessageIdsRef.current.add(mId);
+
+              // Trigger native browser notification if enabled
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                try {
+                  const browserNotif = new Notification(`${m.sender} size bir mesaj gönderdi`, {
+                    body: m.message,
+                    icon: `https://mc-heads.net/avatar/${m.sender}/64`,
+                    tag: `msg_${mId}`
+                  });
+                  browserNotif.onclick = () => {
+                    window.focus();
+                    setChatInitialFriend(m.sender);
+                    changePageWithLoader("friends");
+                  };
+                } catch (e) {
+                  // Ignore
+                }
+              }
+
+              return {
+                id: mId,
+                sender: m.sender,
+                message: m.message,
+                createdAt: m.createdAt,
+                expiresAt: Date.now() + 8000
+              };
+            });
+
+            setMessageToasts(prev => [...prev, ...newToasts]);
+          }
         }
       } catch (err) {
         // silent
       }
     };
 
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 5000);
-    return () => clearInterval(interval);
+    checkLatestUnread();
+    const interval = setInterval(checkLatestUnread, 2800);
+
+    // Auto-clean expired toasts timer
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      setMessageToasts(prev => prev.filter(t => t.expiresAt > now));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(cleanupInterval);
+    };
   }, [user]);
 
   // Sync page state with URL hash for search engine indexing and direct linking (Sitelinks)
@@ -973,6 +1113,110 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* YouTube-Style Interactive Direct Message Toast Notifications */}
+      <div className="fixed top-20 right-4 sm:right-6 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm sm:max-w-md w-[calc(100%-2rem)] sm:w-full">
+        <AnimatePresence>
+          {messageToasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: -25, scale: 0.9, x: 20 }}
+              animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+              exit={{ opacity: 0, x: 80, scale: 0.85, transition: { duration: 0.25 } }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="pointer-events-auto bg-[#0d1428]/95 border-2 border-sky-500/60 shadow-[0_12px_45px_rgba(0,0,0,0.85),0_0_25px_rgba(14,165,233,0.35)] backdrop-blur-xl rounded-2xl p-4 text-white relative overflow-hidden group hover:border-sky-400 transition-all cursor-pointer"
+              onClick={() => {
+                setChatInitialFriend(toast.sender);
+                changePageWithLoader("friends");
+                setMessageToasts(prev => prev.filter(t => t.id !== toast.id));
+              }}
+            >
+              {/* Top Bar with YouTube / Bell Notification Tag */}
+              <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-sky-500/20">
+                <div className="flex items-center gap-1.5 text-sky-400">
+                  <div className="p-1 rounded-md bg-sky-500/20 border border-sky-500/30">
+                    <Bell className="w-3.5 h-3.5 text-sky-300 animate-bounce" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
+                    Yeni Özel Mesaj Bildirimi
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-400 font-medium">Az önce</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMessageToasts(prev => prev.filter(t => t.id !== toast.id));
+                    }}
+                    className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
+                    title="Kapat"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Main Content with Avatar & Message */}
+              <div className="flex items-start gap-3.5">
+                <div className="relative shrink-0">
+                  <img
+                    src={`https://mc-heads.net/avatar/${toast.sender}/64`}
+                    alt={toast.sender}
+                    referrerPolicy="no-referrer"
+                    className="w-12 h-12 rounded-xl border-2 border-sky-400/80 shadow-lg bg-slate-900"
+                  />
+                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#0d1428] rounded-full"></span>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="text-sm font-black text-white truncate group-hover:text-sky-300 transition-colors">
+                      {toast.sender}
+                    </h4>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-extrabold uppercase border border-sky-500/30">
+                      Arkadaş
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-200 line-clamp-2 bg-[#12192e] border border-slate-700/60 rounded-xl p-2 font-medium">
+                    "{toast.message}"
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons Bar */}
+              <div className="flex items-center justify-between gap-2 mt-3 pt-2">
+                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3 text-sky-400" />
+                  <span>Mesajı okumak ve yanıtlamak için tıkla</span>
+                </span>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setChatInitialFriend(toast.sender);
+                    changePageWithLoader("friends");
+                    setMessageToasts(prev => prev.filter(t => t.id !== toast.id));
+                  }}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
+                >
+                  <span>Sohbete Git</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Progress Countdown Bar */}
+              <motion.div
+                initial={{ width: "100%" }}
+                animate={{ width: "0%" }}
+                transition={{ duration: 8, ease: "linear" }}
+                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-sky-400 via-cyan-400 to-amber-400"
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
       {/* Dynamic Nav Loading Transition Overlay */}
       <AnimatePresence>

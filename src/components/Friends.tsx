@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Users, MessageSquare, UserPlus, Send, Search, Check, X, Shield,
-  UserCheck, Clock, AlertCircle, Sparkles, UserX, ArrowLeft, RefreshCw, MessageCircle
+  Users, MessageSquare, UserPlus, Send, Search, Check, CheckCheck, X, Shield,
+  UserCheck, Clock, AlertCircle, Sparkles, UserX, ArrowLeft, RefreshCw, MessageCircle, Calendar
 } from "lucide-react";
 import { FriendUser, DirectMessage } from "../types";
 
@@ -11,6 +11,35 @@ interface FriendsProps {
   initialChatFriend?: string | null;
   onOpenProfile?: (targetUsername: string) => void;
   onNavigateLogin?: () => void;
+}
+
+function formatMessageDateTime(dateInput: string | Date) {
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return { dateLabel: "", timeLabel: "", dayKey: "", fullLabel: "", relativeDay: "" };
+
+  const timeLabel = d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  const dateLabel = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+  
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  let relativeDay = dateLabel;
+  if (isToday) relativeDay = "Bugün";
+  else if (isYesterday) relativeDay = "Dün";
+
+  const dayKey = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+
+  return {
+    timeLabel,
+    dateLabel,
+    relativeDay,
+    fullLabel: `${dateLabel}, ${timeLabel}`,
+    dayKey
+  };
 }
 
 export default function Friends({
@@ -56,16 +85,45 @@ export default function Friends({
     }
   }, [initialChatFriend]);
 
-  // Poll chat messages every 3.5 seconds when active chat is open
+  // Mark messages as read explicitly when active chat is focused
+  const markChatAsRead = async (friendUsername: string) => {
+    if (!user || !friendUsername) return;
+    try {
+      await fetch("/api/social/messages/read", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify({ friendUsername })
+      });
+    } catch (err) {
+      // silent
+    }
+  };
+
+  // Poll chat messages every 2.5 seconds when active chat is open
   useEffect(() => {
     if (!user || !activeChatFriend) return;
 
+    markChatAsRead(activeChatFriend);
     fetchConversation(activeChatFriend, false);
+    
     const interval = setInterval(() => {
       fetchConversation(activeChatFriend, true);
-    }, 3500);
+    }, 2500);
 
-    return () => clearInterval(interval);
+    const handleFocus = () => {
+      markChatAsRead(activeChatFriend);
+      fetchConversation(activeChatFriend, true);
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [user, activeChatFriend]);
 
   const getAuthToken = () => {
@@ -108,13 +166,17 @@ export default function Friends({
         const msgs: DirectMessage[] = await res.json();
 
         setChatMessages(prev => {
-          const isDifferent = msgs.length !== prev.length || (msgs.length > 0 && msgs[msgs.length - 1]?._id !== prev[prev.length - 1]?._id);
+          // Check if any message count, message ID, or read status changed
+          const isDifferent =
+            msgs.length !== prev.length ||
+            msgs.some((m, idx) => m._id !== prev[idx]?._id || m.read !== prev[idx]?.read);
+
           if (!isDifferent) return prev;
 
           setTimeout(() => {
             if (chatContainerRef.current) {
               const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-              const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+              const isNearBottom = scrollHeight - scrollTop - clientHeight < 180;
               if (!silent || isNearBottom) {
                 chatContainerRef.current.scrollTo({
                   top: chatContainerRef.current.scrollHeight,
@@ -538,25 +600,68 @@ export default function Friends({
                       ) : (
                         chatMessages.map((msg, index) => {
                           const isMe = msg.sender.toLowerCase() === user.username.toLowerCase();
-                          const msgDate = new Date(msg.createdAt);
-                          const formattedTime = msgDate.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+                          const dt = formatMessageDateTime(msg.createdAt);
+                          
+                          // Determine if day divider is needed
+                          const prevMsg = index > 0 ? chatMessages[index - 1] : null;
+                          const prevDt = prevMsg ? formatMessageDateTime(prevMsg.createdAt) : null;
+                          const showDateDivider = !prevDt || prevDt.dayKey !== dt.dayKey;
 
                           return (
-                            <div
-                              key={msg._id || index}
-                              className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-                            >
-                              <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-medium leading-relaxed shadow-md ${
-                                isMe
-                                  ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white rounded-br-none"
-                                  : "bg-[#141b30] border border-slate-800 text-slate-200 rounded-bl-none"
-                              }`}>
-                                <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                            <React.Fragment key={msg._id || index}>
+                              {showDateDivider && (
+                                <div className="flex items-center justify-center my-3">
+                                  <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#151d33] border border-sky-500/20 text-[10px] font-bold text-sky-300 shadow-md">
+                                    <Calendar className="w-3 h-3 text-sky-400" />
+                                    <span>
+                                      {dt.relativeDay === "Bugün" || dt.relativeDay === "Dün"
+                                        ? `${dt.relativeDay} • ${dt.dateLabel}`
+                                        : dt.dateLabel}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                                <div className={`max-w-[80%] md:max-w-[70%] px-4 py-2.5 rounded-2xl text-xs font-medium leading-relaxed shadow-lg transition-all ${
+                                  isMe
+                                    ? "bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-600 text-white rounded-br-xs border border-sky-400/30"
+                                    : "bg-[#141b30] border border-slate-700/80 text-slate-100 rounded-bl-xs"
+                                }`}>
+                                  <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                                </div>
+
+                                <div className={`flex items-center gap-1.5 mt-1 px-1.5 text-[10px] ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                                  {/* Full Date & Time */}
+                                  <span className="text-slate-400 font-medium tracking-tight">
+                                    {dt.fullLabel || dt.timeLabel}
+                                  </span>
+
+                                  {/* WhatsApp-Style Read / Delivered Indicator (for user's sent messages) */}
+                                  {isMe && (
+                                    <div className="flex items-center">
+                                      {msg.read ? (
+                                        <div
+                                          className="flex items-center gap-0.5 text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-500/30 px-1.5 py-0.5 rounded-md"
+                                          title={`Görüldü (Okundu)${msg.readAt ? ' - ' + formatMessageDateTime(msg.readAt).fullLabel : ''}`}
+                                        >
+                                          <CheckCheck className="w-3.5 h-3.5 text-cyan-300 stroke-[2.5]" />
+                                          <span className="text-[9px] font-extrabold text-cyan-300 uppercase tracking-tighter">Görüldü</span>
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className="flex items-center gap-0.5 text-slate-400 bg-slate-800/80 border border-slate-700/50 px-1.5 py-0.5 rounded-md"
+                                          title="İletildi (Henüz görülmedi)"
+                                        >
+                                          <Check className="w-3.5 h-3.5 text-slate-400 stroke-[2]" />
+                                          <span className="text-[9px] font-bold text-slate-400 tracking-tighter">İletildi</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <span className="text-[10px] text-slate-500 mt-1 px-1">
-                                {formattedTime}
-                              </span>
-                            </div>
+                            </React.Fragment>
                           );
                         })
                       )}

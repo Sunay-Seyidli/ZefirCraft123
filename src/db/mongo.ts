@@ -76,6 +76,7 @@ export interface DirectMessage {
   recipient: string;
   message: string;
   read: boolean;
+  readAt?: Date;
   createdAt: Date;
 }
 
@@ -1323,12 +1324,20 @@ export class Database {
   }
 
   // COMMAND QUEUE (HTTP API)
-  static async addCommandToQueue(username: string, command: string): Promise<void> {
+  static async addCommandToQueue(username: string, rawCommand: string): Promise<void> {
+    const formattedCommand = (rawCommand || "")
+      .replace(/{player}/gi, username)
+      .replace(/{username}/gi, username)
+      .replace(/{user}/gi, username)
+      .replace(/%player%/gi, username)
+      .replace(/%username%/gi, username)
+      .replace(/%user%/gi, username);
+
     const mongo = await getMongoClient();
     if (mongo) {
       await mongo.db.collection("command_queue").insertOne({
         username,
-        command,
+        command: formattedCommand,
         status: "pending",
         createdAt: new Date()
       });
@@ -1336,7 +1345,7 @@ export class Database {
       mockDbState.command_queue.push({
         _id: "cmd_" + Date.now() + Math.random().toString(36).substr(2, 5),
         username,
-        command,
+        command: formattedCommand,
         status: "pending",
         createdAt: new Date()
       });
@@ -2360,11 +2369,11 @@ export class Database {
 
     const mongo = await getMongoClient();
 
-    // Automatically mark all messages from user2 to user1 as read
+    // Automatically mark all messages from user2 to user1 as read with readAt timestamp
     if (mongo) {
       await mongo.db.collection("direct_messages").updateMany(
         { sender: u2, recipient: u1, read: false },
-        { $set: { read: true } }
+        { $set: { read: true, readAt: new Date() } }
       );
 
       return (await mongo.db.collection("direct_messages").find({
@@ -2375,9 +2384,11 @@ export class Database {
       }).sort({ createdAt: 1 }).toArray()) as DirectMessage[];
     } else {
       if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
+      const now = new Date();
       mockDbState.direct_messages.forEach(m => {
         if (m.sender === u2 && m.recipient === u1 && !m.read) {
           m.read = true;
+          m.readAt = now;
         }
       });
       saveMockDb();
@@ -2385,6 +2396,47 @@ export class Database {
       return mockDbState.direct_messages
         .filter(m => (m.sender === u1 && m.recipient === u2) || (m.sender === u2 && m.recipient === u1))
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    }
+  }
+
+  static async markMessagesAsRead(recipient: string, sender: string): Promise<void> {
+    const recLower = recipient.toLowerCase();
+    const sndLower = sender.toLowerCase();
+    const mongo = await getMongoClient();
+    const now = new Date();
+
+    if (mongo) {
+      await mongo.db.collection("direct_messages").updateMany(
+        { sender: sndLower, recipient: recLower, read: false },
+        { $set: { read: true, readAt: now } }
+      );
+    } else {
+      if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
+      mockDbState.direct_messages.forEach(m => {
+        if (m.sender === sndLower && m.recipient === recLower && !m.read) {
+          m.read = true;
+          m.readAt = now;
+        }
+      });
+      saveMockDb();
+    }
+  }
+
+  static async getRecentUnreadMessages(username: string, limit = 5): Promise<DirectMessage[]> {
+    const lower = username.toLowerCase();
+    const mongo = await getMongoClient();
+    if (mongo) {
+      return (await mongo.db.collection("direct_messages")
+        .find({ recipient: lower, read: false })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .toArray()) as DirectMessage[];
+    } else {
+      if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
+      return mockDbState.direct_messages
+        .filter(m => m.recipient === lower && !m.read)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit);
     }
   }
 
