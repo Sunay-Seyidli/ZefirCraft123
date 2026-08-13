@@ -22,12 +22,9 @@ import UserProfileModal from "./components/UserProfileModal";
 import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
 import LuckyWheel from "./components/LuckyWheel";
-import MinecraftBackground from "./components/MinecraftBackground";
 import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
-const bgEarthSrc = "/bg-earth.jpg";
-const bgEarthMobileSrc = "/bg-earth-mobile.jpg";
 
 // Gentle modern notification sound synthesis (Web Audio API)
 function playMessageNotificationChime() {
@@ -621,8 +618,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white relative">
-      {/* 100% Resilient Minecraft World Background (Procedural Code Canvas + Image Layer + Voxel Shaders) */}
-      <MinecraftBackground imageSrc={bgEarthSrc} mobileImageSrc={bgEarthMobileSrc} />
+      {/* Real High-Resolution Minecraft Cinematic World Background (.JPG) */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none">
+        <picture className="w-full h-full block">
+          <source media="(max-width: 640px)" srcSet="/bg-earth-mobile.jpg" />
+          <img 
+            src="/bg-earth.jpg" 
+            alt="ZefirCraft Minecraft World Background" 
+            className="w-full h-full object-cover object-center filter brightness-[0.88] contrast-[1.10] saturate-[1.15]"
+            loading="eager"
+          />
+        </picture>
+        {/* Soft atmospheric overlay and subtle vignette for readability without hiding the artwork */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#060e1f]/35 via-transparent to-[#040915]/65" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(2,6,23,0.65)_100%)]" />
+      </div>
 
       {/* Sticky Header Container (Top Ambient Banner + Main Glass Header) */}
       <div className="sticky top-0 z-50 w-full bg-[#0a152d]/80 backdrop-blur-xl border-b border-sky-500/25 shadow-2xl">
