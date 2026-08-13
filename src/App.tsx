@@ -23,8 +23,12 @@ import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
 import LuckyWheel from "./components/LuckyWheel";
 import { Users } from "lucide-react";
+import bgEarth from "./assets/images/bg-earth.jpg";
+import bgEarthMobile from "./assets/images/bg-earth-mobile.jpg";
 
 const logoSrc = "/logo.png";
+const bgEarthSrc = typeof bgEarth === "string" ? bgEarth : (bgEarth as any)?.src || "/bg-earth.jpg";
+const bgEarthMobileSrc = typeof bgEarthMobile === "string" ? bgEarthMobile : (bgEarthMobile as any)?.src || "/bg-earth-mobile.jpg";
 
 // Gentle modern notification sound synthesis (Web Audio API)
 function playMessageNotificationChime() {
@@ -622,11 +626,17 @@ export default function App() {
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none">
         {/* Desktop Image */}
         <picture>
-          <source media="(max-width: 640px)" srcSet="/bg-earth-mobile.jpg" />
+          <source media="(max-width: 640px)" srcSet={bgEarthMobileSrc} />
           <img 
-            src="/bg-earth.jpg" 
+            src={bgEarthSrc} 
             alt="Minecraft World Background" 
             className="w-full h-full object-cover object-center filter brightness-[0.75] contrast-[1.05]"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== "/bg-earth.jpg") {
+                target.src = "/bg-earth.jpg";
+              }
+            }}
           />
         </picture>
         {/* Atmospheric subtle vignette and gradient for perfect readability */}
