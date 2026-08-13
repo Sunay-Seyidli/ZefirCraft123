@@ -617,7 +617,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-transparent flex flex-col text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white relative">
+      {/* Cinematic Real Minecraft World Background Layer */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none">
+        {/* Desktop Image */}
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/bg-earth-mobile.jpg" />
+          <img 
+            src="/bg-earth.jpg" 
+            alt="Minecraft World Background" 
+            className="w-full h-full object-cover object-center filter brightness-[0.75] contrast-[1.05]"
+          />
+        </picture>
+        {/* Atmospheric subtle vignette and gradient for perfect readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#060e1f]/50 via-transparent to-[#050b18]/85" />
+      </div>
+
       {/* Sticky Header Container (Top Ambient Banner + Main Glass Header) */}
       <div className="sticky top-0 z-50 w-full bg-[#0a152d]/80 backdrop-blur-xl border-b border-sky-500/25 shadow-2xl">
         {/* Top Ambient Banner with Live Online Web Visitors */}
