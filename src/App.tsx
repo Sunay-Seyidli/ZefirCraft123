@@ -617,9 +617,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b162c] via-[#0e1c38] to-[#0a1426] flex flex-col text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-transparent flex flex-col text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
       {/* Sticky Header Container (Top Ambient Banner + Main Glass Header) */}
-      <div className="sticky top-0 z-50 w-full bg-[#0d1a36]/90 backdrop-blur-xl border-b border-sky-500/25 shadow-2xl">
+      <div className="sticky top-0 z-50 w-full bg-[#0a152d]/80 backdrop-blur-xl border-b border-sky-500/25 shadow-2xl">
         {/* Top Ambient Banner with Live Online Web Visitors */}
         <div className="bg-gradient-to-r from-sky-900/70 via-[#132244]/80 to-cyan-900/70 border-x border-b border-sky-400/30 text-xs py-1.5 px-3 sm:px-4 tracking-wider flex flex-wrap items-center justify-between gap-2 max-w-7xl w-full mx-auto rounded-b-2xl shadow-lg relative z-50">
           <div className="flex items-center gap-2 flex-wrap">
@@ -863,13 +863,43 @@ export default function App() {
             )}
           </div>
 
-          {/* Mobile menu trigger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl border border-slate-850 text-slate-400 hover:bg-slate-900 cursor-pointer"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile Right Controls: Avatar / Login + Menu Toggle */}
+          <div className="flex lg:hidden items-center gap-2">
+            {user ? (
+              <button
+                onClick={() => changePageWithLoader("profile")}
+                className="flex items-center gap-1.5 p-1 bg-[#102040]/80 border border-sky-400/40 rounded-xl cursor-pointer hover:border-sky-300 transition-all"
+                title="Profilim"
+              >
+                <img
+                  src={`https://mc-heads.net/avatar/${user.username}/32`}
+                  alt={user.username}
+                  className="w-7 h-7 rounded-lg border border-sky-400/40"
+                />
+              </button>
+            ) : (
+              <button
+                onClick={() => changePageWithLoader("login")}
+                className="flex items-center gap-1.5 p-1 bg-[#102040]/80 border border-sky-400/40 rounded-xl cursor-pointer hover:border-sky-300 transition-all"
+                title="Oturum Aç"
+              >
+                <img
+                  src="https://mc-heads.net/avatar/MHF_Steve/32"
+                  alt="Giriş Yap"
+                  className="w-7 h-7 rounded-lg border border-sky-400/40"
+                />
+              </button>
+            )}
+
+            {/* Mobile menu trigger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl bg-[#102040]/80 border border-sky-400/40 text-slate-200 hover:text-white hover:border-sky-300 transition-all cursor-pointer"
+              aria-label="Menüyü Aç"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </header>
       </div>
