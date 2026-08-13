@@ -242,30 +242,30 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
   return (
     <div className="space-y-12 py-4">
       {/* Centered High-Fidelity MineTruth Style Hero Section */}
-      <div className="flex flex-col items-center justify-center pt-8 pb-14 text-center relative overflow-hidden bg-[#0d1222]/40 rounded-3xl border border-[#1b253b] p-6 md:p-12 shadow-2xl">
+      <div className="flex flex-col items-center justify-center pt-8 pb-14 text-center relative overflow-hidden bg-[#102042]/70 rounded-3xl border border-sky-400/35 p-6 md:p-12 shadow-2xl backdrop-blur-xl">
         {/* Ambient glows and frost particles */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,#1e4a8a30,transparent_60%)]"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] bg-sky-500/10 rounded-full blur-[80px] pointer-events-none glow-ambient"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(14,165,233,0.22),transparent_65%)]"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-sky-400/20 rounded-full blur-[90px] pointer-events-none glow-ambient"></div>
         
         {/* Particle/Snowy floating icons decorations */}
-        <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
-          <div className="absolute top-10 left-1/4 w-2 h-2 bg-sky-400 rounded-full animate-ping" />
-          <div className="absolute top-24 left-3/4 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" style={{ animationDuration: '3s' }} />
-          <div className="absolute bottom-16 left-12 w-3 h-3 bg-indigo-500 rounded-full blur-xs animate-bounce" style={{ animationDuration: '6s' }} />
+        <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
+          <div className="absolute top-10 left-1/4 w-2 h-2 bg-sky-300 rounded-full animate-ping" />
+          <div className="absolute top-24 left-3/4 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse" style={{ animationDuration: '3s' }} />
+          <div className="absolute bottom-16 left-12 w-3 h-3 bg-sky-400 rounded-full blur-xs animate-bounce" style={{ animationDuration: '6s' }} />
         </div>
 
         {/* High-fidelity Logo Centerpiece (Mimicking animated 3D launcher / GIF) */}
         <div className="relative z-10 flex flex-col items-center w-full">
           <div className="relative w-40 h-40 md:w-48 md:h-48 flex items-center justify-center group mb-6">
             {/* Rotating magic halo circle 1 */}
-            <div className="absolute inset-0 border-[#1b3d54] border-[#1b3d54]ashed border-sky-500/30 rounded-full animate-[spin_25s_linear_infinite] pointer-events-none"></div>
+            <div className="absolute inset-0 border-2 border-dashed border-sky-400/40 rounded-full animate-[spin_25s_linear_infinite] pointer-events-none"></div>
             {/* Rotating neon star/gear circle 2 */}
-            <div className="absolute inset-3 border border-cyan-500/30 rounded-full animate-[spin_12s_linear_infinite_reverse] pointer-events-none"></div>
+            <div className="absolute inset-3 border border-cyan-400/40 rounded-full animate-[spin_12s_linear_infinite_reverse] pointer-events-none"></div>
             {/* Pulsing glow ring */}
-            <div className="absolute -inset-2 bg-gradient-to-tr from-sky-500 via-cyan-500 to-sky-400 rounded-full opacity-30 blur-lg group-hover:opacity-50 transition-opacity animate-pulse duration-1000"></div>
+            <div className="absolute -inset-2 bg-gradient-to-tr from-sky-400 via-cyan-400 to-amber-400 rounded-full opacity-40 blur-xl group-hover:opacity-70 transition-opacity animate-pulse duration-1000"></div>
             
-            {/* Floating Logo with Sweep Shine */}
-            <div className="w-[136px] h-[136px] md:w-[160px] md:h-[160px] logo-container logo-shine flex items-center justify-center bg-[#0a0d17] rounded-full p-1 border-[#1b3d54] border-sky-500/50 shadow-2xl shadow-sky-950/90 hover:scale-105 transition-transform duration-300 relative z-10">
+            {/* Floating Logo with Harmonious Backdrop Badge */}
+            <div className="w-[136px] h-[136px] md:w-[160px] md:h-[160px] logo-container logo-shine flex items-center justify-center rounded-full p-2.5 logo-badge-backdrop shadow-2xl hover:scale-105 transition-transform duration-300 relative z-10">
               <img
                 src={logoSrc}
                 alt="ZefirCraft Logo"
@@ -276,18 +276,18 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
           {/* Metallic 3D Display Typography */}
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 bg-sky-500/10 px-3.5 py-1.5 rounded-full border border-sky-500/30 text-[10px] font-black text-sky-300 tracking-wider uppercase shadow-md shadow-sky-950/30">
-              <Package className="w-3.5 h-3.5 text-sky-400 animate-bounce" />
+            <div className="inline-flex items-center gap-1.5 bg-sky-500/20 px-3.5 py-1.5 rounded-full border border-sky-400/40 text-[10px] font-black text-sky-200 tracking-wider uppercase shadow-md shadow-sky-950/30">
+              <Package className="w-3.5 h-3.5 text-sky-300 animate-bounce" />
               ZefirCraft Aktif!
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-sky-100 via-sky-300 to-cyan-500 uppercase drop-shadow-[0_4px_12px_rgba(245,158,11,0.4)] font-sans">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white via-sky-200 to-cyan-400 uppercase drop-shadow-[0_4px_16px_rgba(14,165,233,0.5)] font-sans">
               ZEFIRCRAFT
             </h1>
-            <p className="text-xs md:text-sm font-extrabold text-sky-400/90 tracking-widest uppercase font-mono">
+            <p className="text-xs md:text-sm font-extrabold text-cyan-300 tracking-widest uppercase font-mono">
               EFSANEVİ TOWNY SUNUCUSU
             </p>
-            <p className="text-slate-300 text-xs md:text-sm max-w-lg mx-auto leading-relaxed pt-1">
+            <p className="text-slate-200 text-xs md:text-sm max-w-lg mx-auto leading-relaxed pt-1">
               ZefirCraft Towny sunucumuz 1.16.5 - 26.2 sürümlerini desteklemektedir! Birbirinden heyecanlı kasabalar, dengeli bir ekonomi, rütbe kasaları ve yenilenmiş teslimat sistemi sizleri bekliyor.
             </p>
           </div>
@@ -298,18 +298,18 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
               {/* Server IP Copy Capsule */}
               <button
                 onClick={handleCopyIp}
-                className={`flex-1 group relative flex flex-col justify-between gap-3 p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer shadow-xl hover:shadow-sky-950/50 min-w-0 ${
+                className={`flex-1 group relative flex flex-col justify-between gap-3 p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer shadow-xl min-w-0 ${
                   copied
-                    ? "bg-emerald-500/10 border-emerald-500/40"
-                    : "bg-[#0b0f1d]/95 hover:bg-[#12182b] border-[#223152]"
+                    ? "bg-emerald-500/20 border-emerald-400/60 shadow-emerald-950/40"
+                    : "bg-[#132348]/90 hover:bg-[#182b56] border-sky-400/40 hover:border-sky-400/70"
                 }`}
               >
                 {/* Top Row: IP Details & Copy Action Button */}
                 <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
                   {/* IP Details */}
                   <div className="text-left leading-tight min-w-0 flex-1">
-                    <span className="text-[10px] text-slate-400 block font-black uppercase tracking-widest">SUNUCU ADRESİ</span>
-                    <span className="font-mono text-xs xs:text-sm sm:text-base md:text-lg text-slate-100 font-black tracking-wide sm:tracking-wider group-hover:text-sky-400 transition-colors break-all select-all block mt-0.5">
+                    <span className="text-[10px] text-cyan-300 block font-black uppercase tracking-widest">SUNUCU ADRESİ</span>
+                    <span className="font-mono text-xs xs:text-sm sm:text-base md:text-lg text-white font-black tracking-wide sm:tracking-wider group-hover:text-sky-300 transition-colors break-all select-all block mt-0.5">
                       {ip}
                     </span>
                   </div>
@@ -319,25 +319,25 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                     title={copied ? "Kopyalandı!" : "IP Adresini Kopyala"}
                     className={`p-2.5 sm:p-3 rounded-xl transition-all flex items-center justify-center shrink-0 border ${
                       copied
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 scale-105"
-                        : "bg-slate-800/90 text-slate-200 group-hover:text-white group-hover:bg-sky-500/20 group-hover:border-sky-500/40 border-slate-700/80"
+                        ? "bg-emerald-500/30 text-emerald-200 border-emerald-400/60 scale-105"
+                        : "bg-[#1c305c] text-sky-200 group-hover:text-white group-hover:bg-sky-500/30 group-hover:border-sky-400/60 border-sky-400/30"
                     }`}
                   >
                     {copied ? (
-                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
                     ) : (
-                      <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
+                      <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-sky-300" />
                     )}
                   </div>
                 </div>
 
                 {/* Bottom Row (Under IP Address): Online Counters */}
-                <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-slate-800/80 w-full">
-                  <span className="text-[11px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-xl whitespace-nowrap flex items-center gap-1.5 shadow-sm" title="Tüm sayfalarda anlık gezinen web ziyaretçileri">
+                <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-sky-400/20 w-full">
+                  <span className="text-[11px] font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 px-2.5 py-1 rounded-xl whitespace-nowrap flex items-center gap-1.5 shadow-sm" title="Tüm sayfalarda anlık gezinen web ziyaretçileri">
                     <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <span>{webVisitorsCount} Web Aktif</span>
                   </span>
-                  <span className="text-[11px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30 px-2.5 py-1 rounded-xl whitespace-nowrap flex items-center gap-1.5 shadow-sm">
+                  <span className="text-[11px] font-bold bg-sky-500/20 text-sky-200 border border-sky-400/40 px-2.5 py-1 rounded-xl whitespace-nowrap flex items-center gap-1.5 shadow-sm">
                     <span className="w-2 h-2 rounded-full bg-sky-400"></span>
                     <span>{loadingStats ? "..." : `${serverStats.players.online} / ${serverStats.players.max} Oyuncu Aktif`}</span>
                   </span>
@@ -349,7 +349,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 href="https://minecraft-mp.com/server/361439/vote/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-xl hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-300/40 shrink-0"
+                className="px-6 py-4 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black text-xs sm:text-sm rounded-2xl shadow-xl hover:shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-200/60 shrink-0"
               >
                 <Flame className="w-4 h-4 text-slate-950 fill-slate-950 animate-bounce" />
                 <span className="uppercase tracking-wider whitespace-nowrap font-black">OY VER</span>
@@ -357,13 +357,13 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
               </a>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-[10px] text-slate-500 font-bold tracking-wider px-1">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-[10px] text-slate-300 font-bold tracking-wider px-1">
               <span>Giriş yapmak için IP adresine tıkla!</span>
               <a
                 href="https://minecraft-mp.com/server/361439/vote/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber-400/90 hover:text-amber-300 hover:underline flex items-center gap-1 font-semibold"
+                className="text-amber-300 hover:text-amber-200 hover:underline flex items-center gap-1 font-semibold"
               >
                 <span>Minecraft-MP Sunucumuza Oy Ver</span>
                 <ExternalLink className="w-3 h-3" />
@@ -375,7 +375,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 w-full max-w-md">
             <button
               onClick={() => onNavigate("store")}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-sky-950/40 hover:shadow-sky-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-sky-500/35"
+              className="w-full py-3 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:via-sky-500 hover:to-indigo-500 text-white font-black rounded-xl text-xs shadow-lg shadow-sky-950/40 hover:shadow-sky-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-sky-400/40"
             >
               <ShoppingBag className="w-4 h-4" />
               MAĞAZAYI KEŞFET
@@ -383,7 +383,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
             {wheelEnabled && (
               <button
                 onClick={() => onNavigate("wheel")}
-                className="w-full py-3 bg-[#172035]/80 hover:bg-[#1f2b48] border border-[#2d3e64] hover:border-sky-500/30 text-slate-200 hover:text-white font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                className="w-full py-3 bg-[#17274c] hover:bg-[#1e3464] border border-sky-400/40 hover:border-sky-400/70 text-slate-100 hover:text-white font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
                 <Sparkles className="w-4 h-4 text-sky-400 animate-pulse" />
                 ŞANS ÇARKINI ÇEVİR!
@@ -392,7 +392,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
             {earnEnabled && (
               <button
                 onClick={() => onNavigate("earn")}
-                className="w-full py-3 bg-[#172035]/80 hover:bg-[#1f2b48] border border-[#2d3e64] hover:border-amber-500/30 text-amber-300 hover:text-amber-200 font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                className="w-full py-3 bg-[#17274c] hover:bg-[#1e3464] border border-amber-400/40 hover:border-amber-400/70 text-amber-300 hover:text-amber-200 font-bold rounded-xl text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
                 <Coins className="w-4 h-4 text-amber-400 animate-pulse" />
                 KREDİ KAZAN
@@ -506,7 +506,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
           {/* Announcements Feed */}
           {articles.length === 0 ? (
-            <div className="bg-[#111625]/60 border border-[#202d44] p-12 text-center rounded-3xl text-slate-500">
+            <div className="bg-[#122347]/70 border border-sky-400/30 p-12 text-center rounded-3xl text-slate-300">
               Şu an yayınlanmış duyuru bulunmuyor.
             </div>
           ) : (
@@ -515,10 +515,10 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 <ScrollReveal key={art._id} delay={index * 0.08} direction="up">
                   <motion.article
                     whileHover={{ y: -3 }}
-                    className="bg-[#111625]/75 border border-[#22304d] rounded-3xl overflow-hidden shadow-lg hover:border-sky-500/30 transition-all flex flex-col md:flex-row group"
+                    className="bg-[#122347]/80 border border-sky-400/30 rounded-3xl overflow-hidden shadow-lg hover:border-sky-400/70 transition-all flex flex-col md:flex-row group backdrop-blur-md"
                   >
                     {/* cover image */}
-                    <div className="md:w-1/3 aspect-video md:aspect-auto relative bg-slate-900 shrink-0 overflow-hidden">
+                    <div className="md:w-1/3 aspect-video md:aspect-auto relative bg-[#0b162c] shrink-0 overflow-hidden">
                       <LazyImage
                         src={art.imageUrl}
                         alt={art.title}
@@ -530,30 +530,30 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                     {/* content */}
                     <div className="p-6 flex-1 flex flex-col justify-between gap-4">
                       <div className="space-y-3">
-                        <div className="flex items-center gap-4 text-[10px] text-slate-400 font-extrabold">
+                        <div className="flex items-center gap-4 text-[10px] text-sky-300 font-extrabold">
                           <span className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5 text-sky-400" />
                             {formatTime(art.createdAt)}
                           </span>
                           <span className="flex items-center gap-1.5">
-                            <Eye className="w-3.5 h-3.5 text-sky-400" />
+                            <Eye className="w-3.5 h-3.5 text-cyan-400" />
                             {art.views || 42} Görüntülenme
                           </span>
                         </div>
 
-                        <h3 className="text-lg font-black text-white leading-tight group-hover:text-sky-400 transition-colors">
+                        <h3 className="text-lg font-black text-white leading-tight group-hover:text-sky-300 transition-colors">
                           {art.title}
                         </h3>
 
-                        <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                        <p className="text-xs text-slate-200 leading-relaxed line-clamp-3">
                           {art.content}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-[#1e2a44]/50">
+                      <div className="flex items-center justify-between pt-3 border-t border-sky-400/20">
                         <button
                           onClick={() => setSelectedArticle(art)}
-                          className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 cursor-pointer transition-colors"
+                          className="text-xs font-bold text-sky-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                         >
                           Devamını Oku
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -583,26 +583,26 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
           
           {/* Widget 1: Sunucuya Nasıl Katılırım? (Kayıt Rehberi) */}
           <ScrollReveal delay={0.1} direction="left">
-            <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
+            <div className="bg-[#122347]/80 border border-sky-400/30 rounded-3xl p-6 shadow-lg space-y-4 backdrop-blur-md">
               <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 font-sans">
                 <Gamepad2 className="w-4 h-4 text-sky-400" />
                 Nasıl Kayıt Olurum?
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 Sitemize giriş yapıp sipariş verebilmek veya web sandığınızı kullanabilmek için öncelikle oyun içinden kayıt olmanız gerekmektedir.
               </p>
-              <div className="bg-[#0e1324] border border-[#212f4c] rounded-2xl p-4 space-y-3 shadow-inner text-xs">
+              <div className="bg-[#0e1b38] border border-sky-400/25 rounded-2xl p-4 space-y-3 shadow-inner text-xs">
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">1</span>
-                  <p className="text-slate-300">Minecraft'ı açın ve sunucu adresine <b className="text-sky-300 select-all font-mono font-extrabold">zefircraft.mcsh.io</b> yazıp giriş yapın.</p>
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">1</span>
+                  <p className="text-slate-200">Minecraft'ı açın ve sunucu adresine <b className="text-sky-300 select-all font-mono font-extrabold">zefircraft.mcsh.io</b> yazıp giriş yapın.</p>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">2</span>
-                  <p className="text-slate-300">Sohbet penceresine <code className="text-sky-300 font-bold bg-[#1b233a] px-1.5 py-0.5 rounded">/kayit [sifre] [sifre]</code> yazıp kaydolun.</p>
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">2</span>
+                  <p className="text-slate-200">Sohbet penceresine <code className="text-sky-300 font-bold bg-[#17274c] px-1.5 py-0.5 rounded border border-sky-400/20">/kayit [sifre] [sifre]</code> yazıp kaydolun.</p>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-lg bg-sky-500/10 text-sky-400 font-extrabold flex items-center justify-center shrink-0 border border-sky-500/20">3</span>
-                  <p className="text-slate-300">Sitedeki "Giriş Yap" panelinden aynı kullanıcı adı ve şifrenizle oturum açın.</p>
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">3</span>
+                  <p className="text-slate-200">Sitedeki "Giriş Yap" panelinden aynı kullanıcı adı ve şifrenizle oturum açın.</p>
                 </div>
               </div>
             </div>
@@ -610,8 +610,8 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
           {/* Widget 2: Web Sandığı (Web Chest Status) */}
           <ScrollReveal delay={0.15} direction="left">
-            <div className="bg-gradient-to-br from-[#12192c] to-[#0c101e] border border-[#22304d] rounded-3xl p-6 shadow-lg space-y-4 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,#2563eb10,transparent_50%)]"></div>
+            <div className="bg-gradient-to-br from-[#122347] to-[#0f1d3b] border border-sky-400/30 rounded-3xl p-6 shadow-lg space-y-4 relative overflow-hidden backdrop-blur-md">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,rgba(14,165,233,0.15),transparent_50%)]"></div>
               <div className="flex items-center gap-2 relative z-10">
                 <Inbox className="w-5 h-5 text-sky-400 animate-pulse" />
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">Web Sandığım</h3>
@@ -619,7 +619,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
               {localStorage.getItem("koli_token") || localStorage.getItem("zefir_token") ? (
                 <div className="space-y-3 relative z-10">
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-300 leading-relaxed">
                     Sandığınızda teslim edilmeyi bekleyen <b className="text-white text-sm font-black">{chestCount}</b> adet eşya bulunuyor.
                   </p>
                   <button
@@ -631,12 +631,12 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 </div>
               ) : (
                 <div className="space-y-3 relative z-10">
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-300 leading-relaxed">
                     Hesabınıza giriş yaparak web sandığınızdaki rütbe ve eşyaları oyuna teslim edebilirsiniz.
                   </p>
                   <button
                     onClick={() => onNavigate("login")}
-                    className="w-full py-2.5 bg-[#1b233a] hover:bg-[#253252] text-sky-400 border border-[#2b3a5c] font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                    className="w-full py-2.5 bg-[#17274c] hover:bg-[#1f3564] text-sky-300 border border-sky-400/40 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
                   >
                     Hesaba Giriş Yap
                   </button>
@@ -647,7 +647,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
           {/* Widget: Son Alışverişler (Dynamic Rolling Recent Purchases) */}
           <ScrollReveal delay={0.2} direction="left">
-            <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
+            <div className="bg-[#122347]/80 border border-sky-400/30 rounded-3xl p-6 shadow-lg space-y-4 backdrop-blur-md">
               <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2 font-sans">
                 <Flame className="w-4 h-4 text-cyan-400 animate-pulse" />
                 Son Alışverişler
@@ -655,7 +655,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
               
               <div className="space-y-3">
                 {recentPurchases.length === 0 ? (
-                  <div className="text-center py-4 text-xs text-slate-500 italic">
+                  <div className="text-center py-4 text-xs text-slate-400 italic">
                     Henüz bir alışveriş yapılmadı.
                   </div>
                 ) : (
@@ -676,22 +676,22 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                     }
 
                     return (
-                      <div key={idx} className="flex items-center justify-between bg-[#171f33]/60 border border-[#23304a]/45 rounded-2xl p-3 hover:bg-[#1c263f] hover:border-[#32456a] transition-all">
+                      <div key={idx} className="flex items-center justify-between bg-[#162850] border border-sky-400/25 rounded-2xl p-3 hover:bg-[#1b3162] hover:border-sky-400/50 transition-all">
                         <div className="flex items-center gap-3 min-w-0">
                           <LazyImage
                             src={`https://mc-heads.net/avatar/${sale.username}/28`}
                             alt={sale.username}
-                            className="w-7 h-7 rounded-lg border border-[#22304d]/40"
+                            className="w-7 h-7 rounded-lg border border-sky-400/40"
                             containerClassName="w-7 h-7 shrink-0 rounded-lg"
                           />
                           <div className="min-w-0">
-                            <div className="text-xs font-black text-slate-200 truncate">{sale.username}</div>
-                            <div className="text-[10px] text-slate-400 truncate">{sale.productName}</div>
+                            <div className="text-xs font-black text-white truncate">{sale.username}</div>
+                            <div className="text-[10px] text-sky-200 truncate">{sale.productName}</div>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-[10px] font-black text-sky-400">{sale.price} Kr.</div>
-                          <div className="text-[9px] text-slate-500 font-bold">{timeStr}</div>
+                          <div className="text-[10px] font-black text-sky-300">{sale.price} Kr.</div>
+                          <div className="text-[9px] text-slate-400 font-bold">{timeStr}</div>
                         </div>
                       </div>
                     );
@@ -703,23 +703,23 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
           {/* Widget 3: Kredi Sıralaması (Top Credits Donators) */}
           <ScrollReveal delay={0.25} direction="left">
-            <div className="bg-[#111625]/75 border border-[#1e2a40] rounded-3xl p-6 shadow-lg space-y-4">
+            <div className="bg-[#122347]/80 border border-sky-400/30 rounded-3xl p-6 shadow-lg space-y-4 backdrop-blur-md">
               <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
                 <Award className="w-4 h-4 text-sky-400" />
                 Zenginler Sıralaması
               </h3>
 
               {topUsers.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">Sıralama verisi şu an boş.</p>
+                <p className="text-xs text-slate-400 italic">Sıralama verisi şu an boş.</p>
               ) : (
                 <div className="space-y-2.5">
                   {topUsers.map((u) => (
-                    <div key={u.rank} className="flex items-center justify-between bg-[#171f33] border border-[#23304a] rounded-xl p-2.5">
+                    <div key={u.rank} className="flex items-center justify-between bg-[#162850] border border-sky-400/25 rounded-xl p-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 ${
-                          u.rank === 1 ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
-                          u.rank === 2 ? "bg-slate-300/10 text-slate-300 border border-slate-300/20" :
-                          u.rank === 3 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-slate-800/20 text-slate-400"
+                          u.rank === 1 ? "bg-amber-500/20 text-amber-300 border border-amber-400/40" :
+                          u.rank === 2 ? "bg-slate-300/20 text-slate-200 border border-slate-300/40" :
+                          u.rank === 3 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/40" : "bg-sky-500/10 text-sky-300"
                         }`}>
                           {u.rank}
                         </span>
@@ -727,20 +727,20 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                         <LazyImage
                           src={`https://mc-heads.net/avatar/${u.username}/24`}
                           alt={u.username}
-                          className="w-6 h-6 rounded-md border border-[#22304d]/40"
+                          className="w-6 h-6 rounded-md border border-sky-400/30"
                           containerClassName="w-6 h-6 shrink-0 rounded-md"
                         />
-                        <span className="font-extrabold text-xs text-slate-300 truncate">{u.username}</span>
+                        <span className="font-extrabold text-xs text-slate-200 truncate">{u.username}</span>
                       </div>
-                      <span className="text-xs font-black text-sky-400 shrink-0 bg-[#0f1425] border border-[#22304d] px-2 py-0.5 rounded-lg">
-                        {u.credits} <span className="text-[9px] font-normal text-slate-500">Kr</span>
+                      <span className="text-xs font-black text-sky-300 shrink-0 bg-[#0e1b38] border border-sky-400/25 px-2 py-0.5 rounded-lg">
+                        {u.credits} <span className="text-[9px] font-normal text-sky-400/80">Kr</span>
                       </span>
                     </div>
                   ))}
                   
                   <button
                     onClick={() => onNavigate("rankings")}
-                    className="w-full mt-2 py-2.5 bg-[#171f33] hover:bg-[#212c47] text-slate-300 hover:text-white border border-[#2b3a5a] rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    className="w-full mt-2 py-2.5 bg-[#17274c] hover:bg-[#1f3564] text-slate-200 hover:text-white border border-sky-400/40 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1"
                   >
                     Tüm Sıralamayı Gör
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -758,7 +758,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                   <MessageSquare className="w-4 h-4 animate-bounce" />
                   Discord Topluluğumuz
                 </h3>
-                <p className="text-xs text-blue-100/80 leading-relaxed">
+                <p className="text-xs text-blue-100/90 leading-relaxed">
                   Etkinlikleri takip et, özel çekilişlere katıl ve sunucunun güncel sohbetlerine ortak ol!
                 </p>
               </div>
@@ -766,7 +766,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 href="https://discord.gg/invite-placeholder"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full py-2.5 bg-white text-[#5865F2] font-extrabold text-center text-xs rounded-xl hover:bg-slate-50 transition-colors shadow-md relative z-10"
+                className="block w-full py-2.5 bg-white text-[#5865F2] font-black text-center text-xs rounded-xl hover:bg-slate-50 transition-colors shadow-md relative z-10"
               >
                 Topluluğa Katıl
               </a>
@@ -777,7 +777,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
       </div>
 
-      {/* Reader Modal Overlay (Instead of generic alert) */}
+      {/* Reader Modal Overlay */}
       <AnimatePresence>
         {selectedArticle && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -786,17 +786,17 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedArticle(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/75 backdrop-blur-md"
             ></motion.div>
             
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#111625] border border-[#233356] rounded-3xl overflow-hidden max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative z-10"
+              className="bg-[#122347] border border-sky-400/40 rounded-3xl overflow-hidden max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative z-10"
             >
               {/* Cover image banner */}
-              <div className="h-48 md:h-64 relative bg-slate-900 overflow-hidden shrink-0">
+              <div className="h-48 md:h-64 relative bg-[#0b162c] overflow-hidden shrink-0">
                 <img
                   src={selectedArticle.imageUrl}
                   alt={selectedArticle.title}
@@ -804,7 +804,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 />
                 <button
                   onClick={() => setSelectedArticle(null)}
-                  className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/75 rounded-full text-white cursor-pointer transition-colors"
+                  className="absolute top-4 right-4 p-2 bg-black/60 hover:bg-black/80 rounded-full text-white cursor-pointer transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -812,13 +812,13 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
 
               {/* Scrollable content block */}
               <div className="p-6 md:p-8 overflow-y-auto space-y-4">
-                <div className="flex items-center gap-4 text-[10px] text-slate-500 font-extrabold">
+                <div className="flex items-center gap-4 text-[10px] text-sky-300 font-extrabold">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-sky-400" />
                     {formatTime(selectedArticle.createdAt)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5 text-sky-400" />
+                    <Eye className="w-3.5 h-3.5 text-cyan-400" />
                     {selectedArticle.views || 42} Görüntülenme
                   </span>
                 </div>
@@ -827,16 +827,16 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                   {selectedArticle.title}
                 </h2>
 
-                <p className="text-xs md:text-sm text-red-500 whitespace-pre-line leading-relaxed">
+                <p className="text-xs md:text-sm text-slate-200 whitespace-pre-line leading-relaxed">
                   {selectedArticle.content}
                 </p>
               </div>
 
               {/* Footer */}
-              <div className="p-4 bg-[#0c0f1b]/80 border-t border-[#1e2a44]/50 flex justify-end shrink-0">
+              <div className="p-4 bg-[#0e1b38] border-t border-sky-400/25 flex justify-end shrink-0">
                 <button
                   onClick={() => setSelectedArticle(null)}
-                  className="px-5 py-2.5 bg-[#1b2236] hover:bg-[#25324e] text-slate-300 font-bold text-xs rounded-xl border border-[#2b3957]/55 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 bg-[#17274c] hover:bg-[#1f3564] text-white font-bold text-xs rounded-xl border border-sky-400/35 transition-colors cursor-pointer"
                 >
                   Kapat
                 </button>

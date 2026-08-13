@@ -26,14 +26,6 @@ import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
 
-export interface MessageToast {
-  id: string;
-  sender: string;
-  message: string;
-  createdAt: string;
-  expiresAt: number;
-}
-
 // Gentle modern notification sound synthesis (Web Audio API)
 function playMessageNotificationChime() {
   try {
@@ -159,12 +151,19 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentPage]);
 
-  // Real-time YouTube-style Message Toast Notifications
-  const [messageToasts, setMessageToasts] = useState<MessageToast[]>([]);
+  // Real-time Web Notification API & Unread message tracking
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
   const initialUnreadLoadedRef = useRef<boolean>(false);
 
-  // Request browser notification permission politely
+  // Request native Web Notification API permission
+  const requestNotificationPermission = () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().catch(() => {});
+      }
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission === "default") {
@@ -177,11 +176,10 @@ export default function App() {
     }
   }, []);
 
-  // Poll latest unread messages for real-time YouTube-style desktop & web toast notifications
+  // Poll latest unread messages for real-time native OS/Desktop notifications (Web Notification API)
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);
-      setMessageToasts([]);
       seenMessageIdsRef.current.clear();
       initialUnreadLoadedRef.current = false;
       return;
@@ -220,41 +218,41 @@ export default function App() {
           });
 
           if (newMessages.length > 0) {
-            // Play harmonious audio chime
+            // Play gentle modern chime
             playMessageNotificationChime();
 
-            const newToasts: MessageToast[] = newMessages.map(m => {
+            newMessages.forEach(m => {
               const mId = m._id ? m._id.toString() : `${m.sender}_${m.createdAt}`;
               seenMessageIdsRef.current.add(mId);
 
-              // Trigger native browser notification if enabled
-              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-                try {
-                  const browserNotif = new Notification(`${m.sender} size bir mesaj gönderdi`, {
-                    body: m.message,
-                    icon: `https://mc-heads.net/avatar/${m.sender}/64`,
-                    tag: `msg_${mId}`
-                  });
-                  browserNotif.onclick = () => {
-                    window.focus();
-                    setChatInitialFriend(m.sender);
-                    changePageWithLoader("friends");
-                  };
-                } catch (e) {
-                  // Ignore
+              // Trigger native Operating System / Browser Notification (Web Notification API)
+              if (typeof window !== "undefined" && "Notification" in window) {
+                if (Notification.permission === "granted") {
+                  try {
+                    const browserNotif = new Notification(m.sender, {
+                      body: m.message,
+                      icon: `https://mc-heads.net/avatar/${m.sender}/128`,
+                      badge: logoSrc,
+                      tag: `dm_${m.sender}`,
+                      renotify: true,
+                    } as any);
+
+                    browserNotif.onclick = () => {
+                      window.focus();
+                      setChatInitialFriend(m.sender);
+                      changePageWithLoader("friends");
+                      try {
+                        browserNotif.close();
+                      } catch (e) {}
+                    };
+                  } catch (e) {
+                    console.warn("Native notification error:", e);
+                  }
+                } else if (Notification.permission === "default") {
+                  Notification.requestPermission().catch(() => {});
                 }
               }
-
-              return {
-                id: mId,
-                sender: m.sender,
-                message: m.message,
-                createdAt: m.createdAt,
-                expiresAt: Date.now() + 8000
-              };
             });
-
-            setMessageToasts(prev => [...prev, ...newToasts]);
           }
         }
       } catch (err) {
@@ -265,15 +263,8 @@ export default function App() {
     checkLatestUnread();
     const interval = setInterval(checkLatestUnread, 2800);
 
-    // Auto-clean expired toasts timer
-    const cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      setMessageToasts(prev => prev.filter(t => t.expiresAt > now));
-    }, 1000);
-
     return () => {
       clearInterval(interval);
-      clearInterval(cleanupInterval);
     };
   }, [user]);
 
@@ -614,23 +605,23 @@ export default function App() {
 
   if (sessionLoading) {
     return (
-      <div className="min-h-screen bg-[#070a14] flex flex-col items-center justify-center text-slate-400">
-        <div className="relative w-24 h-24 mb-4 logo-container logo-shine">
-          <div className="absolute -inset-2 bg-sky-500/20 rounded-full blur-md animate-pulse" />
-          <img src={logoSrc} alt="ZefirCraft Logo" className="w-full h-full object-contain rounded-full relative z-10 border border-sky-500/30" />
+      <div className="min-h-screen bg-gradient-to-b from-[#0b162c] via-[#102040] to-[#0a1426] flex flex-col items-center justify-center text-slate-300">
+        <div className="relative w-24 h-24 mb-4 logo-container logo-shine p-1 rounded-full logo-badge-backdrop">
+          <div className="absolute -inset-2 bg-sky-400/30 rounded-full blur-md animate-pulse" />
+          <img src={logoSrc} alt="ZefirCraft Logo" className="w-full h-full object-contain rounded-full relative z-10" />
         </div>
         <Package className="w-8 h-8 animate-bounce text-sky-400 mb-2" />
-        <span className="font-extrabold text-sm tracking-widest text-sky-400 uppercase">ZEFIRCRAFT PORTAL YÜKLENİYOR...</span>
+        <span className="font-extrabold text-sm tracking-widest text-sky-300 uppercase">ZEFIRCRAFT PORTAL YÜKLENİYOR...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#070a14] flex flex-col text-slate-200 font-sans antialiased">
+    <div className="min-h-screen bg-gradient-to-b from-[#0b162c] via-[#0e1c38] to-[#0a1426] flex flex-col text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
       {/* Sticky Header Container (Top Ambient Banner + Main Glass Header) */}
-      <div className="sticky top-0 z-50 w-full bg-[#070a14]/95 backdrop-blur-md border-b border-[#232a3e]/80 shadow-2xl">
+      <div className="sticky top-0 z-50 w-full bg-[#0d1a36]/90 backdrop-blur-xl border-b border-sky-500/25 shadow-2xl">
         {/* Top Ambient Banner with Live Online Web Visitors */}
-        <div className="bg-gradient-to-r from-sky-950/90 via-slate-900 to-sky-950/90 border-x border-b border-sky-500/30 text-xs py-1.5 px-3 sm:px-4 tracking-wider flex flex-wrap items-center justify-between gap-2 max-w-7xl w-full mx-auto rounded-b-2xl shadow-lg relative z-50">
+        <div className="bg-gradient-to-r from-sky-900/70 via-[#132244]/80 to-cyan-900/70 border-x border-b border-sky-400/30 text-xs py-1.5 px-3 sm:px-4 tracking-wider flex flex-wrap items-center justify-between gap-2 max-w-7xl w-full mx-auto rounded-b-2xl shadow-lg relative z-50">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -732,26 +723,26 @@ export default function App() {
         <header className="bg-transparent">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
           
-          {/* Logo Brand Area (Animated Floating Logo) */}
+          {/* Logo Brand Area (Harmonious Illuminated Badge) */}
           <button
             onClick={() => changePageWithLoader("home")}
-            className="flex items-center gap-3 group cursor-pointer text-left"
+            className="flex items-center gap-3 group cursor-pointer text-left bg-gradient-to-r from-sky-950/60 via-[#13234a]/70 to-cyan-950/60 border border-sky-400/40 hover:border-sky-400/80 px-3 py-1.5 rounded-2xl shadow-lg transition-all backdrop-blur-md"
           >
-            <div className="relative w-14 h-14 logo-container shrink-0">
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-sky-400 blur-sm opacity-70 group-hover:opacity-100 transition duration-500 animate-pulse" />
+            <div className="relative w-12 h-12 md:w-13 md:h-13 logo-container shrink-0 p-1 rounded-full logo-badge-backdrop">
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-amber-400 blur-sm opacity-60 group-hover:opacity-100 transition duration-500 animate-pulse" />
               <img
                 src={logoSrc}
                 alt="ZefirCraft Logo"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-contain rounded-full border border-sky-500/40 relative z-10 filter drop-shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                className="w-full h-full object-contain rounded-full relative z-10 filter drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]"
               />
             </div>
             <div>
-              <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-500 group-hover:brightness-125 transition-all uppercase">
+              <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-cyan-200 to-sky-400 group-hover:brightness-125 transition-all uppercase">
                 ZefirCraft
               </span>
-              <span className="block text-[9px] font-extrabold text-sky-400 uppercase tracking-widest mt-0.5">TOWNY SUNUCUSU</span>
+              <span className="block text-[9px] font-extrabold text-cyan-300 uppercase tracking-widest mt-0.5">TOWNY SUNUCUSU</span>
             </div>
           </button>
 
@@ -767,8 +758,8 @@ export default function App() {
                 }}
                 className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all relative ${
                   currentPage === item.id
-                    ? "bg-sky-600/20 text-sky-400 border border-sky-500/40 shadow-md shadow-sky-950/40"
-                    : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+                    ? "bg-gradient-to-r from-sky-500/25 to-cyan-500/25 text-sky-300 border border-sky-400/50 shadow-md shadow-sky-950/40 font-extrabold"
+                    : "text-slate-300 hover:bg-sky-500/15 hover:text-white"
                 }`}
               >
                 {item.icon}
@@ -902,21 +893,21 @@ export default function App() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-[290px] sm:w-[330px] bg-[#060b16]/95 backdrop-blur-xl border-l border-sky-500/15 p-6 flex flex-col justify-between shadow-2xl lg:hidden"
+              className="fixed top-0 right-0 bottom-0 z-50 w-[290px] sm:w-[330px] bg-[#0e1b38]/95 backdrop-blur-xl border-l border-sky-400/30 p-6 flex flex-col justify-between shadow-2xl lg:hidden"
             >
               <div className="space-y-6">
                 {/* Header inside drawer */}
-                <div className="flex items-center justify-between border-b border-sky-500/10 pb-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative w-8 h-8">
-                      <div className="absolute -inset-0.5 rounded-full bg-sky-500/30 blur-sm animate-pulse" />
-                      <img src={logoSrc} className="w-full h-full rounded-full relative z-10 border border-sky-500/20" alt="Logo" />
+                <div className="flex items-center justify-between border-b border-sky-500/20 pb-4">
+                  <div className="flex items-center gap-2.5 bg-[#122347] border border-sky-400/30 px-2.5 py-1.5 rounded-2xl">
+                    <div className="relative w-8 h-8 logo-badge-backdrop p-0.5 rounded-full">
+                      <div className="absolute -inset-0.5 rounded-full bg-sky-400/40 blur-sm animate-pulse" />
+                      <img src={logoSrc} className="w-full h-full rounded-full relative z-10" alt="Logo" />
                     </div>
                     <span className="text-xs font-black text-sky-100 tracking-widest uppercase">ZEFIRCRAFT</span>
                   </div>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-1.5 rounded-xl bg-sky-500/5 text-slate-400 hover:bg-sky-500/15 hover:text-sky-200 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-xl bg-sky-500/10 text-slate-300 hover:bg-sky-500/20 hover:text-sky-200 transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -935,12 +926,12 @@ export default function App() {
                       }}
                       className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                         currentPage === item.id
-                          ? "bg-gradient-to-r from-sky-500/15 to-sky-500/5 text-sky-300 border-l-2 border-sky-400 pl-3.5"
-                          : "text-slate-400 hover:bg-sky-500/5 hover:text-sky-200"
+                          ? "bg-gradient-to-r from-sky-500/25 to-sky-500/10 text-sky-300 border-l-4 border-sky-400 pl-3.5 shadow-md"
+                          : "text-slate-300 hover:bg-sky-500/10 hover:text-sky-200"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={currentPage === item.id ? "text-sky-400" : "text-slate-500"}>
+                        <div className={currentPage === item.id ? "text-sky-400" : "text-slate-400"}>
                           {item.icon}
                         </div>
                         <span>{item.label}</span>
@@ -961,9 +952,9 @@ export default function App() {
               </div>
  
               {/* Footer action block in drawer */}
-              <div className="border-t border-sky-500/10 pt-4">
+              <div className="border-t border-sky-500/20 pt-4">
                 {user ? (
-                  <div className="space-y-3 bg-[#090f1d] border border-sky-500/10 rounded-2xl p-4">
+                  <div className="space-y-3 bg-[#132244] border border-sky-500/25 rounded-2xl p-4 shadow-lg">
                     <button
                       onClick={() => {
                         changePageWithLoader("profile");
@@ -976,12 +967,12 @@ export default function App() {
                         <img
                           src={`https://mc-heads.net/avatar/${user.username}/32`}
                           alt={user.username}
-                          className="w-9 h-9 rounded-lg border border-sky-500/20 group-hover:border-sky-400/40 transition-colors"
+                          className="w-9 h-9 rounded-lg border border-sky-500/30 group-hover:border-sky-400/60 transition-colors"
                         />
                       </div>
                       <div className="min-w-0">
                         <div className="font-black text-sm text-sky-100 truncate group-hover:text-sky-300 transition-colors">{user.username}</div>
-                        <div className="text-[10px] text-sky-400/70">Oyuncu Profili • Tıkla</div>
+                        <div className="text-[10px] text-sky-300/80">Oyuncu Profili • Tıkla</div>
                       </div>
                     </button>
                     {user.isAdmin && (
@@ -997,7 +988,7 @@ export default function App() {
                       </button>
                     )}
                     <div className="flex items-center justify-between gap-2 pt-1">
-                      <div className="bg-sky-500/10 px-3 py-1.5 rounded-xl font-bold text-xs text-sky-400 border border-sky-500/10 flex items-center gap-1.5 shrink-0">
+                      <div className="bg-sky-500/20 px-3 py-1.5 rounded-xl font-bold text-xs text-sky-300 border border-sky-500/30 flex items-center gap-1.5 shrink-0">
                         <Coins className="w-3.5 h-3.5" />
                         <span>{user.credits} Kr.</span>
                       </div>
@@ -1006,7 +997,7 @@ export default function App() {
                           handleLogout();
                           setMobileMenuOpen(false);
                         }}
-                        className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-400 transition-colors cursor-pointer border border-red-500/5"
+                        className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-400 transition-colors cursor-pointer border border-red-500/10"
                         title="Oturumu Kapat"
                       >
                         <LogOut className="w-4 h-4" />
@@ -1014,7 +1005,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : adminName ? (
-                  <div className="flex items-center justify-between bg-[#090f1d] border border-sky-500/10 rounded-2xl p-4">
+                  <div className="flex items-center justify-between bg-[#132244] border border-sky-500/25 rounded-2xl p-4 shadow-lg">
                     <button
                       onClick={() => {
                         changePageWithLoader("admin");
@@ -1041,7 +1032,7 @@ export default function App() {
                       changePageWithLoader("login");
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white font-black text-xs rounded-xl text-center flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-sky-950/20 border border-sky-500/10"
+                    className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white font-black text-xs rounded-xl text-center flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-sky-950/20 border border-sky-500/20"
                   >
                     <LogIn className="w-4 h-4" />
                     Oturum Aç
@@ -1069,19 +1060,19 @@ export default function App() {
       </main>
 
       {/* Footer Area */}
-      <footer className="bg-[#05070d] text-slate-400 border-t border-[#1a2030] py-12 px-4 md:px-8">
+      <footer className="bg-gradient-to-b from-[#0d1a36] to-[#0a1324] text-slate-300 border-t border-sky-500/25 py-12 px-4 md:px-8 shadow-2xl">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 logo-container shrink-0 border border-sky-500/30 rounded-full overflow-hidden shadow-lg shadow-sky-950/50">
-                <img src={logoSrc} alt="ZefirCraft Logo" className="w-full h-full object-contain" />
+              <div className="w-12 h-12 logo-container shrink-0 p-1 rounded-full logo-badge-backdrop shadow-lg">
+                <img src={logoSrc} alt="ZefirCraft Logo" className="w-full h-full object-contain rounded-full" />
               </div>
               <div>
                 <span className="text-base font-extrabold text-white tracking-tight uppercase">ZefirCraft Sunucusu</span>
-                <span className="block text-[8px] text-sky-400 font-bold uppercase tracking-wider">ZEFIRCRAFT PLATFORMU</span>
+                <span className="block text-[9px] text-cyan-300 font-bold uppercase tracking-wider">ZEFIRCRAFT PLATFORMU</span>
               </div>
             </div>
-            <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+            <p className="text-xs text-slate-300 max-w-sm leading-relaxed">
               ZefirCraft Minecraft sunucusu, oyuncularına özel kasabalar, dengeli bir ekonomi, rütbe kasaları ve gelişmiş bir Towny evreni sunar. Adil ekonomi ve doğrudan web teslimatı eklentisiyle efsanevi bir macera.
             </p>
           </div>
@@ -1089,134 +1080,30 @@ export default function App() {
           <div className="md:col-span-3 space-y-3">
             <div className="text-xs font-bold uppercase tracking-wider text-sky-300">Hızlı Bağlantılar</div>
             <div className="flex flex-col gap-2 text-xs">
-              <button onClick={() => setCurrentPage("home")} className="text-left text-slate-400 hover:text-sky-400 transition-colors cursor-pointer">Ana Sayfa</button>
-              <button onClick={() => setCurrentPage("store")} className="text-left text-slate-400 hover:text-sky-400 transition-colors cursor-pointer">Mağaza</button>
-              <button onClick={() => setCurrentPage("rules")} className="text-left text-slate-400 hover:text-sky-400 transition-colors cursor-pointer">Kurallar</button>
-              <button onClick={() => setCurrentPage("apply")} className="text-left text-slate-400 hover:text-sky-400 transition-colors cursor-pointer">Başvuru Formu</button>
+              <button onClick={() => setCurrentPage("home")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Ana Sayfa</button>
+              <button onClick={() => setCurrentPage("store")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Mağaza</button>
+              <button onClick={() => setCurrentPage("rules")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Kurallar</button>
+              <button onClick={() => setCurrentPage("apply")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Başvuru Formu</button>
             </div>
           </div>
 
           <div className="md:col-span-4 space-y-3 text-left">
             <div className="text-xs font-bold uppercase tracking-wider text-sky-300">Sunucu Bağlantısı</div>
             <div className="space-y-1.5">
-              <div className="text-xs text-sky-200/90 font-mono select-all font-bold">IP: {serverIP}</div>
-              <div className="text-[10px] text-slate-500">
+              <div className="text-xs text-sky-200 font-mono select-all font-bold">IP: {serverIP}</div>
+              <div className="text-[10px] text-slate-400">
                 Sürüm: 1.21.4 (Java & Bedrock) • Tüm Sürümlerle Giriş Yapılabilir.
               </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-[#121827] text-center text-[10px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-sky-500/20 text-center text-[10px] text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             © {new Date().getFullYear()} ZefirCraft. Tüm hakları saklıdır. Bu sitenin Mojang AB veya Microsoft ile herhangi bir ortaklığı bulunmamaktadır.
           </div>
         </div>
       </footer>
-
-      {/* YouTube-Style Interactive Direct Message Toast Notifications */}
-      <div className="fixed top-20 right-4 sm:right-6 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm sm:max-w-md w-[calc(100%-2rem)] sm:w-full">
-        <AnimatePresence>
-          {messageToasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, y: -25, scale: 0.9, x: 20 }}
-              animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-              exit={{ opacity: 0, x: 80, scale: 0.85, transition: { duration: 0.25 } }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="pointer-events-auto bg-[#0d1428]/95 border-2 border-sky-500/60 shadow-[0_12px_45px_rgba(0,0,0,0.85),0_0_25px_rgba(14,165,233,0.35)] backdrop-blur-xl rounded-2xl p-4 text-white relative overflow-hidden group hover:border-sky-400 transition-all cursor-pointer"
-              onClick={() => {
-                setChatInitialFriend(toast.sender);
-                changePageWithLoader("friends");
-                setMessageToasts(prev => prev.filter(t => t.id !== toast.id));
-              }}
-            >
-              {/* Top Bar with YouTube / Bell Notification Tag */}
-              <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-sky-500/20">
-                <div className="flex items-center gap-1.5 text-sky-400">
-                  <div className="p-1 rounded-md bg-sky-500/20 border border-sky-500/30">
-                    <Bell className="w-3.5 h-3.5 text-sky-300 animate-bounce" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-sky-300">
-                    Yeni Özel Mesaj Bildirimi
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-400 font-medium">Az önce</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMessageToasts(prev => prev.filter(t => t.id !== toast.id));
-                    }}
-                    className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
-                    title="Kapat"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Main Content with Avatar & Message */}
-              <div className="flex items-start gap-3.5">
-                <div className="relative shrink-0">
-                  <img
-                    src={`https://mc-heads.net/avatar/${toast.sender}/64`}
-                    alt={toast.sender}
-                    referrerPolicy="no-referrer"
-                    className="w-12 h-12 rounded-xl border-2 border-sky-400/80 shadow-lg bg-slate-900"
-                  />
-                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#0d1428] rounded-full"></span>
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-sm font-black text-white truncate group-hover:text-sky-300 transition-colors">
-                      {toast.sender}
-                    </h4>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-extrabold uppercase border border-sky-500/30">
-                      Arkadaş
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-200 line-clamp-2 bg-[#12192e] border border-slate-700/60 rounded-xl p-2 font-medium">
-                    "{toast.message}"
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons Bar */}
-              <div className="flex items-center justify-between gap-2 mt-3 pt-2">
-                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <MessageSquare className="w-3 h-3 text-sky-400" />
-                  <span>Mesajı okumak ve yanıtlamak için tıkla</span>
-                </span>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setChatInitialFriend(toast.sender);
-                    changePageWithLoader("friends");
-                    setMessageToasts(prev => prev.filter(t => t.id !== toast.id));
-                  }}
-                  className="px-3.5 py-1.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
-                >
-                  <span>Sohbete Git</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Progress Countdown Bar */}
-              <motion.div
-                initial={{ width: "100%" }}
-                animate={{ width: "0%" }}
-                transition={{ duration: 8, ease: "linear" }}
-                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-sky-400 via-cyan-400 to-amber-400"
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
 
       {/* Dynamic Nav Loading Transition Overlay */}
       <AnimatePresence>
@@ -1226,7 +1113,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[999] bg-[#070a14] flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[999] bg-gradient-to-b from-[#0b162c] via-[#102040] to-[#0a1426] flex flex-col items-center justify-center"
           >
             <div className="relative flex flex-col items-center">
               {/* Pulsing glow ring */}
