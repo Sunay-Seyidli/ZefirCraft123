@@ -2378,21 +2378,17 @@ export class Database {
     if (mongo) {
       await mongo.db.collection("direct_messages").updateMany(
         {
-          $expr: {
-            $and: [
-              { $eq: [{ $toLower: "$sender" }, u2] },
-              { $eq: [{ $toLower: "$recipient" }, u1] },
-              { $eq: ["$read", false] }
-            ]
-          }
+          $or: [
+            { sender: { $regex: new RegExp(`^${u2}$`, "i") }, recipient: { $regex: new RegExp(`^${u1}$`, "i") }, read: false }
+          ]
         },
         { $set: { read: true, readAt: new Date() } }
       );
 
       const raw = (await mongo.db.collection("direct_messages").find({
         $or: [
-          { $expr: { $and: [{ $eq: [{ $toLower: "$sender" }, u1] }, { $eq: [{ $toLower: "$recipient" }, u2] }] } },
-          { $expr: { $and: [{ $eq: [{ $toLower: "$sender" }, u2] }, { $eq: [{ $toLower: "$recipient" }, u1] }] } }
+          { sender: { $regex: new RegExp(`^${u1}$`, "i") }, recipient: { $regex: new RegExp(`^${u2}$`, "i") } },
+          { sender: { $regex: new RegExp(`^${u2}$`, "i") }, recipient: { $regex: new RegExp(`^${u1}$`, "i") } }
         ]
       }).sort({ createdAt: 1 }).toArray()) as DirectMessage[];
 
@@ -2427,13 +2423,9 @@ export class Database {
     if (mongo) {
       await mongo.db.collection("direct_messages").updateMany(
         {
-          $expr: {
-            $and: [
-              { $eq: [{ $toLower: "$sender" }, sndLower] },
-              { $eq: [{ $toLower: "$recipient" }, recLower] },
-              { $eq: ["$read", false] }
-            ]
-          }
+          sender: { $regex: new RegExp(`^${sndLower}$`, "i") },
+          recipient: { $regex: new RegExp(`^${recLower}$`, "i") },
+          read: false
         },
         { $set: { read: true, readAt: now } }
       );
@@ -2449,7 +2441,7 @@ export class Database {
     }
   }
 
-  static async getRecentUnreadMessages(username: string, limit = 5): Promise<DirectMessage[]> {
+  static async getRecentUnreadMessages(username: string, limit = 10): Promise<DirectMessage[]> {
     const lower = username.toLowerCase();
     const mongo = await getMongoClient();
     let unreadList: DirectMessage[] = [];
@@ -2457,12 +2449,8 @@ export class Database {
     if (mongo) {
       unreadList = (await mongo.db.collection("direct_messages")
         .find({
-          $expr: {
-            $and: [
-              { $eq: [{ $toLower: "$recipient" }, lower] },
-              { $eq: ["$read", false] }
-            ]
-          }
+          recipient: { $regex: new RegExp(`^${lower}$`, "i") },
+          read: false
         })
         .sort({ createdAt: -1 })
         .limit(limit)
@@ -2491,12 +2479,8 @@ export class Database {
     const mongo = await getMongoClient();
     if (mongo) {
       return await mongo.db.collection("direct_messages").countDocuments({
-        $expr: {
-          $and: [
-            { $eq: [{ $toLower: "$recipient" }, lower] },
-            { $eq: ["$read", false] }
-          ]
-        }
+        recipient: { $regex: new RegExp(`^${lower}$`, "i") },
+        read: false
       });
     } else {
       if (!mockDbState.direct_messages) mockDbState.direct_messages = [];

@@ -199,23 +199,6 @@ export default function App() {
             try { navigator.vibrate([100, 50, 100]); } catch (e) {}
           }
           playMessageNotificationChime();
-
-          // Show immediate confirmation real system notification on phone & desktop
-          if ("serviceWorker" in navigator) {
-            try {
-              const reg = await navigator.serviceWorker.ready;
-              if (reg && "showNotification" in reg) {
-                await reg.showNotification("ZefirCraft Bildirimleri Aktif", {
-                  body: "Mobil ve tarayıcı bildirimleri başarıyla açıldı!",
-                  icon: "/logo.png",
-                  badge: "/logo.png",
-                  tag: "welcome_test_notif",
-                  renotify: true,
-                  vibrate: [200, 100, 200],
-                } as any);
-              }
-            } catch (err) {}
-          }
         }
       } catch (err) {
         // Fallback for older browsers
@@ -225,6 +208,24 @@ export default function App() {
       }
     }
   };
+
+  // Automatically request notification permission on user's first touch/click interaction
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      const handleFirstInteraction = () => {
+        Notification.requestPermission().then((p) => {
+          setNotifPermission(p);
+        }).catch(() => {});
+      };
+      window.addEventListener("click", handleFirstInteraction, { once: true });
+      window.addEventListener("touchstart", handleFirstInteraction, { once: true });
+      return () => {
+        window.removeEventListener("click", handleFirstInteraction);
+        window.removeEventListener("touchstart", handleFirstInteraction);
+      };
+    }
+  }, []);
 
   // Cross-platform native notification dispatcher (Android Chrome SW, iOS PWA, Windows/Mac Desktop)
   const sendCrossPlatformNotification = async (sender: string, messageText: string) => {
@@ -240,52 +241,80 @@ export default function App() {
 
     // 3. Native OS/Device Notification (Android Chrome, iOS PWA, Windows/Mac Desktop)
     if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "granted") {
+      let currentPerm = Notification.permission;
+      if (currentPerm === "default") {
+        try {
+          currentPerm = await Notification.requestPermission();
+          setNotifPermission(currentPerm);
+        } catch (e) {}
+      }
+
+      if (currentPerm === "granted") {
         const playerAvatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(sender)}/128`;
         const playerHeadBadge = `https://mc-heads.net/head/${encodeURIComponent(sender)}/64`;
+
+        let swNotificationSent = false;
 
         // Primary: Service Worker Registration (Mandatory on Android Chrome & iOS Safari PWA!)
         if ("serviceWorker" in navigator) {
           try {
-            const reg = await navigator.serviceWorker.ready;
-            if (reg && "showNotification" in reg) {
-              await reg.showNotification(`${sender} • Yeni Mesaj`, {
-                body: messageText,
-                icon: playerAvatarUrl,
-                badge: playerHeadBadge,
-                tag: `dm_${sender}`,
-                data: {
-                  url: `/#friends`,
-                  sender: sender,
-                },
-                renotify: true,
-                vibrate: [200, 100, 200],
-              } as any);
-              return;
-            }
+            const swPromise = (async () => {
+              const reg = await navigator.serviceWorker.ready;
+              if (reg && "showNotification" in reg) {
+                await reg.showNotification(`${sender} • Yeni Mesaj`, {
+                  body: messageText,
+                  icon: playerAvatarUrl,
+                  badge: playerHeadBadge,
+                  tag: `dm_${sender}_${Date.now()}`,
+                  data: {
+                    url: `/#friends`,
+                    sender: sender,
+                  },
+                  renotify: true,
+                  vibrate: [200, 100, 200],
+                } as any);
+                swNotificationSent = true;
+              }
+            })();
+
+            // Don't let SW wait indefinitely
+            await Promise.race([
+              swPromise,
+              new Promise((resolve) => setTimeout(resolve, 600))
+            ]);
           } catch (swErr) {
-            console.warn("ServiceWorker showNotification fallback:", swErr);
+            console.warn("ServiceWorker showNotification error:", swErr);
           }
         }
 
-        // Secondary Desktop Browser Notification Fallback
-        try {
-          const browserNotif = new Notification(`${sender} • Yeni Mesaj`, {
-            body: messageText,
-            icon: playerAvatarUrl,
-            badge: playerHeadBadge,
-            tag: `dm_${sender}`,
-            renotify: true,
-          } as any);
+        // Secondary Desktop Browser Notification Fallback (if SW didn't fire)
+        if (!swNotificationSent) {
+          try {
+            const browserNotif = new Notification(`${sender} • Yeni Mesaj`, {
+              body: messageText,
+              icon: playerAvatarUrl,
+              badge: playerHeadBadge,
+              tag: `dm_${sender}_${Date.now()}`,
+              renotify: true,
+            } as any);
 
-          browserNotif.onclick = () => {
-            window.focus();
-            setChatInitialFriend(sender);
-            changePageWithLoader("friends");
-            try { browserNotif.close(); } catch (e) {}
-          };
-        } catch (notifErr) {
-          console.warn("Window Notification constructor error:", notifErr);
+            browserNotif.onclick = () => {
+              window.focus();
+              setChatInitialFriend(sender);
+              changePageWithLoader("friends");
+              try { browserNotif.close(); } catch (e) {}
+            };
+          } catch (notifErr) {
+            console.warn("Window Notification constructor fallback:", notifErr);
+            // Retry with standard icon
+            try {
+              new Notification(`${sender} • Yeni Mesaj`, {
+                body: messageText,
+                icon: "/logo.png",
+                badge: "/logo.png",
+              } as any);
+            } catch (e) {}
+          }
         }
       }
     }
@@ -316,7 +345,7 @@ export default function App() {
 
           const messages: Array<{ _id?: string; sender: string; message: string; createdAt: string }> = data.messages || [];
 
-          // On first run, mark existing unread messages as seen to avoid flood on fresh login
+          // On first run, record existing unread messages
           if (!initialUnreadLoadedRef.current) {
             messages.forEach(m => {
               const mId = m._id ? m._id.toString() : `${m.sender}_${m.createdAt}`;
@@ -346,10 +375,12 @@ export default function App() {
     };
 
     checkLatestUnread();
-    const interval = setInterval(checkLatestUnread, 2800);
+    const interval = setInterval(checkLatestUnread, 1800);
+    window.addEventListener("focus", checkLatestUnread);
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener("focus", checkLatestUnread);
     };
   }, [user]);
 
