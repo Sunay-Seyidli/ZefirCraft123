@@ -187,6 +187,57 @@ export default function App() {
     }
   }, []);
 
+  // Helper to convert base64 VAPID public key to Uint8Array for PushManager
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  // Register device for Background Web Push (W3C standard - works even when app/browser is completely closed)
+  const subscribeToBackgroundPush = async (authToken?: string) => {
+    const token = authToken || localStorage.getItem("zefir_token");
+    if (!token || typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      return;
+    }
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (!reg || !reg.pushManager) return;
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const res = await fetch("/api/push/vapid-public-key");
+        const data = await res.json();
+        if (!data.publicKey) return;
+
+        const applicationServerKey = urlBase64ToUint8Array(data.publicKey);
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        });
+      }
+
+      if (sub) {
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ subscription: sub })
+        });
+      }
+    } catch (pushErr) {
+      console.warn("[Background Push Reg]", pushErr);
+    }
+  };
+
   // Request native Web Notification API permission on Mobile & Desktop
   const requestNotificationPermission = async () => {
     if (typeof window !== "undefined" && "Notification" in window) {
@@ -199,23 +250,26 @@ export default function App() {
             try { navigator.vibrate([100, 50, 100]); } catch (e) {}
           }
           playMessageNotificationChime();
+          subscribeToBackgroundPush();
         }
       } catch (err) {
         // Fallback for older browsers
         Notification.requestPermission((p) => {
           setNotifPermission(p);
+          if (p === "granted") subscribeToBackgroundPush();
         });
       }
     }
   };
 
-  // Automatically request notification permission on user's first touch/click interaction
+  // Automatically request notification permission on user's first touch/click interaction and register push
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission === "default") {
       const handleFirstInteraction = () => {
         Notification.requestPermission().then((p) => {
           setNotifPermission(p);
+          if (p === "granted") subscribeToBackgroundPush();
         }).catch(() => {});
       };
       window.addEventListener("click", handleFirstInteraction, { once: true });
@@ -224,8 +278,10 @@ export default function App() {
         window.removeEventListener("click", handleFirstInteraction);
         window.removeEventListener("touchstart", handleFirstInteraction);
       };
+    } else if (Notification.permission === "granted" && user) {
+      subscribeToBackgroundPush();
     }
-  }, []);
+  }, [user]);
 
   // Cross-platform native notification dispatcher (Android Chrome SW, iOS PWA, Windows/Mac Desktop)
   const sendCrossPlatformNotification = async (sender: string, messageText: string) => {

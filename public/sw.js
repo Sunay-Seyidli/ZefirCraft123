@@ -7,6 +7,37 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Real-time Background Web Push Event (Triggered when the site/app is completely closed or device is locked)
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'ZefirCraft', body: event.data.text() };
+    }
+  }
+
+  const title = data.title || 'ZefirCraft';
+  const sender = data.sender || '';
+  const playerAvatarUrl = sender ? `https://mc-heads.net/avatar/${encodeURIComponent(sender)}/128` : '/logo.png';
+  const options = {
+    body: data.body || data.message || 'Yeni bir bildiriminiz var.',
+    icon: data.icon || playerAvatarUrl,
+    badge: '/badge.svg',
+    tag: data.tag || `zefir_${sender || 'notif'}_${Date.now()}`,
+    vibrate: [200, 100, 200],
+    renotify: true,
+    data: {
+      url: data.url || '/#friends',
+      sender: sender,
+    },
+    ...data.options,
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 // Handle messages sent from the main application thread to show native mobile notifications
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
@@ -51,4 +82,3 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-

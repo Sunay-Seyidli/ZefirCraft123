@@ -2487,4 +2487,64 @@ export class Database {
       return mockDbState.direct_messages.filter(m => m.recipient.toLowerCase() === lower && !m.read).length;
     }
   }
+
+  // Web Push Subscriptions for Background & Closed-App OS Notifications
+  static async savePushSubscription(username: string, subscription: any): Promise<void> {
+    if (!subscription || !subscription.endpoint) return;
+    const lower = username.toLowerCase();
+    const mongo = await getMongoClient();
+    const subDoc = {
+      username: lower,
+      subscription: subscription,
+      endpoint: subscription.endpoint,
+      updatedAt: new Date()
+    };
+
+    if (mongo) {
+      await mongo.db.collection("push_subscriptions").updateOne(
+        { endpoint: subscription.endpoint },
+        { $set: subDoc },
+        { upsert: true }
+      );
+    } else {
+      if (!(mockDbState as any).push_subscriptions) (mockDbState as any).push_subscriptions = [];
+      const list = (mockDbState as any).push_subscriptions;
+      const idx = list.findIndex((s: any) => s.endpoint === subscription.endpoint);
+      if (idx >= 0) {
+        list[idx] = subDoc;
+      } else {
+        list.push(subDoc);
+      }
+      saveMockDb();
+    }
+  }
+
+  static async getPushSubscriptions(username: string): Promise<any[]> {
+    const lower = username.toLowerCase();
+    const mongo = await getMongoClient();
+    if (mongo) {
+      return (await mongo.db.collection("push_subscriptions").find({
+        username: lower
+      }).toArray()).map((d: any) => d.subscription);
+    } else {
+      if (!(mockDbState as any).push_subscriptions) return [];
+      return (mockDbState as any).push_subscriptions
+        .filter((s: any) => s.username === lower)
+        .map((s: any) => s.subscription);
+    }
+  }
+
+  static async removePushSubscription(endpoint: string): Promise<void> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      await mongo.db.collection("push_subscriptions").deleteOne({ endpoint });
+    } else {
+      if (!(mockDbState as any).push_subscriptions) return;
+      (mockDbState as any).push_subscriptions = (mockDbState as any).push_subscriptions.filter(
+        (s: any) => s.endpoint !== endpoint
+      );
+      saveMockDb();
+    }
+  }
 }
+

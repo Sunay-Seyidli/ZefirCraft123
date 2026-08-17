@@ -2,11 +2,32 @@ import express from "express";
 import path from "path";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import webpush from "web-push";
 import { Database } from "./src/db/mongo";
 
 const app = express();
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "zefircraft_secret_session_key_555";
+
+// Local W3C Standard VAPID Keys (No external API keys or cloud accounts needed!)
+let vapidKeys = {
+  publicKey: process.env.VAPID_PUBLIC_KEY || "",
+  privateKey: process.env.VAPID_PRIVATE_KEY || "",
+};
+
+try {
+  if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
+    vapidKeys = webpush.generateVAPIDKeys();
+  }
+  webpush.setVapidDetails(
+    "mailto:support@zefircraft.com",
+    vapidKeys.publicKey,
+    vapidKeys.privateKey
+  );
+  console.log("[WebPush] Background Push Notification engine active with local VAPID keys.");
+} catch (e) {
+  console.warn("[WebPush Warn] Could not initialize VAPID details:", e);
+}
 
 // Active 2FA codes: username -> { code, expiresAt }
 const activeVerificationCodes = new Map<string, { code: string; expiresAt: number }>();
@@ -2227,7 +2248,7 @@ app.get("/api/social/messages/:friendUsername", authenticateToken, async (req: a
   }
 });
 
-// POST /api/social/messages/send (Send DM)
+// POST /api/social/messages/send (Send DM + Background Web Push)
 app.post("/api/social/messages/send", authenticateToken, async (req: any, res) => {
   const { recipient, message } = req.body;
   if (!recipient || !message) {
@@ -2236,10 +2257,68 @@ app.post("/api/social/messages/send", authenticateToken, async (req: any, res) =
 
   try {
     const newMsg = await Database.sendDirectMessage(req.user.username, recipient, message);
+
+    // Asynchronously dispatch background web push notifications to recipient's registered devices
+    (async () => {
+      try {
+        const subscriptions = await Database.getPushSubscriptions(recipient);
+        if (subscriptions && subscriptions.length > 0) {
+          const senderName = req.user.username;
+          const payload = JSON.stringify({
+            title: `${senderName} • Yeni Mesaj`,
+            body: message,
+            sender: senderName,
+            icon: `https://mc-heads.net/avatar/${encodeURIComponent(senderName)}/128`,
+            url: `/#friends`,
+            tag: `dm_${senderName}_${Date.now()}`
+          });
+
+          for (const sub of subscriptions) {
+            webpush.sendNotification(sub, payload).catch((pushErr: any) => {
+              if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
+                // Subscription has expired, remove it cleanly
+                Database.removePushSubscription(sub.endpoint).catch(() => {});
+              }
+            });
+          }
+        }
+      } catch (pushErr) {
+        console.warn("[Background Push Dispatch]", pushErr);
+      }
+    })();
+
     return res.json({ success: true, message: newMsg });
   } catch (err: any) {
     return res.status(400).json({ error: err.message || "Mesaj gönderilemedi." });
   }
+});
+
+// GET /api/push/vapid-public-key (Client retrieves public key to subscribe)
+app.get("/api/push/vapid-public-key", (req, res) => {
+  return res.json({ publicKey: vapidKeys.publicKey });
+});
+
+// POST /api/push/subscribe (Save client PushSubscription to DB)
+app.post("/api/push/subscribe", authenticateToken, async (req: any, res) => {
+  const { subscription } = req.body;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: "Geçersiz push aboneliği." });
+  }
+  try {
+    await Database.savePushSubscription(req.user.username, subscription);
+    return res.json({ success: true, message: "Push aboneliği başarıyla kaydedildi." });
+  } catch (err) {
+    return res.status(500).json({ error: "Abonelik kaydedilemedi." });
+  }
+});
+
+// POST /api/push/unsubscribe (Remove client PushSubscription from DB)
+app.post("/api/push/unsubscribe", authenticateToken, async (req: any, res) => {
+  const { endpoint } = req.body;
+  if (endpoint) {
+    await Database.removePushSubscription(endpoint);
+  }
+  return res.json({ success: true });
 });
 
 // POST /api/social/messages/read (Explicitly mark conversation as read)
