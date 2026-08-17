@@ -251,7 +251,7 @@ export default function App() {
 
       if (currentPerm === "granted") {
         const playerAvatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(sender)}/128`;
-        const playerHeadBadge = `https://mc-heads.net/head/${encodeURIComponent(sender)}/64`;
+        const serverBadgeUrl = `/logo.png`;
 
         let swNotificationSent = false;
 
@@ -264,7 +264,7 @@ export default function App() {
                 await reg.showNotification(`${sender} • Yeni Mesaj`, {
                   body: messageText,
                   icon: playerAvatarUrl,
-                  badge: playerHeadBadge,
+                  badge: serverBadgeUrl,
                   tag: `dm_${sender}_${Date.now()}`,
                   data: {
                     url: `/#friends`,
@@ -293,7 +293,7 @@ export default function App() {
             const browserNotif = new Notification(`${sender} • Yeni Mesaj`, {
               body: messageText,
               icon: playerAvatarUrl,
-              badge: playerHeadBadge,
+              badge: serverBadgeUrl,
               tag: `dm_${sender}_${Date.now()}`,
               renotify: true,
             } as any);
