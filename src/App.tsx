@@ -241,6 +241,9 @@ export default function App() {
     // 3. Native OS/Device Notification (Android Chrome, iOS PWA, Windows/Mac Desktop)
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission === "granted") {
+        const playerAvatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(sender)}/128`;
+        const playerHeadBadge = `https://mc-heads.net/head/${encodeURIComponent(sender)}/64`;
+
         // Primary: Service Worker Registration (Mandatory on Android Chrome & iOS Safari PWA!)
         if ("serviceWorker" in navigator) {
           try {
@@ -248,8 +251,8 @@ export default function App() {
             if (reg && "showNotification" in reg) {
               await reg.showNotification(`${sender} • Yeni Mesaj`, {
                 body: messageText,
-                icon: "/logo.png",
-                badge: "/logo.png",
+                icon: playerAvatarUrl,
+                badge: playerHeadBadge,
                 tag: `dm_${sender}`,
                 data: {
                   url: `/#friends`,
@@ -269,8 +272,8 @@ export default function App() {
         try {
           const browserNotif = new Notification(`${sender} • Yeni Mesaj`, {
             body: messageText,
-            icon: "/logo.png",
-            badge: "/logo.png",
+            icon: playerAvatarUrl,
+            badge: playerHeadBadge,
             tag: `dm_${sender}`,
             renotify: true,
           } as any);

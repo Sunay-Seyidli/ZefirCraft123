@@ -2341,9 +2341,14 @@ export class Database {
       throw new Error("Mesaj boş olamaz.");
     }
 
+    const senderUser = await this.findUserByUsername(sndLower);
+    const recipientUser = await this.findUserByUsername(recLower);
+    const properSender = senderUser ? senderUser.username : sender;
+    const properRecipient = recipientUser ? recipientUser.username : recipient;
+
     const newMsg: DirectMessage = {
-      sender: sndLower,
-      recipient: recLower,
+      sender: properSender,
+      recipient: properRecipient,
       message: msgTrimmed,
       read: false,
       createdAt: new Date()
@@ -2372,21 +2377,31 @@ export class Database {
     // Automatically mark all messages from user2 to user1 as read with readAt timestamp
     if (mongo) {
       await mongo.db.collection("direct_messages").updateMany(
-        { sender: u2, recipient: u1, read: false },
+        {
+          $expr: {
+            $and: [
+              { $eq: [{ $toLower: "$sender" }, u2] },
+              { $eq: [{ $toLower: "$recipient" }, u1] },
+              { $eq: ["$read", false] }
+            ]
+          }
+        },
         { $set: { read: true, readAt: new Date() } }
       );
 
-      return (await mongo.db.collection("direct_messages").find({
+      const raw = (await mongo.db.collection("direct_messages").find({
         $or: [
-          { sender: u1, recipient: u2 },
-          { sender: u2, recipient: u1 }
+          { $expr: { $and: [{ $eq: [{ $toLower: "$sender" }, u1] }, { $eq: [{ $toLower: "$recipient" }, u2] }] } },
+          { $expr: { $and: [{ $eq: [{ $toLower: "$sender" }, u2] }, { $eq: [{ $toLower: "$recipient" }, u1] }] } }
         ]
       }).sort({ createdAt: 1 }).toArray()) as DirectMessage[];
+
+      return raw;
     } else {
       if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
       const now = new Date();
       mockDbState.direct_messages.forEach(m => {
-        if (m.sender === u2 && m.recipient === u1 && !m.read) {
+        if (m.sender.toLowerCase() === u2 && m.recipient.toLowerCase() === u1 && !m.read) {
           m.read = true;
           m.readAt = now;
         }
@@ -2394,7 +2409,11 @@ export class Database {
       saveMockDb();
 
       return mockDbState.direct_messages
-        .filter(m => (m.sender === u1 && m.recipient === u2) || (m.sender === u2 && m.recipient === u1))
+        .filter(m => {
+          const s = m.sender.toLowerCase();
+          const r = m.recipient.toLowerCase();
+          return (s === u1 && r === u2) || (s === u2 && r === u1);
+        })
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     }
   }
@@ -2407,13 +2426,21 @@ export class Database {
 
     if (mongo) {
       await mongo.db.collection("direct_messages").updateMany(
-        { sender: sndLower, recipient: recLower, read: false },
+        {
+          $expr: {
+            $and: [
+              { $eq: [{ $toLower: "$sender" }, sndLower] },
+              { $eq: [{ $toLower: "$recipient" }, recLower] },
+              { $eq: ["$read", false] }
+            ]
+          }
+        },
         { $set: { read: true, readAt: now } }
       );
     } else {
       if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
       mockDbState.direct_messages.forEach(m => {
-        if (m.sender === sndLower && m.recipient === recLower && !m.read) {
+        if (m.sender.toLowerCase() === sndLower && m.recipient.toLowerCase() === recLower && !m.read) {
           m.read = true;
           m.readAt = now;
         }
@@ -2425,19 +2452,38 @@ export class Database {
   static async getRecentUnreadMessages(username: string, limit = 5): Promise<DirectMessage[]> {
     const lower = username.toLowerCase();
     const mongo = await getMongoClient();
+    let unreadList: DirectMessage[] = [];
+
     if (mongo) {
-      return (await mongo.db.collection("direct_messages")
-        .find({ recipient: lower, read: false })
+      unreadList = (await mongo.db.collection("direct_messages")
+        .find({
+          $expr: {
+            $and: [
+              { $eq: [{ $toLower: "$recipient" }, lower] },
+              { $eq: ["$read", false] }
+            ]
+          }
+        })
         .sort({ createdAt: -1 })
         .limit(limit)
         .toArray()) as DirectMessage[];
     } else {
       if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
-      return mockDbState.direct_messages
-        .filter(m => m.recipient === lower && !m.read)
+      unreadList = mockDbState.direct_messages
+        .filter(m => m.recipient.toLowerCase() === lower && !m.read)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, limit);
     }
+
+    // Ensure sender has the exact registered case-sensitive username
+    for (const msg of unreadList) {
+      const sndUser = await this.findUserByUsername(msg.sender);
+      if (sndUser && sndUser.username) {
+        msg.sender = sndUser.username;
+      }
+    }
+
+    return unreadList;
   }
 
   static async getUnreadMessageCount(username: string): Promise<number> {
@@ -2445,12 +2491,16 @@ export class Database {
     const mongo = await getMongoClient();
     if (mongo) {
       return await mongo.db.collection("direct_messages").countDocuments({
-        recipient: lower,
-        read: false
+        $expr: {
+          $and: [
+            { $eq: [{ $toLower: "$recipient" }, lower] },
+            { $eq: ["$read", false] }
+          ]
+        }
       });
     } else {
       if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
-      return mockDbState.direct_messages.filter(m => m.recipient === lower && !m.read).length;
+      return mockDbState.direct_messages.filter(m => m.recipient.toLowerCase() === lower && !m.read).length;
     }
   }
 }
