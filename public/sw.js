@@ -14,7 +14,7 @@ self.addEventListener('message', (event) => {
     event.waitUntil(
       self.registration.showNotification(title || 'ZefirCraft', {
         icon: '/logo.png',
-        badge: '/logo.png',
+        badge: '/badge.svg',
         vibrate: [200, 100, 200],
         renotify: true,
         ...options,

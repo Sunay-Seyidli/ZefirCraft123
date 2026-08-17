@@ -251,7 +251,7 @@ export default function App() {
 
       if (currentPerm === "granted") {
         const playerAvatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(sender)}/128`;
-        const serverBadgeUrl = `/logo.png`;
+        const serverBadgeUrl = `/badge.svg`;
 
         let swNotificationSent = false;
 

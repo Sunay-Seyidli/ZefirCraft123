@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
+  <!-- ZefirCraft Minecraft Emblem - Pure White Vector for Crisp Notification Badges -->
+  <g fill="#FFFFFF">
+    <!-- Isometric Minecraft Cube Frame Top -->
+    <path d="M64 12 L112 38 L64 64 L16 38 Z" fill="#FFFFFF" fill-opacity="0.95"/>
+    <!-- Left Face -->
+    <path d="M16 44 L60 69 L60 116 L16 91 Z" fill="#FFFFFF" fill-opacity="0.75"/>
+    <!-- Right Face -->
+    <path d="M68 69 L112 44 L112 91 L68 116 Z" fill="#FFFFFF" fill-opacity="0.85"/>
+    
+    <!-- Central Embossed Minecraft 'Z' Inset -->
+    <path d="M42 36 L86 36 L86 44 L56 68 L86 68 L86 78 L42 78 L42 68 L72 44 L42 44 Z" fill="#0A152D"/>
+    
+    <!-- Spark / Crystal Highlights -->
+    <polygon points="64,24 67,31 74,34 67,37 64,44 61,37 54,34 61,31" fill="#FFFFFF"/>
+    <polygon points="34,70 36,75 41,77 36,79 34,84 32,79 27,77 32,75" fill="#FFFFFF"/>
+    <polygon points="94,70 96,75 101,77 96,79 94,84 92,79 87,77 92,75" fill="#FFFFFF"/>
+  </g>
+</svg>
