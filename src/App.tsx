@@ -154,27 +154,139 @@ export default function App() {
   // Real-time Web Notification API & Unread message tracking
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
   const initialUnreadLoadedRef = useRef<boolean>(false);
+  const [notifPermission, setNotifPermission] = useState<string>("default");
 
-  // Request native Web Notification API permission
-  const requestNotificationPermission = () => {
+  // Check and sync notification permission state
+  useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "default") {
-        Notification.requestPermission().catch(() => {});
+      setNotifPermission(Notification.permission);
+    } else {
+      setNotifPermission("unsupported");
+    }
+  }, []);
+
+  // Register Service Worker for Mobile (Android Chrome & iOS Safari PWA) Native Notifications
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).then((reg) => {
+        // SW registered
+        if (reg.update) reg.update();
+      }).catch((err) => {
+        console.warn("SW Registration:", err);
+      });
+
+      const handleSwMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === "OPEN_CHAT" && event.data.sender) {
+          setChatInitialFriend(event.data.sender);
+          changePageWithLoader("friends");
+        }
+      };
+
+      navigator.serviceWorker.addEventListener("message", handleSwMessage);
+      return () => navigator.serviceWorker.removeEventListener("message", handleSwMessage);
+    }
+  }, []);
+
+  // Request native Web Notification API permission on Mobile & Desktop
+  const requestNotificationPermission = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        setNotifPermission(perm);
+        if (perm === "granted") {
+          // Play test chime and trigger device vibration feedback
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            try { navigator.vibrate([100, 50, 100]); } catch (e) {}
+          }
+          playMessageNotificationChime();
+
+          // Show immediate confirmation real system notification on phone & desktop
+          if ("serviceWorker" in navigator) {
+            try {
+              const reg = await navigator.serviceWorker.ready;
+              if (reg && "showNotification" in reg) {
+                await reg.showNotification("ZefirCraft Bildirimleri Aktif", {
+                  body: "Mobil ve tarayıcı bildirimleri başarıyla açıldı!",
+                  icon: "/logo.png",
+                  badge: "/logo.png",
+                  tag: "welcome_test_notif",
+                  renotify: true,
+                  vibrate: [200, 100, 200],
+                } as any);
+              }
+            } catch (err) {}
+          }
+        }
+      } catch (err) {
+        // Fallback for older browsers
+        Notification.requestPermission((p) => {
+          setNotifPermission(p);
+        });
       }
     }
   };
 
-  useEffect(() => {
+  // Cross-platform native notification dispatcher (Android Chrome SW, iOS PWA, Windows/Mac Desktop)
+  const sendCrossPlatformNotification = async (sender: string, messageText: string) => {
+    // 1. Mobile Physical Vibration Feedback
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate([180, 80, 180]);
+      } catch (e) {}
+    }
+
+    // 2. Play Web Audio Harmonic Chime
+    playMessageNotificationChime();
+
+    // 3. Native OS/Device Notification (Android Chrome, iOS PWA, Windows/Mac Desktop)
     if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "default") {
-        const handleUserAction = () => {
-          Notification.requestPermission().catch(() => {});
-          window.removeEventListener("click", handleUserAction);
-        };
-        window.addEventListener("click", handleUserAction, { once: true });
+      if (Notification.permission === "granted") {
+        // Primary: Service Worker Registration (Mandatory on Android Chrome & iOS Safari PWA!)
+        if ("serviceWorker" in navigator) {
+          try {
+            const reg = await navigator.serviceWorker.ready;
+            if (reg && "showNotification" in reg) {
+              await reg.showNotification(`${sender} • Yeni Mesaj`, {
+                body: messageText,
+                icon: "/logo.png",
+                badge: "/logo.png",
+                tag: `dm_${sender}`,
+                data: {
+                  url: `/#friends`,
+                  sender: sender,
+                },
+                renotify: true,
+                vibrate: [200, 100, 200],
+              } as any);
+              return;
+            }
+          } catch (swErr) {
+            console.warn("ServiceWorker showNotification fallback:", swErr);
+          }
+        }
+
+        // Secondary Desktop Browser Notification Fallback
+        try {
+          const browserNotif = new Notification(`${sender} • Yeni Mesaj`, {
+            body: messageText,
+            icon: "/logo.png",
+            badge: "/logo.png",
+            tag: `dm_${sender}`,
+            renotify: true,
+          } as any);
+
+          browserNotif.onclick = () => {
+            window.focus();
+            setChatInitialFriend(sender);
+            changePageWithLoader("friends");
+            try { browserNotif.close(); } catch (e) {}
+          };
+        } catch (notifErr) {
+          console.warn("Window Notification constructor error:", notifErr);
+        }
       }
     }
-  }, []);
+  };
 
   // Poll latest unread messages for real-time native OS/Desktop notifications (Web Notification API)
   useEffect(() => {
@@ -218,40 +330,10 @@ export default function App() {
           });
 
           if (newMessages.length > 0) {
-            // Play gentle modern chime
-            playMessageNotificationChime();
-
             newMessages.forEach(m => {
               const mId = m._id ? m._id.toString() : `${m.sender}_${m.createdAt}`;
               seenMessageIdsRef.current.add(mId);
-
-              // Trigger native Operating System / Browser Notification (Web Notification API)
-              if (typeof window !== "undefined" && "Notification" in window) {
-                if (Notification.permission === "granted") {
-                  try {
-                    const browserNotif = new Notification(m.sender, {
-                      body: m.message,
-                      icon: `https://mc-heads.net/avatar/${m.sender}/128`,
-                      badge: logoSrc,
-                      tag: `dm_${m.sender}`,
-                      renotify: true,
-                    } as any);
-
-                    browserNotif.onclick = () => {
-                      window.focus();
-                      setChatInitialFriend(m.sender);
-                      changePageWithLoader("friends");
-                      try {
-                        browserNotif.close();
-                      } catch (e) {}
-                    };
-                  } catch (e) {
-                    console.warn("Native notification error:", e);
-                  }
-                } else if (Notification.permission === "default") {
-                  Notification.requestPermission().catch(() => {});
-                }
-              }
+              sendCrossPlatformNotification(m.sender, m.message);
             });
           }
         }
