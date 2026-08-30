@@ -591,20 +591,16 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 Nasıl Kayıt Olurum?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Sitemize giriş yapıp sipariş verebilmek veya web sandığınızı kullanabilmek için öncelikle oyun içinden kayıt olmanız gerekmektedir.
+                ZefirCraft hesabınızı ister web sitemizden saniyeler içinde doğrudan oluşturun, isterseniz oyun içinden kayıt olun.
               </p>
               <div className="bg-[#0e1b38] border border-sky-400/25 rounded-2xl p-4 space-y-3 shadow-inner text-xs">
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">1</span>
-                  <p className="text-slate-200">Minecraft'ı açın ve sunucu adresine <b className="text-sky-300 select-all font-mono font-extrabold">zefircraft.mcsh.io</b> yazıp giriş yapın.</p>
+                  <span className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold flex items-center justify-center shrink-0 border border-emerald-400/40">A</span>
+                  <p className="text-slate-200"><b className="text-emerald-300">Web'den Kayıt:</b> Sitemizin üstündeki <span className="text-white font-bold">Kayıt Ol</span> sekmesinden kullanıcı adı ve şifrenizi girerek anında başlayın.</p>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">2</span>
-                  <p className="text-slate-200">Sohbet penceresine <code className="text-sky-300 font-bold bg-[#17274c] px-1.5 py-0.5 rounded border border-sky-400/20">/kayit [sifre] [sifre]</code> yazıp kaydolun.</p>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">3</span>
-                  <p className="text-slate-200">Sitedeki "Giriş Yap" panelinden aynı kullanıcı adı ve şifrenizle oturum açın.</p>
+                  <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">B</span>
+                  <p className="text-slate-200"><b className="text-sky-300">Oyundan Kayıt:</b> Minecraft'ta <b className="text-sky-300 select-all font-mono">zefircraft.mcsh.io</b> adresine girip sohbete <code className="text-sky-300 font-bold bg-[#17274c] px-1 py-0.5 rounded border border-sky-400/20">/kayit [sifre] [sifre]</code> yazın.</p>
                 </div>
               </div>
             </div>

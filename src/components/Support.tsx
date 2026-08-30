@@ -22,8 +22,8 @@ export default function Support() {
       a: "İlk olarak envanterinizde boş yer olduğundan emin olun. Eğer envanteriniz doluyken alım yaptıysanız, yer açtıktan sonra teslimat gerçekleşecektir. Sorun devam ederse Discord sunucumuzdan destek talebi açabilirsiniz."
     },
     {
-      q: "Minecraft oyun içi kayıt işlemini nasıl gerçekleştiririm?",
-      a: "Sitemizde doğrudan kayıt paneli yoktur. Sunucumuza 'zefircraft.mcsh.io' adresiyle giriş yaptıktan sonra sohbete '/kayitol <şifre> <şifre>' komutunu yazarak anında kayıt olabilirsiniz. Ardından bu şifreyle siteye giriş yapabilirsiniz."
+      q: "ZefirCraft hesabını nasıl oluşturur ve kayıt olurum?",
+      a: "İki yöntemle de kolayca kayıt olabilirsiniz: 1) Web sitemizin üst menüsündeki 'Kayıt Ol' butonuna basarak doğrudan web üzerinden kullanıcı adı ve şifrenizle anında hesap açabilirsiniz. 2) Veya Minecraft sunucumuza 'zefircraft.mcsh.io' adresiyle bağlanıp sohbete '/kayit <şifre> <şifre>' yazarak kayıt olabilirsiniz. Her iki yöntemle de oluşturduğunuz hesap hem sitede hem de oyunda geçerlidir."
     },
     {
       q: "Sunucuda hile bildirimini nereden yapabilirim?",

@@ -457,6 +457,80 @@ app.post("/api/queue/complete", async (req, res) => {
 // 2) PUBLIC & PLAYER AUTHENTICATION
 // ==========================================
 
+// POST /api/auth/register (Direct web registration)
+app.post("/api/auth/register", async (req, res) => {
+  const { username, password, confirmPassword } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: "Kullanıcı adı ve şifre zorunludur." });
+  }
+
+  const cleanUsername = username.trim();
+
+  // Validate username format (Minecraft usernames: 3-16 alphanumeric or underscores)
+  if (cleanUsername.length < 3 || cleanUsername.length > 16) {
+    return res.status(400).json({ error: "Kullanıcı adı 3 ile 16 karakter arasında olmalıdır." });
+  }
+
+  if (!/^[a-zA-Z0-9_]+$/.test(cleanUsername)) {
+    return res.status(400).json({ error: "Kullanıcı adı sadece harf, rakam ve alt çizgi (_) içerebilir." });
+  }
+
+  if (password.length < 5) {
+    return res.status(400).json({ error: "Şifreniz en az 5 karakter uzunluğunda olmalıdır." });
+  }
+
+  if (confirmPassword && password !== confirmPassword) {
+    return res.status(400).json({ error: "Girdiğiniz şifreler birbiriyle eşleşmiyor." });
+  }
+
+  try {
+    const existing = await Database.findUserByUsername(cleanUsername);
+    if (existing) {
+      return res.status(409).json({ error: "Bu kullanıcı adı zaten kayıtlı. Lütfen giriş yapın." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const clientIp = getClientIp(req);
+
+    const newUser = {
+      username: cleanUsername,
+      username_lower: cleanUsername.toLowerCase(),
+      password: hashedPassword,
+      credits: 0,
+      registerDate: new Date(),
+      ipAddress: clientIp,
+      isAdmin: false
+    };
+
+    await Database.createUser(newUser as any);
+
+    // Auto-login newly registered user
+    const token = jwt.sign(
+      { username: newUser.username, username_lower: newUser.username_lower, isAdmin: false },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(201).json({
+      message: "Kayıt başarıyla tamamlandı!",
+      token,
+      user: {
+        username: newUser.username,
+        credits: newUser.credits,
+        registerDate: newUser.registerDate,
+        isAdmin: false,
+        lastWheelSpin: undefined,
+        isOnline: false,
+        permissions: []
+      }
+    });
+  } catch (err: any) {
+    console.error("Register error:", err);
+    return res.status(500).json({ error: "Kayıt sırasında bir sunucu hatası oluştu." });
+  }
+});
+
 // POST /api/auth/login
 app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body;
@@ -469,7 +543,7 @@ app.post("/api/auth/login", async (req, res) => {
     const user = await Database.findUserByUsername(username);
     if (!user) {
       return res.status(404).json({
-        error: "Bu kullanıcı adına kayıtlı hesap bulunamadı, önce sunucuda /kayitol yazmalısın."
+        error: "Bu kullanıcı adına ait hesap bulunamadı. Lütfen kayıt olun veya bilgilerinizi kontrol edin."
       });
     }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Package, Coins, Sparkles, Menu, X, LogOut, ShieldCheck,
-  Home as HomeIcon, ShoppingBag, HelpCircle, FileText, UserCheck, LogIn,
+  Home as HomeIcon, ShoppingBag, HelpCircle, FileText, UserCheck, LogIn, UserPlus,
   Inbox, Gift, Award, User as UserIcon, Copy, Check, CheckCheck, Boxes,
   MessageSquare, Bell, ArrowRight, MessageCircle, ExternalLink
 } from "lucide-react";
@@ -1070,13 +1070,22 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => changePageWithLoader("login")}
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg hover:shadow-blue-900/20 transition-all cursor-pointer border border-sky-500/20"
-              >
-                <LogIn className="w-4 h-4" />
-                Oturum Aç
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => changePageWithLoader("login")}
+                  className="px-3.5 py-2 bg-[#121c32] hover:bg-[#1a2744] text-slate-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-sky-400/20 transition-all cursor-pointer shadow-sm"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Giriş Yap</span>
+                </button>
+                <button
+                  onClick={() => changePageWithLoader("login")}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg shadow-emerald-950/40 hover:scale-105 transition-all cursor-pointer border border-emerald-400/30"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Kayıt Ol</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -1274,16 +1283,28 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => {
-                      changePageWithLoader("login");
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full py-3 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white font-black text-xs rounded-xl text-center flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-sky-950/20 border border-sky-500/20"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Oturum Aç
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        changePageWithLoader("login");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="py-3 bg-[#131d33] hover:bg-[#1a2846] text-slate-200 font-bold text-xs rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer border border-sky-400/20 shadow-md"
+                    >
+                      <LogIn className="w-4 h-4 text-sky-400" />
+                      <span>Giriş Yap</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        changePageWithLoader("login");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-emerald-950/30 border border-emerald-400/30"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Kayıt Ol</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </motion.div>
