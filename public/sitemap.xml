@@ -4,12 +4,92 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- ZefirCraft Minecraft Towny Web Sitesi Ana Sayfa -->
+  <!-- 1. Ana Sayfa (Home) -->
   <url>
     <loc>https://zefircraft.vercel.app/</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+
+  <!-- 2. Mağaza & VIP Market (Store) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/store</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 3. Ücretsiz Kredi Kazan & Anket Portalı (Earn Credits) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/earn</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 4. Şans Çarkı & Günlük Ödüller (Lucky Wheel) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/wheel</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 5. En İyiler & Oyuncu Sıralamaları (Rankings) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/rankings</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 6. Web Sandığı & Teslimat (Web Chest) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/chest</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 7. Sosyal & Arkadaşlık & Özel Mesajlaşma (Social / Friends) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/friends</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 8. Sunucu Kuralları & Oyun Rehberi (Server Rules) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/rules</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- 9. Destek Talebi & İletişim (Support Ticket) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/support</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- 10. Yetkili Başvurusu (Staff Recruitment) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/apply</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- 11. Giriş Yap & Kayıt Ol (Login / Register) -->
+  <url>
+    <loc>https://zefircraft.vercel.app/login</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 
 </urlset>

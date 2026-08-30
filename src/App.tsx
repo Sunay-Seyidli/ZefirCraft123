@@ -440,29 +440,48 @@ export default function App() {
     };
   }, [user]);
 
-  // Sync page state with URL hash for search engine indexing and direct linking (Sitelinks)
+  // Sync page state with Clean SEO URLs (/store, /earn, etc.) & URL hash for search engine indexing (Sitelinks)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace("#", "");
-      const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
-      if (hash && validPages.includes(hash)) {
-        setCurrentPage(hash);
+    const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+
+    const resolveCurrentRoute = () => {
+      // 1. Check clean pathname first (e.g. /store, /earn)
+      const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+      if (path && validPages.includes(path)) {
+        return path;
       }
+
+      // 2. Check hash fallback (e.g. #store, #earn)
+      const hash = window.location.hash.replace("#", "");
+      if (hash && validPages.includes(hash)) {
+        return hash;
+      }
+
+      return "home";
+    };
+
+    const handleRouteChange = () => {
+      const targetPage = resolveCurrentRoute();
+      setCurrentPage(targetPage);
     };
 
     // Initial check on load
-    handleHashChange();
+    handleRouteChange();
 
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    window.addEventListener("popstate", handleRouteChange);
+    window.addEventListener("hashchange", handleRouteChange);
+    return () => {
+      window.removeEventListener("popstate", handleRouteChange);
+      window.removeEventListener("hashchange", handleRouteChange);
+    };
   }, []);
 
-  // Update hash when page changes (supports Sitelinks crawling)
+  // Update Clean SEO URL in address bar when page state changes
   useEffect(() => {
-    if (currentPage) {
-      const currentHash = window.location.hash.replace("#", "");
-      if (currentHash !== currentPage) {
-        window.history.pushState(null, "", `#${currentPage}`);
+    if (currentPage && typeof window !== "undefined") {
+      const cleanPath = currentPage === "home" ? "/" : `/${currentPage}`;
+      if (window.location.pathname !== cleanPath && window.location.hash.replace("#", "") !== currentPage) {
+        window.history.pushState({ page: currentPage }, "", cleanPath);
       }
     }
   }, [currentPage]);

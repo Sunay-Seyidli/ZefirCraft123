@@ -2360,6 +2360,27 @@ app.get("/api/social/unread-count", authenticateToken, async (req: any, res) => 
 });
 
 
+// Serve static build assets and handle clean SPA routes for SEO (/store, /earn, /wheel, etc.)
+app.use(express.static(path.join(process.cwd(), "dist")));
+app.use(express.static(path.join(process.cwd(), "public")));
+
+app.get("*", (req: any, res: any, next: any) => {
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+  const distIndex = path.join(process.cwd(), "dist", "index.html");
+  res.sendFile(distIndex, (err: any) => {
+    if (err) {
+      const rootIndex = path.join(process.cwd(), "index.html");
+      res.sendFile(rootIndex, (err2: any) => {
+        if (err2) {
+          res.status(404).send("Page not found");
+        }
+      });
+    }
+  });
+});
+
 // ==========================================
 // 6) FRONT-END SERVER (Next.js integrated)
 // ==========================================
