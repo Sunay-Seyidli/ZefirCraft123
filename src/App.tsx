@@ -66,8 +66,18 @@ function playMessageNotificationChime() {
   }
 }
 
+const getInitialPage = (): string => {
+  if (typeof window === "undefined") return "home";
+  const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  if (path && validPages.includes(path)) return path;
+  const hash = window.location.hash.replace("#", "");
+  if (hash && validPages.includes(hash)) return hash;
+  return "home";
+};
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<string>("home");
+  const [currentPage, setCurrentPage] = useState<string>(getInitialPage);
   const [user, setUser] = useState<{ username: string; credits: number; registerDate?: string; isAdmin?: boolean; lastWheelSpin?: string } | null>(null);
   const [adminName, setAdminName] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
