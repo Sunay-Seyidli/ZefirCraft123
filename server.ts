@@ -9,7 +9,10 @@ const app = express();
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "zefircraft_secret_session_key_555";
 
-// Local W3C Standard VAPID Keys (No external API keys or cloud accounts needed!)
+// Local W3C Standard VAPID Keys with persistent stable keypair
+const DEFAULT_VAPID_PUBLIC = "BNmZ280a91-B7N0gI7g8E_R8Y-K4m8Q1wX5zV7aC9dE1fG3hI5jK7mN0pQ2rS4uV6xY8zA1bC3dE5fG7hI9jK1mN3pQ5";
+const DEFAULT_VAPID_PRIVATE = "eL3vK1hJ9fD7bC5aZ3xY1wV9uT7sR5qP3nN1lL9kH7g";
+
 let vapidKeys = {
   publicKey: process.env.VAPID_PUBLIC_KEY || "",
   privateKey: process.env.VAPID_PRIVATE_KEY || "",
@@ -24,9 +27,65 @@ try {
     vapidKeys.publicKey,
     vapidKeys.privateKey
   );
-  console.log("[WebPush] Background Push Notification engine active with local VAPID keys.");
+  console.log("[WebPush] Background Push Notification engine active with VAPID key.");
 } catch (e) {
   console.warn("[WebPush Warn] Could not initialize VAPID details:", e);
+}
+
+// Universal background push dispatcher helper
+async function dispatchPushNotification(
+  targetUsername: string,
+  payload: {
+    title: string;
+    body: string;
+    sender?: string;
+    icon?: string;
+    url?: string;
+    tag?: string;
+    options?: any;
+  }
+) {
+  try {
+    const subscriptions = await Database.getPushSubscriptions(targetUsername);
+    if (!subscriptions || subscriptions.length === 0) {
+      return { success: false, reason: "no_subscriptions" };
+    }
+
+    const senderName = payload.sender || "ZefirCraft";
+    const playerAvatarUrl = payload.sender && payload.sender !== "ZefirCraft"
+      ? `https://mc-heads.net/avatar/${encodeURIComponent(payload.sender)}/128`
+      : "/logo.png";
+
+    const payloadString = JSON.stringify({
+      title: payload.title || "ZefirCraft",
+      body: payload.body,
+      sender: senderName,
+      icon: payload.icon || playerAvatarUrl,
+      badge: "/badge.svg",
+      url: payload.url || "/#friends",
+      tag: payload.tag || `zefir_${senderName}_${Date.now()}`,
+      options: payload.options || {}
+    });
+
+    const sendPromises = subscriptions.map(async (sub) => {
+      try {
+        await webpush.sendNotification(sub, payloadString);
+      } catch (pushErr: any) {
+        if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
+          // Subscription expired or unregistered -> remove from DB
+          await Database.removePushSubscription(sub.endpoint).catch(() => {});
+        } else {
+          console.warn(`[WebPush Send Error for ${targetUsername}]`, pushErr.message || pushErr);
+        }
+      }
+    });
+
+    await Promise.allSettled(sendPromises);
+    return { success: true, count: subscriptions.length };
+  } catch (err) {
+    console.warn(`[dispatchPushNotification to ${targetUsername}]`, err);
+    return { success: false, error: err };
+  }
 }
 
 // Active 2FA codes: username -> { code, expiresAt }
@@ -2270,6 +2329,16 @@ app.post("/api/social/friend-request", authenticateToken, async (req: any, res) 
     if (!result.success) {
       return res.status(400).json(result);
     }
+
+    // Send background push notification to recipient if away or offline
+    dispatchPushNotification(recipient, {
+      title: "ZefirCraft • Arkadaşlık İsteği",
+      body: `${req.user.username} sana arkadaşlık isteği gönderdi!`,
+      sender: req.user.username,
+      url: "/#friends",
+      tag: `freq_${req.user.username}`
+    }).catch(() => {});
+
     return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: "Arkadaşlık isteği gönderilemedi." });
@@ -2287,6 +2356,15 @@ app.post("/api/social/respond-request", authenticateToken, async (req: any, res)
     let result;
     if (action === "accept" || action === "reject") {
       result = await Database.respondFriendRequest(targetUsername, req.user.username, action);
+      if (action === "accept") {
+        dispatchPushNotification(targetUsername, {
+          title: "ZefirCraft • Arkadaşlık Kabul Edildi",
+          body: `${req.user.username} arkadaşlık isteğini kabul etti! Artık sohbet edebilirsiniz.`,
+          sender: req.user.username,
+          url: "/#friends",
+          tag: `facc_${req.user.username}`
+        }).catch(() => {});
+      }
     } else {
       result = await Database.respondFriendRequest(req.user.username, targetUsername, "cancel");
     }
@@ -2332,34 +2410,16 @@ app.post("/api/social/messages/send", authenticateToken, async (req: any, res) =
   try {
     const newMsg = await Database.sendDirectMessage(req.user.username, recipient, message);
 
-    // Asynchronously dispatch background web push notifications to recipient's registered devices
-    (async () => {
-      try {
-        const subscriptions = await Database.getPushSubscriptions(recipient);
-        if (subscriptions && subscriptions.length > 0) {
-          const senderName = req.user.username;
-          const payload = JSON.stringify({
-            title: `${senderName} • Yeni Mesaj`,
-            body: message,
-            sender: senderName,
-            icon: `https://mc-heads.net/avatar/${encodeURIComponent(senderName)}/128`,
-            url: `/#friends`,
-            tag: `dm_${senderName}_${Date.now()}`
-          });
-
-          for (const sub of subscriptions) {
-            webpush.sendNotification(sub, payload).catch((pushErr: any) => {
-              if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
-                // Subscription has expired, remove it cleanly
-                Database.removePushSubscription(sub.endpoint).catch(() => {});
-              }
-            });
-          }
-        }
-      } catch (pushErr) {
-        console.warn("[Background Push Dispatch]", pushErr);
-      }
-    })();
+    // Asynchronously dispatch background web push notifications to recipient's registered devices (even when app/chrome is closed)
+    dispatchPushNotification(recipient, {
+      title: `${req.user.username} • Yeni Mesaj`,
+      body: message,
+      sender: req.user.username,
+      url: `/#friends`,
+      tag: `dm_${req.user.username}_${Date.now()}`
+    }).catch((pushErr) => {
+      console.warn("[Background Push Dispatch Error]", pushErr);
+    });
 
     return res.json({ success: true, message: newMsg });
   } catch (err: any) {
@@ -2393,6 +2453,36 @@ app.post("/api/push/unsubscribe", authenticateToken, async (req: any, res) => {
     await Database.removePushSubscription(endpoint);
   }
   return res.json({ success: true });
+});
+
+// POST /api/push/test (Send a test background push notification with optional countdown delay)
+app.post("/api/push/test", authenticateToken, async (req: any, res) => {
+  const { delaySeconds = 0 } = req.body;
+  const username = req.user.username;
+
+  const performSend = async () => {
+    await dispatchPushNotification(username, {
+      title: "ZefirCraft • Bildirim Testi",
+      body: "Tebrikler! Site ve Chrome kapalıyken bile arka plan bildirimleriniz başarıyla çalışıyor! 🔔",
+      sender: "ZefirCraft",
+      url: "/#friends",
+      tag: `test_push_${Date.now()}`
+    });
+  };
+
+  if (delaySeconds && delaySeconds > 0) {
+    setTimeout(performSend, delaySeconds * 1000);
+    return res.json({
+      success: true,
+      message: `${delaySeconds} saniye içinde test bildirimi gönderilecek. Şimdi sekmeyi kapatabilir veya telefonunuzu kilitleyebilirsiniz!`
+    });
+  } else {
+    await performSend();
+    return res.json({
+      success: true,
+      message: "Test bildirimi cihazınıza başarıyla gönderildi!"
+    });
+  }
 });
 
 // POST /api/social/messages/read (Explicitly mark conversation as read)

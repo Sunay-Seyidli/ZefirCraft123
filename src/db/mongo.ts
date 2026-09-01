@@ -2279,7 +2279,7 @@ export class Database {
       const friendUser = await this.findUserByUsername(friendLower);
       if (!friendUser) continue;
 
-      // Fetch last message between user and friend
+      // Fetch last message between user and friend (case-insensitive search)
       let lastMsgText = "";
       let lastMsgTime: Date | string | undefined = undefined;
       let unreadCount = 0;
@@ -2288,34 +2288,40 @@ export class Database {
         const lastMsg = await mongo.db.collection("direct_messages").findOne(
           {
             $or: [
-              { sender: lower, recipient: friendLower },
-              { sender: friendLower, recipient: lower }
+              { sender: { $regex: new RegExp(`^${lower}$`, "i") }, recipient: { $regex: new RegExp(`^${friendLower}$`, "i") } },
+              { sender: { $regex: new RegExp(`^${friendLower}$`, "i") }, recipient: { $regex: new RegExp(`^${lower}$`, "i") } }
             ]
           },
           { sort: { createdAt: -1 } }
         );
         if (lastMsg) {
-          lastMsgText = lastMsg.message;
+          const isMe = (lastMsg.sender || "").toLowerCase() === lower;
+          lastMsgText = (isMe ? "Siz: " : "") + lastMsg.message;
           lastMsgTime = lastMsg.createdAt;
         }
 
         unreadCount = await mongo.db.collection("direct_messages").countDocuments({
-          sender: friendLower,
-          recipient: lower,
+          sender: { $regex: new RegExp(`^${friendLower}$`, "i") },
+          recipient: { $regex: new RegExp(`^${lower}$`, "i") },
           read: false
         });
       } else {
         if (!mockDbState.direct_messages) mockDbState.direct_messages = [];
         const msgs = mockDbState.direct_messages
-          .filter(m => (m.sender === lower && m.recipient === friendLower) || (m.sender === friendLower && m.recipient === lower))
+          .filter(m => {
+            const s = (m.sender || "").toLowerCase();
+            const r = (m.recipient || "").toLowerCase();
+            return (s === lower && r === friendLower) || (s === friendLower && r === lower);
+          })
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         if (msgs.length > 0) {
-          lastMsgText = msgs[0].message;
+          const isMe = (msgs[0].sender || "").toLowerCase() === lower;
+          lastMsgText = (isMe ? "Siz: " : "") + msgs[0].message;
           lastMsgTime = msgs[0].createdAt;
         }
 
-        unreadCount = mockDbState.direct_messages.filter(m => m.sender === friendLower && m.recipient === lower && !m.read).length;
+        unreadCount = mockDbState.direct_messages.filter(m => (m.sender || "").toLowerCase() === friendLower && (m.recipient || "").toLowerCase() === lower && !m.read).length;
       }
 
       friends.push({
@@ -2327,6 +2333,24 @@ export class Database {
         unreadCount
       });
     }
+
+    // Sort friends:
+    // 1. Those with unread messages first (highest unreadCount first)
+    // 2. Then most recent message (latest lastMessageTime first)
+    // 3. Then alphabetical
+    friends.sort((a, b) => {
+      const unreadA = a.unreadCount || 0;
+      const unreadB = b.unreadCount || 0;
+      if (unreadB !== unreadA) {
+        return unreadB - unreadA;
+      }
+      const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+      const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+      if (timeB !== timeA) {
+        return timeB - timeA;
+      }
+      return a.username.localeCompare(b.username);
+    });
 
     return { friends, receivedRequests, sentRequests };
   }

@@ -4,7 +4,7 @@ import LazyImage from "./LazyImage";
 import ScrollReveal from "./ScrollReveal";
 import { 
   ShoppingCart, AlertCircle, CheckCircle, Clock, X, Database, Coins, 
-  ArrowRightLeft, Sparkles, LogIn, ChevronRight, Check, RefreshCw
+  ArrowRightLeft, Sparkles, LogIn, ChevronRight, Check, Package, Gift
 } from "lucide-react";
 import { Product, PurchaseRequest } from "../types";
 
@@ -23,7 +23,6 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
   
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(false);
 
   // Custom purchase confirmation modal state
   const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(null);
@@ -35,7 +34,6 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
     fetchCategories();
     if (user) {
       fetchMyPurchases();
-      fetchOnlineStatus();
     }
   }, [user]);
 
@@ -52,50 +50,6 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
     } catch (err) {
       console.error("Failed to fetch categories:", err);
     }
-  };
-
-  const [refreshingStatus, setRefreshingStatus] = useState(false);
-  const [serverStatusInfo, setServerStatusInfo] = useState<{
-    isPluginConnected: boolean;
-    onlineCount: number;
-    serverIp: string;
-  }>({
-    isPluginConnected: false,
-    onlineCount: 0,
-    serverIp: "zefircraft.mcsh.io"
-  });
-
-  const fetchOnlineStatus = async () => {
-    const token = localStorage.getItem("koli_token") || localStorage.getItem("zefir_token");
-    setRefreshingStatus(true);
-    try {
-      const [userRes, serverRes] = await Promise.all([
-        token ? fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } }) : null,
-        fetch("/api/server-status")
-      ]);
-
-      if (userRes && userRes.ok) {
-        const data = await userRes.json();
-        setIsOnline(!!data.isOnline);
-      }
-
-      if (serverRes && serverRes.ok) {
-        const statusData = await serverRes.json();
-        setServerStatusInfo({
-          isPluginConnected: !!statusData.isPluginConnected,
-          onlineCount: statusData.onlineCount || 0,
-          serverIp: statusData.serverIp || "zefircraft.mcsh.io"
-        });
-      }
-    } catch (err) {
-      console.error("Failed to fetch online status:", err);
-    } finally {
-      setRefreshingStatus(false);
-    }
-  };
-
-  const handleRefreshStatus = async () => {
-    await fetchOnlineStatus();
   };
 
   const fetchProducts = async () => {
@@ -192,10 +146,10 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
           </p>
         </div>
 
-        {/* User Stats Card with Connection Status */}
+        {/* User Stats Card */}
         {user ? (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-gradient-to-br from-[#12192c] to-[#0c101e] rounded-2xl p-4 shadow-md border border-[#22304d]">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 bg-gradient-to-br from-[#12192c] to-[#0c101e] rounded-2xl p-4 shadow-md border border-[#22304d]">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center text-sky-400 border border-sky-500/10 shrink-0">
                 <Coins className="w-6 h-6 animate-pulse" />
               </div>
@@ -207,36 +161,13 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
               </div>
             </div>
             
-            <div className="hidden sm:block border-l border-[#22304d]/40 h-8 mx-1"></div>
+            <div className="border-l border-[#22304d]/40 h-8 mx-1"></div>
             
-            <div className="flex items-center justify-between sm:justify-start gap-4">
+            <div className="flex items-center gap-3">
               <div className="text-xs">
                 <span className="text-slate-500 block text-[9px] font-bold">KULLANICI</span>
                 <div className="font-extrabold text-slate-200">{user.username}</div>
               </div>
-
-              <div className="border-l border-[#22304d]/40 h-8 mx-1"></div>
-
-              {/* Server connection indicator with real plugin verification */}
-              <div className="flex flex-col gap-0.5 text-left shrink-0">
-                <span className="text-slate-500 block text-[9px] font-bold uppercase">Hesap Durumunuz</span>
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}></span>
-                  <span className={`text-xs font-black uppercase ${isOnline ? "text-emerald-400" : "text-red-400"}`}>
-                    {isOnline ? "Oyunda (Doğrulandı)" : "Çevrimdışı (Oyunda Değil)"}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleRefreshStatus}
-                disabled={refreshingStatus}
-                className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all border bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border-sky-500/20 flex items-center gap-1.5 shrink-0"
-                title="Sunucudaki canlı durumunuzu kontrol edin"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${refreshingStatus ? "animate-spin" : ""}`} />
-                <span>Durumu Yenile</span>
-              </button>
             </div>
           </div>
         ) : (
@@ -256,21 +187,11 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
 
       {/* Automatic Delivery Informative Banner */}
       {user && (
-        <div className="bg-sky-950/30 border border-sky-500/25 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-sky-200">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle className="w-5 h-5 text-sky-400 shrink-0" />
-            <span>
-              <strong>⚡ Otomatik Teslimat Sistemi:</strong> Mağazadan satın aldığınız tüm ürünler ve komutlar sunucuya anında otomatik aktarılır. Oyunda olsanız da olmasanız da siparişleriniz güvenle hesabınıza tanımlanır!
-            </span>
-          </div>
-          <button
-            onClick={handleRefreshStatus}
-            disabled={refreshingStatus}
-            className="px-3 py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold rounded-xl text-[11px] whitespace-nowrap shrink-0 transition-all cursor-pointer flex items-center gap-1 border border-sky-500/30"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshingStatus ? "animate-spin" : ""}`} />
-            <span>Durumu Yenile</span>
-          </button>
+        <div className="bg-sky-950/30 border border-sky-500/25 rounded-2xl p-4 flex items-center gap-3 text-xs text-sky-200">
+          <CheckCircle className="w-5 h-5 text-sky-400 shrink-0" />
+          <span>
+            <strong>⚡ Otomatik Teslimat Sistemi:</strong> Mağazadan satın aldığınız tüm ürünler ve komutlar Web Sandığınıza anında otomatik olarak tanımlanır. İstediğiniz an oyun içine teslim alabilirsiniz!
+          </span>
         </div>
       )}
 
@@ -529,15 +450,12 @@ export default function Store({ user, onUpdateCredits, onNavigate }: StoreProps)
                 </div>
               </div>
 
-              {/* Live Connection Status Check Indicator */}
+              {/* Delivery Info Indicator */}
               <div className="p-3.5 rounded-2xl border text-left text-xs leading-relaxed flex items-start gap-2.5 transition-all bg-sky-500/10 border-sky-500/25 text-sky-300">
                 <CheckCircle className="w-4 h-4 shrink-0 text-sky-400 mt-0.5" />
                 <div>
-                  <strong className="block text-[11px] font-black uppercase text-sky-200">Otomatik Teslimat Hazır</strong>
-                  {isOnline 
-                    ? "Sunucudasınız! Siparişiniz onaylandığı an oyun içi komutlar saniyeler içinde karakterinize uygulanacaktır."
-                    : "Sipariş komutları anında otomatik teslimat kuyruğuna eklenecektir. Oyuna girdiğiniz an eklenti tarafından otomatik teslim edilir."
-                  }
+                  <strong className="block text-[11px] font-black uppercase text-sky-200">Otomatik Teslimat</strong>
+                  Siparişiniz onaylandığı an ürünler Web Sandığınıza eklenir ve karakterinize otomatik olarak aktarılır.
                 </div>
               </div>
 
