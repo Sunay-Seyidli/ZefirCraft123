@@ -4,17 +4,7 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const slugParam = context.params?.slug;
-  const page = Array.isArray(slugParam) ? slugParam[0] : slugParam;
-  if (page === "map") {
-    return {
-      redirect: {
-        destination: "http://zefircraft.ddns.net:8123/?worldname=Towny",
-        permanent: false,
-      },
-    };
-  }
+export const getServerSideProps: GetServerSideProps = async () => {
   return { props: {} };
 };
 
@@ -63,21 +53,15 @@ const pageMeta: Record<string, { title: string; desc: string }> = {
     title: "ZefirCraft • Giriş Yap & Kayıt Ol",
     desc: "ZefirCraft hesabınıza giriş yapın veya yeni bir hesap oluşturun.",
   },
+  map: {
+    title: "ZefirCraft • Towny Canlı Haritası",
+    desc: "ZefirCraft Towny sunucusunun canlı haritası. Kasabaları, arsaları ve oyuncuları harita üzerinden canlı takip edin.",
+  },
 };
 
 export default function SubPage() {
   const router = useRouter();
   const slug = Array.isArray(router.query.slug) ? router.query.slug[0] : (router.query.slug || "");
-
-  useEffect(() => {
-    if (slug === "map") {
-      window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
-    }
-  }, [slug]);
-
-  if (slug === "map") {
-    return null;
-  }
 
   const currentMeta = pageMeta[slug] || {
     title: "ZefirCraft • Türkiye'nin En İyi Minecraft Towny Sunucusu",

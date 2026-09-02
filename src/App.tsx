@@ -22,6 +22,7 @@ import UserProfileModal from "./components/UserProfileModal";
 import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
 import LuckyWheel from "./components/LuckyWheel";
+import MapViewer from "./components/MapViewer";
 import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
@@ -474,20 +475,12 @@ export default function App() {
     const resolveCurrentRoute = () => {
       // 1. Check clean pathname first (e.g. /store, /earn)
       const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
-      if (path === "map") {
-        window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
-        return "map";
-      }
       if (path && validPages.includes(path)) {
         return path;
       }
 
       // 2. Check hash fallback (e.g. #store, #earn)
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (hash === "map") {
-        window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
-        return "map";
-      }
       if (hash && validPages.includes(hash)) {
         return hash;
       }
@@ -756,10 +749,7 @@ export default function App() {
       case "rankings":
         return <Rankings />;
       case "map":
-        if (typeof window !== "undefined") {
-          window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
-        }
-        return null;
+        return <MapViewer onBack={() => changePageWithLoader("home")} />;
       case "profile":
         return (
           <Profile 
@@ -1011,7 +1001,6 @@ export default function App() {
                 target={item.isExternal ? "_blank" : undefined}
                 rel={item.isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {
-                  if (item.id === "map") return;
                   if (item.isExternal) return;
                   e.preventDefault();
                   changePageWithLoader(item.id);
@@ -1225,7 +1214,6 @@ export default function App() {
                       rel={item.isExternal ? "noopener noreferrer" : undefined}
                       onClick={(e) => {
                         setMobileMenuOpen(false);
-                        if (item.id === "map") return;
                         if (item.isExternal) return;
                         e.preventDefault();
                         changePageWithLoader(item.id);
@@ -1402,6 +1390,7 @@ export default function App() {
             <div className="flex flex-col gap-2 text-xs">
               <button onClick={() => setCurrentPage("home")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Ana Sayfa</button>
               <button onClick={() => setCurrentPage("store")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Mağaza</button>
+              <button onClick={() => setCurrentPage("map")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Canlı Harita</button>
               <button onClick={() => setCurrentPage("rules")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Kurallar</button>
               <button onClick={() => setCurrentPage("apply")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Başvuru Formu</button>
             </div>
