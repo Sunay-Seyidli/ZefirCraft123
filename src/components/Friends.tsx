@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   Users, MessageSquare, UserPlus, Send, Search, Check, CheckCheck, X,
-  Clock, AlertCircle, Sparkles, UserX, RefreshCw, MessageCircle, Calendar, ChevronUp,
-  Bell, BellRing, Smartphone, CheckCircle2, Zap
+  Clock, AlertCircle, Sparkles, UserX, RefreshCw, MessageCircle, Calendar, ChevronUp
 } from "lucide-react";
 import { FriendUser, DirectMessage } from "../types";
 
@@ -219,114 +218,6 @@ export default function Friends({
   // Message windowing for ultra-smooth performance with massive chats
   const INITIAL_VISIBLE_COUNT = 80;
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
-
-  // Background Push Notifications State
-  const [notifPermission, setNotifPermission] = useState<string>("default");
-  const [testPushCountdown, setTestPushCountdown] = useState<number | null>(null);
-  const [pushStatusMsg, setPushStatusMsg] = useState<string | null>(null);
-  const [pushSubscribed, setPushSubscribed] = useState<boolean>(false);
-
-  // Helper to convert base64 VAPID public key to Uint8Array for PushManager
-  const urlBase64ToUint8Array = (base64String: string) => {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setNotifPermission(Notification.permission);
-      if ("serviceWorker" in navigator && "PushManager" in window) {
-        navigator.serviceWorker.ready.then((reg) => {
-          reg.pushManager.getSubscription().then((sub) => {
-            if (sub) setPushSubscribed(true);
-          });
-        }).catch(() => {});
-      }
-    }
-  }, []);
-
-  const handleEnableNotifications = async () => {
-    if (typeof window === "undefined" || !("Notification" in window)) {
-      setPushStatusMsg("Tarayıcınız bildirim özelliğini desteklemiyor.");
-      return;
-    }
-    try {
-      const p = await Notification.requestPermission();
-      setNotifPermission(p);
-      if (p === "granted") {
-        setPushStatusMsg("Bildirim izni verildi! Arka plan push servisi kaydediliyor...");
-        if ("serviceWorker" in navigator && "PushManager" in window) {
-          const reg = await navigator.serviceWorker.ready;
-          const res = await fetch("/api/push/vapid-public-key");
-          const data = await res.json();
-          if (data.publicKey) {
-            const applicationServerKey = urlBase64ToUint8Array(data.publicKey);
-            const sub = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: applicationServerKey
-            });
-            await fetch("/api/push/subscribe", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getAuthToken()}`
-              },
-              body: JSON.stringify({ subscription: sub })
-            });
-            setPushSubscribed(true);
-            setPushStatusMsg("Arka plan bildirimleri başarıyla aktif edildi! Site veya Chrome kapalıyken bile anlık bildirim alacaksınız.");
-          }
-        }
-      } else if (p === "denied") {
-        setPushStatusMsg("Bildirim izni tarayıcınızda engellendi. Adres çubuğundaki kilit simgesine tıklayıp bildirimlere izin verebilirsiniz.");
-      }
-    } catch (e) {
-      console.warn("Enable notifications error:", e);
-      setPushStatusMsg("Bildirim izni alınırken bir sorun oluştu.");
-    }
-  };
-
-  const handleTestBackgroundPush = async () => {
-    setPushStatusMsg(null);
-    setTestPushCountdown(5);
-
-    try {
-      const res = await fetch("/api/push/test", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${getAuthToken()}`
-        },
-        body: JSON.stringify({ delaySeconds: 5 })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setPushStatusMsg("⏳ 5 saniyelik test sayacı başladı! Sekmeyi kapatabilir veya ekranınızı kilitleyebilirsiniz. Bildirim telefonunuza/bilgisayarınıza gelecektir!");
-      }
-    } catch (err) {
-      setPushStatusMsg("Test bildirimi gönderilirken hata oluştu.");
-    }
-  };
-
-  // Countdown timer for testing
-  useEffect(() => {
-    if (testPushCountdown === null || testPushCountdown <= 0) return;
-    const timer = setTimeout(() => {
-      if (testPushCountdown === 1) {
-        setTestPushCountdown(null);
-        setPushStatusMsg("🔔 Test bildirimi gönderildi! Cihazınızı kontrol edin.");
-      } else {
-        setTestPushCountdown(testPushCountdown - 1);
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [testPushCountdown]);
 
   // In-memory conversation cache to make switching friends instant (0ms)
   const messagesCache = useRef<Record<string, DirectMessage[]>>({});
@@ -757,76 +648,6 @@ export default function Friends({
           <span>Yenile</span>
         </button>
       </div>
-
-      {/* Background Push Notification Status Card */}
-      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-[#0c162d] via-[#0d1c38] to-[#0c162d] border border-sky-500/25 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border ${notifPermission === "granted" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400" : "bg-amber-500/15 border-amber-500/40 text-amber-400"}`}>
-            {notifPermission === "granted" ? <BellRing className="w-5 h-5 animate-pulse" /> : <Bell className="w-5 h-5" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-white uppercase tracking-wider">
-                Arka Plan Bildirimleri (Site Kapalıyken)
-              </span>
-              {notifPermission === "granted" ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Aktif
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  İzin Bekleniyor
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {notifPermission === "granted"
-                ? "Sekme ve Chrome tamamen kapalıyken bile arkadaşlarından gelen mesajlar cihazına anında bildirim olarak düşer."
-                : "Site kapalıyken arkadaşlarınızdan gelen mesajları kaçırmamak için bildirimleri aktif edin."}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          {notifPermission !== "granted" ? (
-            <button
-              onClick={handleEnableNotifications}
-              className="w-full md:w-auto px-4 py-2 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all hover:scale-105"
-            >
-              <Bell className="w-3.5 h-3.5" />
-              <span>Bildirimleri Aç</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleTestBackgroundPush}
-              disabled={testPushCountdown !== null}
-              className={`w-full md:w-auto px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${
-                testPushCountdown !== null
-                  ? "bg-amber-500/20 border-amber-500/40 text-amber-300 animate-pulse cursor-wait"
-                  : "bg-sky-500/15 hover:bg-sky-500/25 border-sky-400/30 text-sky-300 hover:text-white"
-              }`}
-              title="5 saniye sonra bildirim tetikler, hemen sekmeyi kapatıp test edebilirsiniz"
-            >
-              <Zap className="w-3.5 h-3.5 text-sky-400" />
-              <span>
-                {testPushCountdown !== null ? `Test Gönderiliyor (${testPushCountdown}s)...` : "⚡ Bildirimi Test Et (5sn)"}
-              </span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {pushStatusMsg && (
-        <div className="mb-4 p-3 bg-sky-950/60 border border-sky-500/30 rounded-xl text-xs text-sky-200 flex items-center justify-between gap-2 animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-sky-400 shrink-0" />
-            <span>{pushStatusMsg}</span>
-          </div>
-          <button onClick={() => setPushStatusMsg(null)} className="text-slate-400 hover:text-white cursor-pointer">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
 
       {/* Tabs Bar */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-[#0b0f1c] border border-slate-800 rounded-2xl mb-6">

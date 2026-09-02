@@ -4,7 +4,7 @@ import {
   Package, Coins, Sparkles, Menu, X, LogOut, ShieldCheck,
   Home as HomeIcon, ShoppingBag, HelpCircle, FileText, UserCheck, LogIn, UserPlus,
   Inbox, Gift, Award, User as UserIcon, Copy, Check, CheckCheck, Boxes,
-  MessageSquare, Bell, ArrowRight, MessageCircle, ExternalLink
+  MessageSquare, Bell, ArrowRight, MessageCircle, ExternalLink, Map, Compass
 } from "lucide-react";
 
 import Home from "./components/Home";
@@ -68,10 +68,18 @@ function playMessageNotificationChime() {
 
 const getInitialPage = (): string => {
   if (typeof window === "undefined") return "home";
-  const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
-  const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "map", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
+  if (path === "map") {
+    window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+    return "map";
+  }
   if (path && validPages.includes(path)) return path;
-  const hash = window.location.hash.replace("#", "");
+  const hash = window.location.hash.replace("#", "").toLowerCase();
+  if (hash === "map") {
+    window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+    return "map";
+  }
   if (hash && validPages.includes(hash)) return hash;
   return "home";
 };
@@ -452,17 +460,25 @@ export default function App() {
 
   // Sync page state with Clean SEO URLs (/store, /earn, etc.) & URL hash for search engine indexing (Sitelinks)
   useEffect(() => {
-    const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+    const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "map", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
 
     const resolveCurrentRoute = () => {
       // 1. Check clean pathname first (e.g. /store, /earn)
-      const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+      const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
+      if (path === "map") {
+        window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+        return "map";
+      }
       if (path && validPages.includes(path)) {
         return path;
       }
 
       // 2. Check hash fallback (e.g. #store, #earn)
-      const hash = window.location.hash.replace("#", "");
+      const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (hash === "map") {
+        window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+        return "map";
+      }
       if (hash && validPages.includes(hash)) {
         return hash;
       }
@@ -517,6 +533,10 @@ export default function App() {
         title: "ZefirCraft Oyuncu Sıralamaları | En Güçlü Kasabalar ve Oyuncular",
         desc: "ZefirCraft Towny sunucusunun en iyi oyuncuları, en zengin kasabaları, en yüksek seviyeli milletleri ve liderlik tablolarını gör!"
       },
+      map: {
+        title: "ZefirCraft Canlı Harita | Towny Dynmap Dünyası",
+        desc: "ZefirCraft Towny sunucusunun canlı web haritası. Kasabaları, sınırları ve oyuncu konumlarını tarayıcınızdan canlı takip edin!"
+      },
       support: {
         title: "ZefirCraft Destek Merkezi | Yardım ve Destek Talebi Oluştur",
         desc: "ZefirCraft destek sistemi üzerinden karşılaştığın sorunlar hakkında anında yardım al ve yetkililere destek talebi gönder!"
@@ -569,8 +589,12 @@ export default function App() {
 
   // Elegant page preloader transition helper
   const changePageWithLoader = (newPage: string) => {
-    setPageLoading(true);
     setMobileMenuOpen(false);
+    if (newPage === "map") {
+      window.location.href = "http://zefircraft.ddns.net:8123/?worldname=Towny";
+      return;
+    }
+    setPageLoading(true);
     setTimeout(() => {
       setCurrentPage(newPage);
       setPageLoading(false);
@@ -722,6 +746,11 @@ export default function App() {
         return <Apply />;
       case "rankings":
         return <Rankings />;
+      case "map":
+        if (typeof window !== "undefined") {
+          window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+        }
+        return null;
       case "profile":
         return (
           <Profile 
@@ -788,6 +817,7 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Ana Sayfa", icon: <HomeIcon className="w-4 h-4" /> },
     { id: "store", label: "Mağaza", icon: <ShoppingBag className="w-4 h-4" /> },
+    { id: "map", label: "Harita", icon: <Map className="w-4 h-4" />, href: "/map" },
     { id: "wheel", label: "Çarkıfelek", icon: <Gift className="w-4 h-4 text-amber-400 animate-pulse" /> },
     { id: "earn", label: "Kredi Kazan", icon: <Coins className="w-4 h-4 text-amber-400" /> },
     { id: "chest", label: "Web Sandığı", icon: <Inbox className="w-4 h-4" /> },
@@ -968,8 +998,12 @@ export default function App() {
             {activeNavItems.map((item: any) => (
               <a
                 key={item.id}
-                href={`#${item.id}`}
+                href={item.href || `#${item.id}`}
+                target={item.isExternal ? "_blank" : undefined}
+                rel={item.isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {
+                  if (item.id === "map") return;
+                  if (item.isExternal) return;
                   e.preventDefault();
                   changePageWithLoader(item.id);
                 }}
@@ -986,6 +1020,9 @@ export default function App() {
                     {item.tag}
                   </span>
                 ) : null}
+                {item.isExternal ? (
+                  <ExternalLink className="w-3 h-3 text-slate-400 ml-0.5 opacity-70" />
+                ) : null}
                 {item.badge && item.badge > 0 ? (
                   <span className="ml-1 px-1.5 py-0.2 bg-red-500 text-white text-[10px] font-black rounded-full animate-pulse shadow-sm">
                     {item.badge}
@@ -995,8 +1032,8 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Player Profile & Authentication Block */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* Player Profile & Authentication Block (Right Menu) */}
+          <div className="hidden lg:flex items-center gap-2.5">
             {user ? (
               <div className="flex items-center gap-3">
                 {/* Credits Bubble */}
@@ -1151,7 +1188,7 @@ export default function App() {
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
               className="fixed top-0 right-0 bottom-0 z-50 w-[290px] sm:w-[330px] bg-[#0e1b38]/95 backdrop-blur-xl border-l border-sky-400/30 p-6 flex flex-col justify-between shadow-2xl lg:hidden"
             >
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Header inside drawer */}
                 <div className="flex items-center justify-between border-b border-sky-500/20 pb-4">
                   <div className="flex items-center gap-2.5 bg-[#122347] border border-sky-400/30 px-2.5 py-1.5 rounded-2xl">
@@ -1168,17 +1205,21 @@ export default function App() {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
- 
+
                 {/* Navigation links */}
-                <div className="space-y-1.5 flex flex-col overflow-y-auto max-h-[calc(100vh-260px)] pr-1 scrollbar-thin">
+                <div className="space-y-1.5 flex flex-col overflow-y-auto max-h-[calc(100vh-200px)] pr-1 scrollbar-thin">
                   {activeNavItems.map((item: any) => (
                     <a
                       key={item.id}
-                      href={`#${item.id}`}
+                      href={item.href || `#${item.id}`}
+                      target={item.isExternal ? "_blank" : undefined}
+                      rel={item.isExternal ? "noopener noreferrer" : undefined}
                       onClick={(e) => {
+                        setMobileMenuOpen(false);
+                        if (item.id === "map") return;
+                        if (item.isExternal) return;
                         e.preventDefault();
                         changePageWithLoader(item.id);
-                        setMobileMenuOpen(false);
                       }}
                       className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                         currentPage === item.id
@@ -1197,7 +1238,9 @@ export default function App() {
                           </span>
                         ) : null}
                       </div>
-                      {item.badge && item.badge > 0 ? (
+                      {item.isExternal ? (
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-80" />
+                      ) : item.badge && item.badge > 0 ? (
                         <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-full animate-bounce">
                           {item.badge}
                         </span>
