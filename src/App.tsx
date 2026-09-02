@@ -22,7 +22,6 @@ import UserProfileModal from "./components/UserProfileModal";
 import AdminRoleModal from "./components/AdminRoleModal";
 import EarnCredits from "./components/EarnCredits";
 import LuckyWheel from "./components/LuckyWheel";
-import MapViewer from "./components/MapViewer";
 import { Users } from "lucide-react";
 
 const logoSrc = "/logo.png";
@@ -71,8 +70,16 @@ const getInitialPage = (): string => {
   if (typeof window === "undefined") return "home";
   const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "map", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
   const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
+  if (path === "map") {
+    window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+    return "home";
+  }
   if (path && validPages.includes(path)) return path;
   const hash = window.location.hash.replace("#", "").toLowerCase();
+  if (hash === "map") {
+    window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+    return "home";
+  }
   if (hash && validPages.includes(hash)) return hash;
   return "home";
 };
@@ -467,12 +474,20 @@ export default function App() {
     const resolveCurrentRoute = () => {
       // 1. Check clean pathname first (e.g. /store, /earn)
       const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
+      if (path === "map") {
+        window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+        return "home";
+      }
       if (path && validPages.includes(path)) {
         return path;
       }
 
       // 2. Check hash fallback (e.g. #store, #earn)
       const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (hash === "map") {
+        window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+        return "home";
+      }
       if (hash && validPages.includes(hash)) {
         return hash;
       }
@@ -585,7 +600,7 @@ export default function App() {
   const changePageWithLoader = (newPage: string) => {
     setMobileMenuOpen(false);
     if (newPage === "map") {
-      setCurrentPage("map");
+      window.location.href = "http://zefircraft.ddns.net:8123/?worldname=Towny";
       return;
     }
     setPageLoading(true);
@@ -741,7 +756,10 @@ export default function App() {
       case "rankings":
         return <Rankings />;
       case "map":
-        return <MapViewer onBack={() => changePageWithLoader("home")} />;
+        if (typeof window !== "undefined") {
+          window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
+        }
+        return null;
       case "profile":
         return (
           <Profile 
@@ -808,7 +826,7 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Ana Sayfa", icon: <HomeIcon className="w-4 h-4" /> },
     { id: "store", label: "Mağaza", icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: "map", label: "Harita", icon: <Map className="w-4 h-4" />, href: "/map" },
+    { id: "map", label: "Harita", icon: <Map className="w-4 h-4" />, href: "http://zefircraft.ddns.net:8123/?worldname=Towny", isExternal: true },
     { id: "wheel", label: "Çarkıfelek", icon: <Gift className="w-4 h-4 text-amber-400 animate-pulse" /> },
     { id: "earn", label: "Kredi Kazan", icon: <Coins className="w-4 h-4 text-amber-400" /> },
     { id: "chest", label: "Web Sandığı", icon: <Inbox className="w-4 h-4" /> },
@@ -824,10 +842,6 @@ export default function App() {
     if (item.id === "earn" && !earnEnabled) return false;
     return true;
   });
-
-  if (currentPage === "map") {
-    return <MapViewer onBack={() => changePageWithLoader("home")} />;
-  }
 
   if (sessionLoading) {
     return (
@@ -1386,7 +1400,7 @@ export default function App() {
             <div className="flex flex-col gap-2 text-xs">
               <button onClick={() => setCurrentPage("home")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Ana Sayfa</button>
               <button onClick={() => setCurrentPage("store")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Mağaza</button>
-              <button onClick={() => setCurrentPage("map")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Canlı Harita</button>
+              <a href="http://zefircraft.ddns.net:8123/?worldname=Towny" target="_blank" rel="noopener noreferrer" className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer flex items-center gap-1">Canlı Harita <ExternalLink className="w-3 h-3 text-sky-400 inline" /></a>
               <button onClick={() => setCurrentPage("rules")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Kurallar</button>
               <button onClick={() => setCurrentPage("apply")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Başvuru Formu</button>
             </div>

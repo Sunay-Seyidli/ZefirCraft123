@@ -2547,6 +2547,11 @@ app.get("/api/social/unread-count", authenticateToken, async (req: any, res) => 
 app.use(express.static(path.join(process.cwd(), "dist")));
 app.use(express.static(path.join(process.cwd(), "public")));
 
+// Direct route: /map redirects instantly to the Towny live map
+app.get(["/map", "/map/"], (req: any, res: any) => {
+  return res.redirect(302, "http://zefircraft.ddns.net:8123/?worldname=Towny");
+});
+
 app.get("*", (req: any, res: any, next: any) => {
   if (req.path.startsWith("/api/")) {
     return next();
