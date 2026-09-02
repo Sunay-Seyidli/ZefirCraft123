@@ -71,16 +71,8 @@ const getInitialPage = (): string => {
   if (typeof window === "undefined") return "home";
   const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "map", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
   const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
-  if (path === "map") {
-    window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
-    return "map";
-  }
   if (path && validPages.includes(path)) return path;
   const hash = window.location.hash.replace("#", "").toLowerCase();
-  if (hash === "map") {
-    window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
-    return "map";
-  }
   if (hash && validPages.includes(hash)) return hash;
   return "home";
 };
@@ -593,7 +585,7 @@ export default function App() {
   const changePageWithLoader = (newPage: string) => {
     setMobileMenuOpen(false);
     if (newPage === "map") {
-      window.location.href = "http://zefircraft.ddns.net:8123/?worldname=Towny";
+      setCurrentPage("map");
       return;
     }
     setPageLoading(true);
@@ -832,6 +824,10 @@ export default function App() {
     if (item.id === "earn" && !earnEnabled) return false;
     return true;
   });
+
+  if (currentPage === "map") {
+    return <MapViewer onBack={() => changePageWithLoader("home")} />;
+  }
 
   if (sessionLoading) {
     return (
