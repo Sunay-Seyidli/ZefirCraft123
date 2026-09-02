@@ -1480,25 +1480,42 @@ app.put("/api/admin/applications/:id", authenticateAdmin, checkPermission("apps"
   }
 });
 
-// GET & SET SETTINGS (Plugin Secret Key)
+// GET & SET SETTINGS (Plugin Secret Key & Server Settings)
 app.get("/api/admin/settings", authenticateAdmin, checkPermission("sys-settings"), async (req, res) => {
   try {
     const secretKey = await Database.getSecretKey();
-    return res.json({ secretKey });
+    const pluginSettings = await Database.getPluginSettings();
+    return res.json({
+      secretKey,
+      serverIp: pluginSettings.serverIp || "zefircraft.ddns.net",
+      serverPort: pluginSettings.serverPort || 25565,
+      requireOnlineForPurchase: Boolean(pluginSettings.requireOnlineForPurchase)
+    });
   } catch (err) {
     return res.status(500).json({ error: "Ayarlar yüklenemedi." });
   }
 });
 
 app.post("/api/admin/settings", authenticateAdmin, checkPermission("sys-settings"), async (req, res) => {
-  const { secretKey } = req.body;
-  if (!secretKey || secretKey.trim().length < 5) {
+  const { secretKey, serverIp, serverPort, requireOnlineForPurchase } = req.body;
+  if (secretKey && secretKey.trim().length > 0 && secretKey.trim().length < 5) {
     return res.status(400).json({ error: "Gizli anahtar en az 5 karakter olmalıdır." });
   }
 
   try {
-    await Database.setSecretKey(secretKey);
-    return res.json({ status: "success", message: "Gizli anahtar başarıyla güncellendi." });
+    if (secretKey && secretKey.trim()) {
+      await Database.setSecretKey(secretKey.trim());
+    }
+    const updatePayload: any = {};
+    if (secretKey && secretKey.trim()) updatePayload.secretKey = secretKey.trim();
+    if (serverIp !== undefined && typeof serverIp === "string") updatePayload.serverIp = serverIp.trim();
+    if (typeof serverPort === "number") updatePayload.serverPort = serverPort;
+    if (typeof requireOnlineForPurchase === "boolean") updatePayload.requireOnlineForPurchase = requireOnlineForPurchase;
+
+    if (Object.keys(updatePayload).length > 0) {
+      await Database.updatePluginSettings(updatePayload);
+    }
+    return res.json({ status: "success", message: "Ayarlar başarıyla güncellendi." });
   } catch (err) {
     return res.status(500).json({ error: "Ayarlar güncellenemedi." });
   }
@@ -1596,7 +1613,9 @@ app.get("/api/stats/top-credits", async (req, res) => {
 // GET /api/stats/server (Server-side proxy for Minecraft server status)
 app.get("/api/stats/server", async (req, res) => {
   try {
-    const response = await fetch("https://api.mcsrvstat.us/3/zefircraft.mcsh.io");
+    const pluginSettings = await Database.getPluginSettings();
+    const serverIp = (pluginSettings.serverIp && pluginSettings.serverIp.trim()) || "zefircraft.ddns.net";
+    const response = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(serverIp)}`);
     if (!response.ok) {
       throw new Error("MCSrvStat returned non-ok status");
     }

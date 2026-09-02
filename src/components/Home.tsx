@@ -58,7 +58,19 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
   // Detailed article modal state
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
-  const ip = "zefircraft.mcsh.io";
+  const [ip, setIp] = useState("zefircraft.ddns.net");
+
+  // Fetch dynamic server IP from server-status
+  useEffect(() => {
+    fetch("/api/server-status")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.serverIp) {
+          setIp(data.serverIp);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Check Admin & logged-in player
   useEffect(() => {
@@ -295,7 +307,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
               ) : (
                 <>
                   <Copy className="w-5 h-5 text-sky-200 group-hover:scale-110 transition-transform" />
-                  <span className="font-mono tracking-wide">zefircraft.mcsh.io</span>
+                  <span className="font-mono tracking-wide">{ip}</span>
                 </>
               )}
             </button>
@@ -600,7 +612,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-extrabold flex items-center justify-center shrink-0 border border-sky-400/40">B</span>
-                  <p className="text-slate-200"><b className="text-sky-300">Oyundan Kayıt:</b> Minecraft'ta <b className="text-sky-300 select-all font-mono">zefircraft.mcsh.io</b> adresine girip sohbete <code className="text-sky-300 font-bold bg-[#17274c] px-1 py-0.5 rounded border border-sky-400/20">/kayit [sifre] [sifre]</code> yazın.</p>
+                  <p className="text-slate-200"><b className="text-sky-300">Oyundan Kayıt:</b> Minecraft'ta <b className="text-sky-300 select-all font-mono">{ip}</b> adresine girip sohbete <code className="text-sky-300 font-bold bg-[#17274c] px-1 py-0.5 rounded border border-sky-400/20">/kayit [sifre] [sifre]</code> yazın.</p>
                 </div>
               </div>
             </div>

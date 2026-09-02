@@ -526,7 +526,7 @@ async function seedInitialMockData() {
     {
       _id: "art_1",
       title: "ZefirCraft Kapılarını Açtı!",
-      content: "ZefirCraft Towny sunucumuz 1.16.5 - 26.2 sürümlerini desteklemektedir! Birbirinden heyecanlı kasabalar, dengeli bir ekonomi, rütbe kasaları ve yenilenmiş teslimat sistemi sizleri bekliyor. Hemen zefircraft.mcsh.io IP adresi ile aramıza katılın ve bu muhteşem diyarlardaki yerinizi alın!",
+      content: "ZefirCraft Towny sunucumuz 1.16.5 - 26.2 sürümlerini desteklemektedir! Birbirinden heyecanlı kasabalar, dengeli bir ekonomi, rütbe kasaları ve yenilenmiş teslimat sistemi sizleri bekliyor. Hemen zefircraft.ddns.net IP adresi ile aramıza katılın ve bu muhteşem diyarlardaki yerinizi alın!",
       imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
       createdAt: new Date(),
       views: 142
@@ -1688,7 +1688,7 @@ export class Database {
         return {
           secretKey: doc.secretKey || "zefir_sec_982374829374",
           requireOnlineForPurchase: Boolean(doc.requireOnlineForPurchase),
-          serverIp: doc.serverIp || "zefircraft.mcsh.io",
+          serverIp: doc.serverIp || "zefircraft.ddns.net",
           serverPort: doc.serverPort || 25565,
           lastHeartbeat: Database.pluginLastHeartbeat || doc.lastHeartbeat || null,
           serverVersion: doc.serverVersion || "1.20.4",
@@ -1698,7 +1698,7 @@ export class Database {
       return {
         secretKey: "zefir_sec_982374829374",
         requireOnlineForPurchase: false,
-        serverIp: "zefircraft.mcsh.io",
+        serverIp: "zefircraft.ddns.net",
         serverPort: 25565,
         lastHeartbeat: Database.pluginLastHeartbeat,
         serverVersion: "1.20.4",
@@ -1709,7 +1709,7 @@ export class Database {
         mockDbState.pluginSettings = {
           secretKey: "zefir_sec_982374829374",
           requireOnlineForPurchase: false,
-          serverIp: "zefircraft.mcsh.io",
+          serverIp: "zefircraft.ddns.net",
           serverPort: 25565,
           lastHeartbeat: Database.pluginLastHeartbeat,
           serverVersion: "1.20.4",
@@ -1773,7 +1773,7 @@ export class Database {
         mockDbState.pluginSettings = {
           secretKey: "zefir_sec_982374829374",
           requireOnlineForPurchase: true,
-          serverIp: "zefircraft.mcsh.io",
+          serverIp: "zefircraft.ddns.net",
           serverPort: 25565,
           lastHeartbeat: now,
           serverVersion: version || "1.20.4",

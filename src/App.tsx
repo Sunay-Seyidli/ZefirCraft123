@@ -113,10 +113,19 @@ export default function App() {
   const [wheelEnabled, setWheelEnabled] = useState(true);
   const [earnEnabled, setEarnEnabled] = useState(true);
 
-  const serverIP = "zefircraft.mcsh.io";
+  const [serverIP, setServerIP] = useState("zefircraft.ddns.net");
 
-  // Check Wheel & Earn Enabled status
+  // Check Wheel, Earn Enabled status & dynamic Server IP
   useEffect(() => {
+    fetch("/api/server-status")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.serverIp) {
+          setServerIP(data.serverIp);
+        }
+      })
+      .catch(() => {});
+
     fetch("/api/lucky-wheel/settings")
       .then(res => res.json())
       .then(data => {

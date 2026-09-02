@@ -488,7 +488,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               <span className="font-extrabold text-white block mb-1">
                 {activeTab === "login" ? "Hesabınız Yok Mu?" : "Oyun İçi ve Web Senkronizasyonu"}
               </span>
-              Sitemizden oluşturduğunuz hesapla hem web sitemize hem de Minecraft sunucumuza (<code className="bg-[#0e1423] border border-[#212f4d] px-1 py-0.5 rounded font-mono font-bold text-sky-300">zefircraft.mcsh.io</code>) doğrudan giriş yapabilirsiniz. Dilerseniz oyun içinden <code className="bg-[#0e1423] border border-[#212f4d] px-1 py-0.5 rounded font-mono font-bold text-sky-300">/kayit &lt;şifre&gt; &lt;şifre&gt;</code> komutuyla da kayıt olabilirsiniz.
+              Sitemizden oluşturduğunuz hesapla hem web sitemize hem de Minecraft sunucumuza (<code className="bg-[#0e1423] border border-[#212f4d] px-1 py-0.5 rounded font-mono font-bold text-sky-300">zefircraft.ddns.net</code>) doğrudan giriş yapabilirsiniz. Dilerseniz oyun içinden <code className="bg-[#0e1423] border border-[#212f4d] px-1 py-0.5 rounded font-mono font-bold text-sky-300">/kayit &lt;şifre&gt; &lt;şifre&gt;</code> komutuyla da kayıt olabilirsiniz.
             </div>
           </div>
         )}

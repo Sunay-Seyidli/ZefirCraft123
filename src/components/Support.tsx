@@ -23,7 +23,7 @@ export default function Support() {
     },
     {
       q: "ZefirCraft hesabını nasıl oluşturur ve kayıt olurum?",
-      a: "İki yöntemle de kolayca kayıt olabilirsiniz: 1) Web sitemizin üst menüsündeki 'Kayıt Ol' butonuna basarak doğrudan web üzerinden kullanıcı adı ve şifrenizle anında hesap açabilirsiniz. 2) Veya Minecraft sunucumuza 'zefircraft.mcsh.io' adresiyle bağlanıp sohbete '/kayit <şifre> <şifre>' yazarak kayıt olabilirsiniz. Her iki yöntemle de oluşturduğunuz hesap hem sitede hem de oyunda geçerlidir."
+      a: "İki yöntemle de kolayca kayıt olabilirsiniz: 1) Web sitemizin üst menüsündeki 'Kayıt Ol' butonuna basarak doğrudan web üzerinden kullanıcı adı ve şifrenizle anında hesap açabilirsiniz. 2) Veya Minecraft sunucumuza 'zefircraft.ddns.net' adresiyle bağlanıp sohbete '/kayit <şifre> <şifre>' yazarak kayıt olabilirsiniz. Her iki yöntemle de oluşturduğunuz hesap hem sitede hem de oyunda geçerlidir."
     },
     {
       q: "Sunucuda hile bildirimini nereden yapabilirim?",

@@ -155,7 +155,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
 
   // General Settings States
   const [secretKey, setSecretKey] = useState("");
-  const [serverIP, setServerIP] = useState("zefircraft.mcsh.io");
+  const [serverIP, setServerIP] = useState("zefircraft.ddns.net");
   const [discordWebhook, setDiscordWebhook] = useState("https://discord.com/api/webhooks/...");
   const [seasonalMode, setSeasonalMode] = useState(true);
   const [creditRatio, setCreditRatio] = useState(1);
@@ -381,7 +381,25 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
       });
       if (setRes.ok) {
         const setData = await setRes.json();
-        setSecretKey(setData.secretKey || "");
+        if (setData.secretKey) setSecretKey(setData.secretKey);
+        if (setData.serverIp) setServerIP(setData.serverIp);
+        if (setData.requireOnlineForPurchase !== undefined) setRequireOnlineForPurchase(Boolean(setData.requireOnlineForPurchase));
+      }
+
+      // 7.2) Plugin status & settings
+      const pluginRes = await fetch("/api/admin/plugin/settings", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (pluginRes.ok) {
+        const pData = await pluginRes.json();
+        if (pData.serverIp) setServerIP(pData.serverIp);
+        if (pData.secretKey) setSecretKey(pData.secretKey);
+        if (pData.requireOnlineForPurchase !== undefined) setRequireOnlineForPurchase(Boolean(pData.requireOnlineForPurchase));
+        setPluginStatusInfo({
+          isConnected: Boolean(pData.isConnected),
+          lastHeartbeat: pData.lastHeartbeat || null,
+          onlineCount: Array.isArray(pData.onlinePlayers) ? pData.onlinePlayers.length : (pData.onlineCount || 0)
+        });
       }
 
       // 7.5) Earn Settings
@@ -1087,7 +1105,13 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("zefir_admin_token") || localStorage.getItem("zefir_token");
+      const token = getAdminToken();
+      const payload = {
+        secretKey: secretKey.trim(),
+        requireOnlineForPurchase,
+        serverIp: serverIP.trim()
+      };
+
       const [res1, res2] = await Promise.all([
         fetch("/api/admin/settings", {
           method: "POST",
@@ -1095,7 +1119,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ secretKey })
+          body: JSON.stringify(payload)
         }),
         fetch("/api/admin/plugin/settings", {
           method: "POST",
@@ -1103,12 +1127,12 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ secretKey, requireOnlineForPurchase, serverIp: serverIP })
+          body: JSON.stringify(payload)
         })
       ]);
 
       if (res1.ok || res2.ok) {
-        triggerNotification("Eklenti ve sunucu ayarları başarıyla kaydedildi!");
+        triggerNotification("Minecraft sunucu adresi ve eklenti ayarları başarıyla kaydedildi!");
       } else {
         triggerNotification("Ayarlar kaydedilirken hata oluştu.", false);
       }
