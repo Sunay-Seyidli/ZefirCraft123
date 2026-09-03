@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import webpush from "web-push";
@@ -154,6 +155,7 @@ async function sendVerificationEmail(email: string, code: string): Promise<boole
 }
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // HELPER: Middleware to verify JWT Player token
 function authenticateToken(req: any, res: any, next: any) {
@@ -1075,6 +1077,516 @@ app.get("/api/purchases/my", authenticateToken, async (req: any, res) => {
     return res.json(myPurchases);
   } catch (err) {
     return res.status(500).json({ error: "Geçmiş yüklenemedi." });
+  }
+});
+
+// ==========================================
+// 3.5) REAL MONEY CREDITS & PAYMENT GATEWAYS (Shopier, PayTR, Havale/Papara)
+// ==========================================
+
+// GET /api/credits/settings (Public payment settings & packages)
+app.get("/api/credits/settings", async (req, res) => {
+  try {
+    const settings = await Database.getPaymentSettings();
+    return res.json({
+      creditPerTL: settings.creditPerTL || 1,
+      minPaymentTL: settings.minPaymentTL || 10,
+      maxPaymentTL: settings.maxPaymentTL || 5000,
+      packages: settings.packages || [],
+      gateways: {
+        shopier: {
+          enabled: settings.shopier?.enabled ?? true,
+          testMode: settings.shopier?.testMode ?? true,
+          hasCredentials: !!(settings.shopier?.apiKey && settings.shopier?.apiSecret)
+        },
+        paytr: {
+          enabled: settings.paytr?.enabled ?? false,
+          testMode: settings.paytr?.testMode ?? true,
+          hasCredentials: !!(settings.paytr?.merchantId && settings.paytr?.merchantKey)
+        },
+        havale: {
+          enabled: settings.havale?.enabled ?? true,
+          bankName: settings.havale?.bankName || "Banka Havalesi / FAST (Türkiye)",
+          accountHolder: settings.havale?.accountHolder || "ZefirCraft Yönetimi",
+          iban: settings.havale?.iban || "TR00 0000 0000 0000 0000 0000 00",
+          paparaNumber: settings.havale?.paparaNumber || "",
+          instructions: settings.havale?.instructions || ""
+        },
+        visaCard: {
+          enabled: settings.visaCard?.enabled ?? true,
+          cardNumber: settings.visaCard?.cardNumber || "4098 5844 6336 1459",
+          cardHolder: settings.visaCard?.cardHolder || "Sunay Seyidli",
+          bankName: settings.visaCard?.bankName || "Kapital Bank / Birbank (Azərbaycan)",
+          currency: settings.visaCard?.currency || "AZN",
+          aznRate: settings.visaCard?.aznRate || 20,
+          instructions: settings.visaCard?.instructions || ""
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Error fetching credit settings:", err);
+    return res.status(500).json({ error: "Kredi ayarları alınamadı." });
+  }
+});
+
+// GET /api/credits/history (Logged in player's credit orders & transfers)
+app.get("/api/credits/history", authenticateToken, async (req: any, res) => {
+  try {
+    const username = req.user.username;
+    const orders = await Database.getUserPaymentOrders(username);
+    const transfers = await Database.getUserCreditTransfers(username);
+    return res.json({ orders, transfers });
+  } catch (err) {
+    console.error("Error fetching credit history:", err);
+    return res.status(500).json({ error: "Kredi geçmişi yüklenemedi." });
+  }
+});
+
+// POST /api/credits/create-order (Initiate real money credit purchase)
+app.post("/api/credits/create-order", authenticateToken, async (req: any, res) => {
+  try {
+    const username = req.user.username;
+    const { amountTL, packageId, paymentMethod, senderName, senderBank, senderIban, senderNote } = req.body;
+
+    const settings = await Database.getPaymentSettings();
+    let finalTL = Number(amountTL);
+    let finalCredits = 0;
+    let bonusCredits = 0;
+
+    if (packageId) {
+      const selectedPkg = (settings.packages || []).find(p => p.id === packageId);
+      if (selectedPkg) {
+        finalTL = selectedPkg.amountTL;
+        finalCredits = selectedPkg.credits;
+        bonusCredits = Math.max(0, selectedPkg.credits - selectedPkg.amountTL * (settings.creditPerTL || 1));
+      }
+    }
+
+    if (!finalTL || isNaN(finalTL) || finalTL < (settings.minPaymentTL || 10) || finalTL > (settings.maxPaymentTL || 5000)) {
+      return res.status(400).json({
+        error: `Ödeme tutarı en az ${settings.minPaymentTL || 10} TL, en fazla ${settings.maxPaymentTL || 5000} TL olmalıdır.`
+      });
+    }
+
+    if (!packageId || finalCredits === 0) {
+      finalCredits = Math.round(finalTL * (settings.creditPerTL || 1));
+      // Progressive bonus for custom amount
+      if (finalTL >= 1000) bonusCredits = Math.round(finalCredits * 0.30);
+      else if (finalTL >= 500) bonusCredits = Math.round(finalCredits * 0.20);
+      else if (finalTL >= 250) bonusCredits = Math.round(finalCredits * 0.15);
+      else if (finalTL >= 100) bonusCredits = Math.round(finalCredits * 0.10);
+      finalCredits += bonusCredits;
+    }
+
+    const orderId = `ZC-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Handle Test Mode purchase
+    if (paymentMethod === "test") {
+      const isTestAllowed = settings.shopier?.testMode || settings.paytr?.testMode;
+      if (!isTestAllowed) {
+        return res.status(400).json({ error: "Test modu şu anda kapalıdır." });
+      }
+
+      const order = await Database.createPaymentOrder({
+        orderId,
+        username,
+        amountTL: finalTL,
+        credits: finalCredits,
+        bonusCredits,
+        paymentMethod: "test",
+        status: "completed",
+        completedAt: new Date(),
+        transactionRef: `TEST-SIM-${orderId}`,
+        createdAt: new Date(),
+        adminNote: "Test Modu Simülasyonu"
+      });
+
+      // Update user credits
+      const user = await Database.findUserByUsername(username);
+      const newCredits = (user?.credits || 0) + finalCredits;
+      await Database.updateUserCredits(username, newCredits);
+
+      return res.json({
+        success: true,
+        orderId,
+        completed: true,
+        creditsAdded: finalCredits,
+        newCredits,
+        message: `🎉 Test ödemesi başarılı! Hesabınıza +${finalCredits} Kredi tanımlandı.`
+      });
+    }
+
+    // Handle Bank Transfer / Visa Card-to-Card / Papara Notice
+    if (paymentMethod === "havale" || paymentMethod === "papara" || paymentMethod === "visa" || paymentMethod === "card_transfer") {
+      if (!senderName || String(senderName).trim().length < 3) {
+        return res.status(400).json({ error: "Lütfen gönderici Adı Soyadı bilgisini giriniz." });
+      }
+
+      let defaultBankName = "Banka Havalesi / FAST";
+      if (paymentMethod === "visa" || paymentMethod === "card_transfer") {
+        defaultBankName = "Visa Kart Transferi (4098 5844 6336 1459)";
+      } else if (paymentMethod === "papara") {
+        defaultBankName = "Papara Transferi";
+      }
+
+      const order = await Database.createPaymentOrder({
+        orderId,
+        username,
+        amountTL: finalTL,
+        credits: finalCredits,
+        bonusCredits,
+        paymentMethod: (paymentMethod === "card_transfer" ? "visa" : paymentMethod) as any,
+        status: "pending",
+        senderName: String(senderName).trim(),
+        senderBank: senderBank ? String(senderBank).trim() : defaultBankName,
+        senderIban: senderIban ? String(senderIban).trim() : undefined,
+        senderNote: senderNote ? String(senderNote).trim() : undefined,
+        createdAt: new Date()
+      });
+
+      const successMsg = (paymentMethod === "visa" || paymentMethod === "card_transfer")
+        ? "Visa kart transfer bildiriminiz başarıyla alındı! Ödemeniz onaylandıktan sonra krediniz otomatik hesabınıza yüklenecektir."
+        : "Ödeme bildiriminiz başarıyla alındı! Yetkililerimiz transferinizi teyit ettikten sonra krediniz anında yüklenecektir.";
+
+      return res.json({
+        success: true,
+        orderId,
+        pending: true,
+        message: successMsg
+      });
+    }
+
+    // Handle Shopier
+    if (paymentMethod === "shopier") {
+      const shopierConf = settings.shopier || { enabled: true, testMode: true, apiKey: "", apiSecret: "", websiteIndex: "1" };
+      if (!shopierConf.enabled) {
+        return res.status(400).json({ error: "Shopier ödeme yöntemi şu an devre dışıdır." });
+      }
+
+      const order = await Database.createPaymentOrder({
+        orderId,
+        username,
+        amountTL: finalTL,
+        credits: finalCredits,
+        bonusCredits,
+        paymentMethod: "shopier",
+        status: "pending",
+        createdAt: new Date()
+      });
+
+      // If test mode or no credentials configured, allow direct test-success flow
+      if (shopierConf.testMode || !shopierConf.apiKey || !shopierConf.apiSecret) {
+        return res.json({
+          success: true,
+          orderId,
+          testMode: true,
+          amountTL: finalTL,
+          credits: finalCredits,
+          bonusCredits,
+          message: "Shopier Test Modu Aktif. Kart bilgileri sitemize yazılmaz; Shopier 3D Secure ekranı simüle edilir."
+        });
+      }
+
+      // Shopier official form payload calculation
+      const random_nr = Math.floor(100000 + Math.random() * 900000).toString();
+      const currency = "TRY";
+      const total_order_value = finalTL.toFixed(2);
+      const signaturePayload = `${random_nr}${orderId}${total_order_value}${currency}`;
+      const signature = crypto.createHmac("sha256", shopierConf.apiSecret).update(signaturePayload).digest("base64");
+
+      const formParams = {
+        API_KEY: shopierConf.apiKey,
+        website_index: shopierConf.websiteIndex || "1",
+        platform_order_id: orderId,
+        product_name: `ZefirCraft ${finalCredits} Kredi Paketi`,
+        product_type: "0", // Dijital Ürün
+        buyer_id: username,
+        buyer_name: username,
+        buyer_surname: "Oyuncu",
+        buyer_email: `${username}@zefircraft.com`,
+        buyer_phone: "05555555555",
+        billing_address: "ZefirCraft Online",
+        billing_city: "Istanbul",
+        billing_country: "Turkey",
+        billing_postcode: "34000",
+        shipping_address: "ZefirCraft Online",
+        shipping_city: "Istanbul",
+        shipping_country: "Turkey",
+        shipping_postcode: "34000",
+        total_order_value,
+        currency,
+        random_nr,
+        signature,
+        callback_url: `${req.protocol}://${req.get("host")}/api/credits/callback/shopier`
+      };
+
+      return res.json({
+        success: true,
+        orderId,
+        testMode: false,
+        gateway: "shopier",
+        actionUrl: "https://www.shopier.com/ShowProductNew.php",
+        formParams
+      });
+    }
+
+    // Handle PayTR
+    if (paymentMethod === "paytr") {
+      const paytrConf = settings.paytr || { enabled: false, testMode: true, merchantId: "", merchantKey: "", merchantSalt: "" };
+      if (!paytrConf.enabled) {
+        return res.status(400).json({ error: "PayTR ödeme yöntemi şu an devre dışıdır." });
+      }
+
+      const order = await Database.createPaymentOrder({
+        orderId,
+        username,
+        amountTL: finalTL,
+        credits: finalCredits,
+        bonusCredits,
+        paymentMethod: "paytr",
+        status: "pending",
+        createdAt: new Date()
+      });
+
+      return res.json({
+        success: true,
+        orderId,
+        testMode: paytrConf.testMode,
+        amountTL: finalTL,
+        credits: finalCredits,
+        message: paytrConf.testMode ? "PayTR Test Modu aktif." : "PayTR 3D Secure ödeme başlatıldı."
+      });
+    }
+
+    return res.status(400).json({ error: "Geçersiz ödeme yöntemi." });
+  } catch (err: any) {
+    console.error("Create order error:", err);
+    return res.status(500).json({ error: "Ödeme emri oluşturulamadı." });
+  }
+});
+
+// POST /api/credits/simulate-success (Complete test payment order)
+app.post("/api/credits/simulate-success", authenticateToken, async (req: any, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) return res.status(400).json({ error: "Sipariş kodu zorunludur." });
+
+    const order = await Database.getPaymentOrderByOrderId(orderId);
+    if (!order) return res.status(404).json({ error: "Sipariş bulunamadı." });
+
+    if (order.username.toLowerCase() !== req.user.username.toLowerCase()) {
+      return res.status(403).json({ error: "Bu siparişe erişim izniniz yok." });
+    }
+
+    if (order.status === "completed") {
+      return res.json({ success: true, message: "Bu sipariş zaten tamamlanmış." });
+    }
+
+    const settings = await Database.getPaymentSettings();
+    const isTest = settings.shopier?.testMode || settings.paytr?.testMode || order.paymentMethod === "test";
+    if (!isTest) {
+      return res.status(400).json({ error: "Test modu kapalı. Gerçek ödeme gereklidir." });
+    }
+
+    const updated = await Database.updatePaymentOrderStatus(orderId, "completed", {
+      transactionRef: `SIM-SUCCESS-${Date.now()}`,
+      adminNote: "Test Modu Simülasyonu ile onaylandı"
+    });
+
+    const user = await Database.findUserByUsername(order.username);
+    return res.json({
+      success: true,
+      message: `🎉 Tebrikler! ${order.credits} Kredi hesabınıza başarıyla yüklendi!`,
+      newCredits: user?.credits || 0
+    });
+  } catch (err) {
+    console.error("Simulate success error:", err);
+    return res.status(500).json({ error: "İşlem tamamlanamadı." });
+  }
+});
+
+// POST /api/credits/transfer (Player to player credit transfer)
+app.post("/api/credits/transfer", authenticateToken, async (req: any, res) => {
+  try {
+    const fromUser = req.user.username;
+    const { toUser, amount, note } = req.body;
+
+    if (!toUser || typeof toUser !== "string" || !toUser.trim()) {
+      return res.status(400).json({ error: "Lütfen krediyi göndermek istediğiniz oyuncunun kullanıcı adını giriniz." });
+    }
+
+    const parsedAmount = parseInt(amount, 10);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ error: "Lütfen geçerli pozitif bir kredi miktarı giriniz." });
+    }
+
+    const result = await Database.transferCredits(fromUser, toUser.trim(), parsedAmount, note);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Also dispatch push notification to recipient if subscribed
+    try {
+      await dispatchPushNotification(toUser.trim(), {
+        title: "💰 Kredi Transferi Geldi!",
+        body: `${fromUser} sana ${parsedAmount} Kredi gönderdi!`
+      });
+    } catch (e) {
+      // Non-fatal
+    }
+
+    return res.json({
+      success: true,
+      message: `🎉 ${parsedAmount} Kredi başarıyla '${toUser.trim()}' oyuncusuna aktarıldı!`,
+      newBalance: result.newBalance,
+      transfer: result.transfer
+    });
+  } catch (err) {
+    console.error("Credit transfer error:", err);
+    return res.status(500).json({ error: "Transfer gerçekleştirilemedi." });
+  }
+});
+
+// POST /api/credits/callback/shopier (Shopier Webhook / IPN)
+app.post("/api/credits/callback/shopier", async (req, res) => {
+  try {
+    const { platform_order_id, status, payment_id, random_nr, signature } = req.body;
+    console.log("[Shopier Callback]", { platform_order_id, status, payment_id });
+
+    if (!platform_order_id) {
+      return res.status(400).send("Geçersiz sipariş kodu.");
+    }
+
+    const order = await Database.getPaymentOrderByOrderId(platform_order_id);
+    if (!order) {
+      return res.status(404).send("Sipariş bulunamadı.");
+    }
+
+    if (status === "success") {
+      await Database.updatePaymentOrderStatus(platform_order_id, "completed", {
+        transactionRef: `SHOPIER-${payment_id || Date.now()}`
+      });
+      console.log(`[Shopier] Sipariş ${platform_order_id} başarıyla tamamlandı, ${order.credits} Kredi ${order.username} hesabına aktarıldı.`);
+    } else {
+      await Database.updatePaymentOrderStatus(platform_order_id, "failed");
+    }
+
+    return res.status(200).send("OK");
+  } catch (err) {
+    console.error("[Shopier Callback Error]:", err);
+    return res.status(500).send("İşlem hatası.");
+  }
+});
+
+// POST /api/credits/callback/paytr (PayTR Webhook / IPN)
+app.post("/api/credits/callback/paytr", async (req, res) => {
+  try {
+    const { merchant_oid, status, total_amount, hash } = req.body;
+    console.log("[PayTR Callback]", { merchant_oid, status, total_amount });
+
+    if (!merchant_oid) {
+      return res.status(400).send("Geçersiz merchant_oid.");
+    }
+
+    const order = await Database.getPaymentOrderByOrderId(merchant_oid);
+    if (!order) {
+      return res.status(404).send("Sipariş bulunamadı.");
+    }
+
+    if (status === "success") {
+      await Database.updatePaymentOrderStatus(merchant_oid, "completed", {
+        transactionRef: `PAYTR-${Date.now()}`
+      });
+      console.log(`[PayTR] Sipariş ${merchant_oid} başarıyla tamamlandı.`);
+    } else {
+      await Database.updatePaymentOrderStatus(merchant_oid, "failed");
+    }
+
+    return res.send("OK");
+  } catch (err) {
+    console.error("[PayTR Callback Error]:", err);
+    return res.status(500).send("Hata");
+  }
+});
+
+// ADMIN: GET /api/admin/payments/settings
+app.get("/api/admin/payments/settings", authenticateAdmin, checkPermission("credits"), async (req, res) => {
+  try {
+    const settings = await Database.getPaymentSettings();
+    return res.json(settings);
+  } catch (err) {
+    return res.status(500).json({ error: "Ödeme ayarları yüklenemedi." });
+  }
+});
+
+// ADMIN: POST /api/admin/payments/settings
+app.post("/api/admin/payments/settings", authenticateAdmin, checkPermission("credits"), async (req, res) => {
+  try {
+    const updates = req.body;
+    const updated = await Database.updatePaymentSettings(updates);
+    return res.json({ success: true, settings: updated, message: "Ödeme ve bakiye ayarları başarıyla kaydedildi." });
+  } catch (err) {
+    return res.status(500).json({ error: "Ödeme ayarları güncellenemedi." });
+  }
+});
+
+// ADMIN: GET /api/admin/payments/orders
+app.get("/api/admin/payments/orders", authenticateAdmin, checkPermission("credits"), async (req, res) => {
+  try {
+    const orders = await Database.getAllPaymentOrders();
+    return res.json(orders);
+  } catch (err) {
+    return res.status(500).json({ error: "Ödeme siparişleri yüklenemedi." });
+  }
+});
+
+// ADMIN: POST /api/admin/payments/orders/:orderId/approve (Approve pending havale/order)
+app.post("/api/admin/payments/orders/:orderId/approve", authenticateAdmin, checkPermission("credits"), async (req: any, res) => {
+  try {
+    const { orderId } = req.params;
+    const { adminNote } = req.body;
+
+    const order = await Database.getPaymentOrderByOrderId(orderId);
+    if (!order) return res.status(404).json({ error: "Sipariş bulunamadı." });
+
+    if (order.status === "completed") {
+      return res.status(400).json({ error: "Bu sipariş zaten onaylanmış." });
+    }
+
+    const updated = await Database.updatePaymentOrderStatus(orderId, "completed", {
+      adminNote: adminNote || `Yönetici (${req.admin.username}) tarafından onaylandı`
+    });
+
+    return res.json({
+      success: true,
+      message: `✅ Sipariş onaylandı! ${order.credits} Kredi '${order.username}' hesabına başarıyla tanımlandı.`,
+      order: updated
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Sipariş onaylanamadı." });
+  }
+});
+
+// ADMIN: POST /api/admin/payments/orders/:orderId/reject
+app.post("/api/admin/payments/orders/:orderId/reject", authenticateAdmin, checkPermission("credits"), async (req: any, res) => {
+  try {
+    const { orderId } = req.params;
+    const { adminNote } = req.body;
+
+    const order = await Database.getPaymentOrderByOrderId(orderId);
+    if (!order) return res.status(404).json({ error: "Sipariş bulunamadı." });
+
+    const updated = await Database.updatePaymentOrderStatus(orderId, "cancelled", {
+      adminNote: adminNote || `Yönetici (${req.admin.username}) tarafından reddedildi`
+    });
+
+    return res.json({
+      success: true,
+      message: `Sipariş reddedildi/iptal edildi.`,
+      order: updated
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Sipariş güncellenemedi." });
   }
 });
 

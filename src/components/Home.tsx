@@ -773,7 +773,7 @@ export default function Home({ onNavigate, wheelEnabled = true, earnEnabled = tr
                 </p>
               </div>
               <a
-                href="https://discord.gg/invite-placeholder"
+                href="https://discord.gg/yH52952uCq"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full py-2.5 bg-white text-[#5865F2] font-black text-center text-xs rounded-xl hover:bg-slate-50 transition-colors shadow-md relative z-10"

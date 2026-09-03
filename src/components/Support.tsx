@@ -151,7 +151,7 @@ export default function Support() {
               </p>
             </div>
             <a
-              href="https://discord.gg/invite-placeholder"
+              href="https://discord.gg/yH52952uCq"
               target="_blank"
               rel="noopener noreferrer"
               className="px-5 py-3 bg-white hover:bg-slate-100 text-slate-900 text-xs font-black rounded-xl transition-all shadow-md inline-block text-center cursor-pointer whitespace-nowrap"

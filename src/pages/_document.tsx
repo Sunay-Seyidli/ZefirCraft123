@@ -43,7 +43,7 @@ export default function Document() {
                   "url": "https://zefircraft.vercel.app/",
                   "logo": "https://zefircraft.vercel.app/logo.png",
                   "sameAs": [
-                    "https://discord.gg/zefircraft"
+                    "https://discord.gg/yH52952uCq"
                   ],
                   "contactPoint": {
                     "@type": "ContactPoint",

@@ -109,6 +109,126 @@ export interface CreditRequest {
   createdAt: Date;
 }
 
+export interface PaymentPackage {
+  id: string;
+  amountTL: number;
+  credits: number;
+  bonusPercent: number;
+  badge?: string;
+  popular?: boolean;
+}
+
+export interface PaymentSettings {
+  creditPerTL: number;
+  minPaymentTL: number;
+  maxPaymentTL: number;
+  packages: PaymentPackage[];
+  shopier: {
+    enabled: boolean;
+    apiKey: string;
+    apiSecret: string;
+    websiteIndex: string;
+    testMode: boolean;
+  };
+  paytr: {
+    enabled: boolean;
+    merchantId: string;
+    merchantKey: string;
+    merchantSalt: string;
+    testMode: boolean;
+  };
+  havale: {
+    enabled: boolean;
+    bankName: string;
+    accountHolder: string;
+    iban: string;
+    paparaNumber: string;
+    instructions: string;
+  };
+  visaCard: {
+    enabled: boolean;
+    cardNumber: string;
+    cardHolder: string;
+    bankName: string;
+    currency: string;
+    aznRate: number;
+    instructions: string;
+  };
+}
+
+export interface PaymentOrder {
+  _id?: any;
+  orderId: string;
+  username: string;
+  amountTL: number;
+  credits: number;
+  bonusCredits: number;
+  paymentMethod: "shopier" | "paytr" | "havale" | "papara" | "test" | "visa" | "card_transfer";
+  status: "pending" | "completed" | "failed" | "cancelled";
+  senderName?: string;
+  senderBank?: string;
+  senderIban?: string;
+  senderNote?: string;
+  transactionRef?: string;
+  createdAt: Date;
+  completedAt?: Date;
+  adminNote?: string;
+}
+
+export interface CreditTransfer {
+  _id?: any;
+  fromUser: string;
+  toUser: string;
+  amount: number;
+  note?: string;
+  createdAt: Date;
+}
+
+export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
+  creditPerTL: 1,
+  minPaymentTL: 10,
+  maxPaymentTL: 5000,
+  packages: [
+    { id: "pkg-1", amountTL: 25, credits: 25, bonusPercent: 0, badge: "Başlangıç" },
+    { id: "pkg-2", amountTL: 50, credits: 50, bonusPercent: 0, badge: "Standart" },
+    { id: "pkg-3", amountTL: 100, credits: 110, bonusPercent: 10, badge: "+%10 Bonus", popular: true },
+    { id: "pkg-4", amountTL: 250, credits: 285, bonusPercent: 15, badge: "+%15 Bonus" },
+    { id: "pkg-5", amountTL: 500, credits: 600, bonusPercent: 20, badge: "+%20 Süper Bonus" },
+    { id: "pkg-6", amountTL: 1000, credits: 1300, bonusPercent: 30, badge: "+%30 MEGA Bonus" }
+  ],
+  shopier: {
+    enabled: true,
+    apiKey: "",
+    apiSecret: "",
+    websiteIndex: "1",
+    testMode: true
+  },
+  paytr: {
+    enabled: false,
+    merchantId: "",
+    merchantKey: "",
+    merchantSalt: "",
+    testMode: true
+  },
+  havale: {
+    enabled: true,
+    bankName: "Banka Havalesi / FAST (Türkiye)",
+    accountHolder: "ZefirCraft Sunucu Yönetimi",
+    iban: "TR00 0000 0000 0000 0000 0000 00",
+    paparaNumber: "",
+    instructions: "Havale / FAST veya EFT ile ödeme yaparken açıklama kısmına MUTLAKA sipariş kodunuzu veya kullanıcı adınızı yazınız. Ödemeyi tamamladıktan sonra formu doldurup bildiriniz."
+  },
+  visaCard: {
+    enabled: true,
+    cardNumber: "4098 5844 6336 1459",
+    cardHolder: "Sunay Seyidli",
+    bankName: "Kapital Bank / Birbank (Azərbaycan)",
+    currency: "AZN",
+    aznRate: 20,
+    instructions: "Azərbaycan daxilində (Birbank, m10, Leobank, ABB) və ya xaricdən (Paysend, KoronaPay, UPT, Visa Direct) 16 rəqəmli Visa kart nömrəsinə birbaşa köçürmə edə bilərsiniz. Ödənişi etdikdən sonra formu göndərin, yetkili tərəfindən dərhal təsdiqlənsin!"
+  }
+};
+
 export interface Application {
   _id?: any;
   username: string;
@@ -335,6 +455,9 @@ interface MockSchema {
   quizSettings?: EarnQuizSettings;
   wheelSettings?: { enabled: boolean; price: number; multiplier: number };
   quiz_daily_logs?: { date: string; username: string; ip: string; deviceId: string; count: number }[];
+  payment_orders?: PaymentOrder[];
+  credit_transfers?: CreditTransfer[];
+  paymentSettings?: PaymentSettings;
   pluginSettings?: {
     secretKey: string;
     requireOnlineForPurchase: boolean;
@@ -365,7 +488,10 @@ let mockDbState: MockSchema = {
   quizQuestions: [],
   quizQuests: [],
   wheelSettings: { enabled: true, price: 0, multiplier: 1 },
-  quiz_daily_logs: []
+  quiz_daily_logs: [],
+  payment_orders: [],
+  credit_transfers: [],
+  paymentSettings: DEFAULT_PAYMENT_SETTINGS
 };
 
 // Seed helper functions
@@ -1263,6 +1389,246 @@ export class Database {
         mockDbState.credit_requests[index].status = status;
         saveMockDb();
       }
+    }
+  }
+
+  // PAYMENT SETTINGS & TRANSACTIONS
+  static async getPaymentSettings(): Promise<PaymentSettings> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      const doc = await mongo.db.collection("system_configs").findOne({ type: "payment_settings" });
+      if (doc && doc.settings) {
+        return {
+          ...DEFAULT_PAYMENT_SETTINGS,
+          ...doc.settings,
+          packages: doc.settings.packages || DEFAULT_PAYMENT_SETTINGS.packages,
+          shopier: { ...DEFAULT_PAYMENT_SETTINGS.shopier, ...(doc.settings.shopier || {}) },
+          paytr: { ...DEFAULT_PAYMENT_SETTINGS.paytr, ...(doc.settings.paytr || {}) },
+          havale: { ...DEFAULT_PAYMENT_SETTINGS.havale, ...(doc.settings.havale || {}) },
+          visaCard: { ...DEFAULT_PAYMENT_SETTINGS.visaCard, ...(doc.settings.visaCard || {}) }
+        };
+      }
+    } else {
+      if (mockDbState.paymentSettings) {
+        return {
+          ...DEFAULT_PAYMENT_SETTINGS,
+          ...mockDbState.paymentSettings,
+          visaCard: { ...DEFAULT_PAYMENT_SETTINGS.visaCard, ...(mockDbState.paymentSettings.visaCard || {}) }
+        };
+      }
+    }
+    return DEFAULT_PAYMENT_SETTINGS;
+  }
+
+  static async updatePaymentSettings(updates: Partial<PaymentSettings>): Promise<PaymentSettings> {
+    const current = await this.getPaymentSettings();
+    const updated: PaymentSettings = {
+      ...current,
+      ...updates,
+      shopier: { ...current.shopier, ...(updates.shopier || {}) },
+      paytr: { ...current.paytr, ...(updates.paytr || {}) },
+      havale: { ...current.havale, ...(updates.havale || {}) },
+      visaCard: { ...current.visaCard, ...(updates.visaCard || {}) }
+    };
+
+    const mongo = await getMongoClient();
+    if (mongo) {
+      await mongo.db.collection("system_configs").updateOne(
+        { type: "payment_settings" },
+        { $set: { type: "payment_settings", settings: updated, updatedAt: new Date() } },
+        { upsert: true }
+      );
+    } else {
+      mockDbState.paymentSettings = updated;
+      saveMockDb();
+    }
+    return updated;
+  }
+
+  static async createPaymentOrder(order: Omit<PaymentOrder, "_id">): Promise<PaymentOrder> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      const res = await mongo.db.collection("payment_orders").insertOne(order);
+      return { ...order, _id: res.insertedId };
+    } else {
+      if (!mockDbState.payment_orders) mockDbState.payment_orders = [];
+      const newOrder: PaymentOrder = {
+        ...order,
+        _id: "order_" + Date.now()
+      };
+      mockDbState.payment_orders.push(newOrder);
+      saveMockDb();
+      return newOrder;
+    }
+  }
+
+  static async getPaymentOrderByOrderId(orderId: string): Promise<PaymentOrder | null> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      return (await mongo.db.collection("payment_orders").findOne({ orderId })) as PaymentOrder | null;
+    } else {
+      const orders = mockDbState.payment_orders || [];
+      return orders.find(o => o.orderId === orderId) || null;
+    }
+  }
+
+  static async updatePaymentOrderStatus(
+    orderId: string,
+    status: "completed" | "failed" | "cancelled",
+    details?: { transactionRef?: string; adminNote?: string }
+  ): Promise<PaymentOrder | null> {
+    const order = await this.getPaymentOrderByOrderId(orderId);
+    if (!order) return null;
+
+    const completedAt = status === "completed" ? new Date() : undefined;
+    const mongo = await getMongoClient();
+
+    if (order.status !== "completed" && status === "completed") {
+      const user = await this.findUserByUsername(order.username);
+      if (user) {
+        const newCredits = (user.credits || 0) + order.credits;
+        await this.updateUserCredits(order.username, newCredits);
+      }
+    }
+
+    if (mongo) {
+      await mongo.db.collection("payment_orders").updateOne(
+        { orderId },
+        {
+          $set: {
+            status,
+            ...(completedAt ? { completedAt } : {}),
+            ...(details?.transactionRef ? { transactionRef: details.transactionRef } : {}),
+            ...(details?.adminNote ? { adminNote: details.adminNote } : {})
+          }
+        }
+      );
+      return await this.getPaymentOrderByOrderId(orderId);
+    } else {
+      const orders = mockDbState.payment_orders || [];
+      const idx = orders.findIndex(o => o.orderId === orderId);
+      if (idx !== -1) {
+        orders[idx] = {
+          ...orders[idx],
+          status,
+          ...(completedAt ? { completedAt } : {}),
+          ...(details?.transactionRef ? { transactionRef: details.transactionRef } : {}),
+          ...(details?.adminNote ? { adminNote: details.adminNote } : {})
+        };
+        saveMockDb();
+        return orders[idx];
+      }
+      return null;
+    }
+  }
+
+  static async getUserPaymentOrders(username: string): Promise<PaymentOrder[]> {
+    const lower = username.toLowerCase();
+    const mongo = await getMongoClient();
+    if (mongo) {
+      return (await mongo.db.collection("payment_orders")
+        .find({ username: { $regex: new RegExp(`^${lower}$`, "i") } })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .toArray()) as PaymentOrder[];
+    } else {
+      const orders = mockDbState.payment_orders || [];
+      return orders
+        .filter(o => o.username.toLowerCase() === lower)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+  }
+
+  static async getAllPaymentOrders(): Promise<PaymentOrder[]> {
+    const mongo = await getMongoClient();
+    if (mongo) {
+      return (await mongo.db.collection("payment_orders")
+        .find({})
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .toArray()) as PaymentOrder[];
+    } else {
+      const orders = mockDbState.payment_orders || [];
+      return [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+  }
+
+  static async transferCredits(
+    fromUser: string,
+    toUser: string,
+    amount: number,
+    note?: string
+  ): Promise<{ success: boolean; error?: string; newBalance?: number; transfer?: CreditTransfer }> {
+    const fromLower = fromUser.toLowerCase();
+    const toLower = toUser.toLowerCase();
+
+    if (fromLower === toLower) {
+      return { success: false, error: "Kendinize kredi transferi yapamazsınız!" };
+    }
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return { success: false, error: "Lütfen geçerli pozitif bir kredi miktarı giriniz!" };
+    }
+
+    const sender = await this.findUserByUsername(fromUser);
+    if (!sender) {
+      return { success: false, error: "Gönderici hesap bulunamadı!" };
+    }
+    if ((sender.credits || 0) < amount) {
+      return { success: false, error: `Krediniz yetersiz! Mevcut bakiyeniz: ${sender.credits || 0} Kredi.` };
+    }
+
+    const recipient = await this.findUserByUsername(toUser);
+    if (!recipient) {
+      return { success: false, error: `'${toUser}' kullanıcı adına sahip bir ZefirCraft oyuncusu bulunamadı!` };
+    }
+
+    const newSenderCredits = sender.credits - amount;
+    const newRecipientCredits = (recipient.credits || 0) + amount;
+
+    await this.updateUserCredits(sender.username, newSenderCredits);
+    await this.updateUserCredits(recipient.username, newRecipientCredits);
+
+    const record: CreditTransfer = {
+      fromUser: sender.username,
+      toUser: recipient.username,
+      amount,
+      note: note?.trim() || undefined,
+      createdAt: new Date()
+    };
+
+    const mongo = await getMongoClient();
+    if (mongo) {
+      const res = await mongo.db.collection("credit_transfers").insertOne(record);
+      record._id = res.insertedId;
+    } else {
+      if (!mockDbState.credit_transfers) mockDbState.credit_transfers = [];
+      record._id = "ct_" + Date.now();
+      mockDbState.credit_transfers.push(record);
+      saveMockDb();
+    }
+
+    return { success: true, newBalance: newSenderCredits, transfer: record };
+  }
+
+  static async getUserCreditTransfers(username: string): Promise<CreditTransfer[]> {
+    const lower = username.toLowerCase();
+    const mongo = await getMongoClient();
+    if (mongo) {
+      return (await mongo.db.collection("credit_transfers")
+        .find({
+          $or: [
+            { fromUser: { $regex: new RegExp(`^${lower}$`, "i") } },
+            { toUser: { $regex: new RegExp(`^${lower}$`, "i") } }
+          ]
+        })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .toArray()) as CreditTransfer[];
+    } else {
+      const transfers = mockDbState.credit_transfers || [];
+      return transfers
+        .filter(t => t.fromUser.toLowerCase() === lower || t.toUser.toLowerCase() === lower)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
   }
 

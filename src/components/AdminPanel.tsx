@@ -38,7 +38,11 @@ import {
   Network,
   HelpCircle,
   Target,
-  Clock
+  Clock,
+  CreditCard,
+  Building2,
+  Smartphone,
+  ShieldCheck
 } from "lucide-react";
 import { User, Product, PurchaseRequest, StaffApplication, AdminStats, Article, Category } from "../types";
 import AdminRoleModal from "./AdminRoleModal";
@@ -51,6 +55,8 @@ type SubMenuId =
   | "categories"
   | "products-list"
   | "orders"
+  | "payment-settings"
+  | "payment-orders"
   | "wheel-settings"
   | "wheel-logs"
   | "quiz-settings"
@@ -108,6 +114,8 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
     { id: "categories" as SubMenuId, category: "store", label: "Mağaza Kategorileri", desc: "Rütbe, Eşya, VIP gibi ürün grupları düzenleme", icon: <Award className="w-4 h-4 text-amber-400" />, keywords: ["kategori", "mağaza", "grup", "vip", "eşya", "rütbe"] },
     { id: "products-list" as SubMenuId, category: "store", label: "Ürün Kataloğu & Fiyat", desc: "Mağaza eşya fiyatları, simgeleri ve sunucu komutları", icon: <ShoppingBag className="w-4 h-4 text-emerald-400" />, keywords: ["ürün", "fiyat", "komut", "eşya", "katalog", "satış", "mağaza"] },
     { id: "orders" as SubMenuId, category: "store", label: "Sipariş Geçmişi", desc: "Sunucuya gönderilen sipariş ve bakiye geçmişi", icon: <History className="w-4 h-4 text-cyan-400" />, badge: stats?.pendingPurchases, keywords: ["sipariş", "geçmiş", "satın alma", "teslimat", "ödeme"] },
+    { id: "payment-settings" as SubMenuId, category: "store", label: "Ödeme Yöntemleri (POS)", desc: "Shopier, PayTR, Banka IBAN, Papara ve Kredi Paketleri ayarları", icon: <CreditCard className="w-4 h-4 text-sky-400" />, keywords: ["ödeme", "shopier", "paytr", "havale", "papara", "kredi", "pos", "iban", "kart"] },
+    { id: "payment-orders" as SubMenuId, category: "store", label: "Kredi Siparişleri & Havale Onayı", desc: "Gelen gerçek para ödemeleri, bekleyen havaleler ve onay masası", icon: <Coins className="w-4 h-4 text-amber-400" />, keywords: ["ödeme", "sipariş", "havale", "onay", "dekont", "bakiye"] },
     { id: "quiz-settings" as SubMenuId, category: "earn", label: "Kredi Kazan & Anketler", desc: "Sistem durumunu aç/kapa, anket soruları, AdSense & reklam linkleri", icon: <HelpCircle className="w-4 h-4 text-amber-400" />, keywords: ["anket", "kredi", "kazan", "adsense", "reklam", "soru", "devre dışı", "aç", "kapat", "açık", "kapalı", "bakım"] },
     { id: "wheel-settings" as SubMenuId, category: "earn", label: "Şans Çarkı (Çarkıfelek)", desc: "Çarkıfelek aç/kapa, ödül oranları ve bilet bedelleri", icon: <Gift className="w-4 h-4 text-pink-400" />, keywords: ["çark", "çarkıfelek", "şans", "ödül", "oran", "kredi", "aç", "kapat"] },
     { id: "wheel-logs" as SubMenuId, category: "earn", label: "Çark Kazanım Logları", desc: "Çarkıfelek kazanan oyuncuların detaylı günlüğü", icon: <Coins className="w-4 h-4 text-[#ff2200]" />, keywords: ["çark", "kazanım", "günlük", "log", "ödül"] },
@@ -254,6 +262,41 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
     rewardCredits: 5
   });
 
+  // Payment Settings & Orders States
+  const [paymentSettings, setPaymentSettings] = useState<any>({
+    creditPerTL: 1,
+    minPaymentTL: 10,
+    maxPaymentTL: 5000,
+    packages: [
+      { id: "pkg_1", amountTL: 50, credits: 50, bonus: 0, badge: "", isPopular: false },
+      { id: "pkg_2", amountTL: 100, credits: 110, bonus: 10, badge: "%10 Bonus", isPopular: true },
+      { id: "pkg_3", amountTL: 250, credits: 300, bonus: 50, badge: "%20 Bonus", isPopular: false },
+      { id: "pkg_4", amountTL: 500, credits: 650, bonus: 150, badge: "%30 Mega Bonus", isPopular: false }
+    ],
+    shopier: { enabled: true, testMode: true, apiKey: "", apiSecret: "", websiteIndex: "1" },
+    paytr: { enabled: false, testMode: true, merchantId: "", merchantKey: "", merchantSalt: "" },
+    havale: {
+      enabled: true,
+      bankName: "Ziraat Bankası / Enpara / Garanti",
+      accountHolder: "Ahmet Yılmaz",
+      iban: "TR12 3456 7890 1234 5678 9012 34",
+      paparaNumber: "1234567890",
+      instructions: "Açıklama alanına SADECE kullanıcı adınızı veya Sipariş Kodunuzu yazınız."
+    }
+  });
+  const [paymentOrders, setPaymentOrders] = useState<any[]>([]);
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const [paymentOrderFilter, setPaymentOrderFilter] = useState<"all" | "pending" | "completed" | "cancelled">("all");
+  const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
+  const [newPackage, setNewPackage] = useState({
+    amountTL: 150,
+    credits: 165,
+    bonus: 15,
+    badge: "",
+    isPopular: false
+  });
+  const [showAddPackage, setShowAddPackage] = useState(false);
+
   // Sidebar Configuration
   const sidebarGroups: SidebarGroup[] = [
     {
@@ -278,7 +321,9 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
       children: [
         { id: "categories", label: "Kategoriler", icon: <Award className="w-4 h-4" /> },
         { id: "products-list", label: "Ürün Kataloğu", icon: <ShoppingBag className="w-4 h-4" /> },
-        { id: "orders", label: "Sipariş Geçmişi", icon: <History className="w-4 h-4" /> }
+        { id: "orders", label: "Sipariş Geçmişi", icon: <History className="w-4 h-4" /> },
+        { id: "payment-settings", label: "Ödeme Yöntemleri (POS)", icon: <CreditCard className="w-4 h-4" /> },
+        { id: "payment-orders", label: "Kredi Siparişleri & Havale", icon: <Coins className="w-4 h-4" /> }
       ]
     },
     {
@@ -462,11 +507,127 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
 
       const qSetRes = await fetch("/api/admin/quiz/settings", { headers: { Authorization: `Bearer ${token}` } });
       if (qSetRes.ok) setAdminQuizSettings(await qSetRes.json());
+
+      // 11) Payment settings & orders
+      try {
+        const pSetRes = await fetch("/api/admin/payments/settings", { headers: { Authorization: `Bearer ${token}` } });
+        if (pSetRes.ok) setPaymentSettings(await pSetRes.json());
+
+        const pOrdRes = await fetch("/api/admin/payments/orders", { headers: { Authorization: `Bearer ${token}` } });
+        if (pOrdRes.ok) {
+          const pOrdData = await pOrdRes.json();
+          setPaymentOrders(Array.isArray(pOrdData) ? pOrdData : []);
+        }
+      } catch (payErr) {
+        console.error("Payment data fetch error:", payErr);
+      }
     } catch (err) {
       setError("Veriler yüklenirken teknik bir bağlantı hatası oluştu.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // PAYMENT HANDLERS
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPaymentSaving(true);
+    try {
+      const token = getAdminToken();
+      const res = await fetch("/api/admin/payments/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(paymentSettings)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMessage("Ödeme ayarları ve paketler başarıyla kaydedildi!");
+        setTimeout(() => setSuccessMessage(null), 4000);
+      } else {
+        setError(data.error || "Ödeme ayarları kaydedilemedi.");
+      }
+    } catch (err) {
+      setError("Bağlantı hatası oluştu.");
+    } finally {
+      setPaymentSaving(false);
+    }
+  };
+
+  const handleApprovePaymentOrder = async (orderId: string) => {
+    const adminNote = prompt("Onay açıklaması / Not (İsteğe Bağlı):", "Ödeme teyit edildi, kredi yüklendi.");
+    if (adminNote === null) return;
+
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`/api/admin/payments/orders/${orderId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ adminNote })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMessage(data.message || "Sipariş onaylandı ve oyuncunun bakiyesine eklendi!");
+        setTimeout(() => setSuccessMessage(null), 4000);
+        fetchAdminData();
+      } else {
+        setError(data.error || "Sipariş onaylanamadı.");
+      }
+    } catch (e) {
+      setError("Bağlantı hatası oluştu.");
+    }
+  };
+
+  const handleRejectPaymentOrder = async (orderId: string) => {
+    const adminNote = prompt("İptal / Red sebebi:", "Ödeme doğrulanmadı veya dekont bulunamadı.");
+    if (adminNote === null) return;
+
+    try {
+      const token = getAdminToken();
+      const res = await fetch(`/api/admin/payments/orders/${orderId}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ adminNote })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMessage("Sipariş iptal edildi.");
+        setTimeout(() => setSuccessMessage(null), 4000);
+        fetchAdminData();
+      } else {
+        setError(data.error || "İptal işlemi gerçekleştirilemedi.");
+      }
+    } catch (e) {
+      setError("Bağlantı hatası oluştu.");
+    }
+  };
+
+  const handleAddPaymentPackage = () => {
+    if (newPackage.amountTL <= 0 || newPackage.credits <= 0) {
+      setError("Lütfen geçerli bir tutar ve kredi miktarı girin.");
+      return;
+    }
+    const pkgId = `pkg_${Date.now()}`;
+    const updatedPackages = [
+      ...(paymentSettings.packages || []),
+      { ...newPackage, id: pkgId }
+    ];
+    setPaymentSettings({ ...paymentSettings, packages: updatedPackages });
+    setShowAddPackage(false);
+    setNewPackage({ amountTL: 150, credits: 165, bonus: 15, badge: "", isPopular: false });
+  };
+
+  const handleRemovePaymentPackage = (pkgId: string) => {
+    const updatedPackages = (paymentSettings.packages || []).filter((p: any) => p.id !== pkgId);
+    setPaymentSettings({ ...paymentSettings, packages: updatedPackages });
   };
 
   // QUIZ & QUESTS HANDLERS
@@ -2300,7 +2461,826 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                 </div>
               )}
 
-              {/* 7) TAB: WHEEL SETTINGS */}
+              {/* 6.5) TAB: PAYMENT SETTINGS */}
+              {activeTab === "payment-settings" && (
+                <div className="space-y-8">
+                  <div className="border-[#1b3d54] border-[#1e293b] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                        <CreditCard className="w-5 h-5 text-sky-400" /> Ödeme Yöntemleri & Kredi Satış Ayarları
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Shopier, PayTR, Banka Havalesi ve Papara ödeme altyapılarını yönetin, kredi kurunu ve indirim paketlerini belirleyin.
+                      </p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSavePaymentSettings} className="space-y-8">
+                    {/* General Rates & Limits */}
+                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 text-sky-400">
+                        <Coins className="w-4 h-4" /> Kredi & Fiyat Dönüşüm Politikası
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            1 TL Karşılığı Temel Kredi
+                          </label>
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            required
+                            value={paymentSettings.creditPerTL || 1}
+                            onChange={(e) => setPaymentSettings({ ...paymentSettings, creditPerTL: parseFloat(e.target.value) || 1 })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                          <p className="text-[10px] text-slate-500">Örn: 1 TL = 1 Kredi</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Minimum Ödeme Tutarı (TL)
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={paymentSettings.minPaymentTL || 10}
+                            onChange={(e) => setPaymentSettings({ ...paymentSettings, minPaymentTL: parseFloat(e.target.value) || 10 })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Maksimum Tek Seferlik Ödeme (TL)
+                          </label>
+                          <input
+                            type="number"
+                            min="10"
+                            required
+                            value={paymentSettings.maxPaymentTL || 5000}
+                            onChange={(e) => setPaymentSettings({ ...paymentSettings, maxPaymentTL: parseFloat(e.target.value) || 5000 })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SHOPIER GATEWAY */}
+                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27355a]/60 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-black text-sm">
+                            S
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                              Shopier Sanal POS Entegrasyonu
+                            </h3>
+                            <p className="text-[11px] text-slate-400">
+                              Kredi Kartı / Banka Kartı ile 3D Secure güvenli tahsilat
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <span className="text-xs text-slate-300 font-bold">Aktif</span>
+                            <input
+                              type="checkbox"
+                              checked={paymentSettings.shopier?.enabled || false}
+                              onChange={(e) => setPaymentSettings({
+                                ...paymentSettings,
+                                shopier: { ...paymentSettings.shopier, enabled: e.target.checked }
+                              })}
+                              className="w-4 h-4 rounded text-sky-500"
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <span className="text-xs text-amber-400 font-bold">Test Modu</span>
+                            <input
+                              type="checkbox"
+                              checked={paymentSettings.shopier?.testMode || false}
+                              onChange={(e) => setPaymentSettings({
+                                ...paymentSettings,
+                                shopier: { ...paymentSettings.shopier, testMode: e.target.checked }
+                              })}
+                              className="w-4 h-4 rounded text-amber-500"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Shopier API Key (İstemci Anahtarı)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="shopier_api_key_..."
+                            value={paymentSettings.shopier?.apiKey || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              shopier: { ...paymentSettings.shopier, apiKey: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Shopier API Secret (Gizli Anahtar)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="shopier_secret_..."
+                            value={paymentSettings.shopier?.apiSecret || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              shopier: { ...paymentSettings.shopier, apiSecret: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Website Index
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="1"
+                            value={paymentSettings.shopier?.websiteIndex || "1"}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              shopier: { ...paymentSettings.shopier, websiteIndex: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-[#111625] border border-sky-500/20 rounded-xl text-[11px] text-slate-300 flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-sky-400">Geri Dönüş (Callback / Webhook) URL'si:</span>
+                          <span className="font-mono text-slate-400 ml-2">/api/credits/callback/shopier</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400">Shopier panelinizde geri dönüş URL'sine bu adresi giriniz.</span>
+                      </div>
+                    </div>
+
+                    {/* PAYTR GATEWAY */}
+                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27355a]/60 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-sm">
+                            P
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                              PayTR Sanal POS Entegrasyonu
+                            </h3>
+                            <p className="text-[11px] text-slate-400">
+                              Tüm yerli banka ve kredi kartlarına taksitli/tek çekim POS
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <span className="text-xs text-slate-300 font-bold">Aktif</span>
+                            <input
+                              type="checkbox"
+                              checked={paymentSettings.paytr?.enabled || false}
+                              onChange={(e) => setPaymentSettings({
+                                ...paymentSettings,
+                                paytr: { ...paymentSettings.paytr, enabled: e.target.checked }
+                              })}
+                              className="w-4 h-4 rounded text-sky-500"
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <span className="text-xs text-amber-400 font-bold">Test Modu</span>
+                            <input
+                              type="checkbox"
+                              checked={paymentSettings.paytr?.testMode || false}
+                              onChange={(e) => setPaymentSettings({
+                                ...paymentSettings,
+                                paytr: { ...paymentSettings.paytr, testMode: e.target.checked }
+                              })}
+                              className="w-4 h-4 rounded text-amber-500"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Merchant ID (Mağaza No)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="PayTR Mağaza ID"
+                            value={paymentSettings.paytr?.merchantId || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              paytr: { ...paymentSettings.paytr, merchantId: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Merchant Key (Mağaza Parolası)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="PayTR Merchant Key"
+                            value={paymentSettings.paytr?.merchantKey || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              paytr: { ...paymentSettings.paytr, merchantKey: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Merchant Salt (Gizli Anahtar)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="PayTR Merchant Salt"
+                            value={paymentSettings.paytr?.merchantSalt || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              paytr: { ...paymentSettings.paytr, merchantSalt: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* HAVALE / FAST / PAPARA */}
+                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27355a]/60 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-sm">
+                            <Building2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                              Havale, EFT, FAST ve Papara
+                            </h3>
+                            <p className="text-[11px] text-slate-400">
+                              Oyuncuların banka hesaplarınıza para transferi yapıp onay talep edebileceği yöntem
+                            </p>
+                          </div>
+                        </div>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <span className="text-xs text-slate-300 font-bold">Havale/Papara Açık</span>
+                          <input
+                            type="checkbox"
+                            checked={paymentSettings.havale?.enabled || false}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              havale: { ...paymentSettings.havale, enabled: e.target.checked }
+                            })}
+                            className="w-4 h-4 rounded text-emerald-500"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Banka Adı / Şube
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ziraat Bankası / Enpara / Garanti BBVA"
+                            value={paymentSettings.havale?.bankName || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              havale: { ...paymentSettings.havale, bankName: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Hesap Sahibi (Ad Soyad)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ahmet Yılmaz"
+                            value={paymentSettings.havale?.accountHolder || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              havale: { ...paymentSettings.havale, accountHolder: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            IBAN Numarası
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="TR12 3456 7890 1234 5678 9012 34"
+                            value={paymentSettings.havale?.iban || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              havale: { ...paymentSettings.havale, iban: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Papara Numara / Mail (İsteğe Bağlı)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="1234567890 veya papara@zefircraft.com"
+                            value={paymentSettings.havale?.paparaNumber || ""}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              havale: { ...paymentSettings.havale, paparaNumber: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                          Oyuncuya Gösterilecek Havale Talimatı / Açıklama Notu
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={paymentSettings.havale?.instructions || ""}
+                          onChange={(e) => setPaymentSettings({
+                            ...paymentSettings,
+                            havale: { ...paymentSettings.havale, instructions: e.target.value }
+                          })}
+                          placeholder="Açıklama alanına SADECE kullanıcı adınızı veya Sipariş Kodunuzu yazınız..."
+                          className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* GATEWAY 4: VISA KART / DOĞRUDAN KART TRANSFERİ */}
+                    <div className="bg-[#171e32] border border-blue-500/30 rounded-3xl p-6 space-y-4">
+                      <div className="flex items-center justify-between border-b border-[#27355a]/60 pb-3">
+                        <div>
+                          <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 text-blue-400">
+                            <CreditCard className="w-4 h-4" /> Doğrudan Visa Kart Numarasına Transfer (Azerbaycan & Uluslararası)
+                          </h3>
+                          <p className="text-[11px] text-slate-400">
+                            Oyuncuların doğrudan 16 haneli kart numaranıza (Birbank, m10, Leobank veya Paysend/KoronaPay ile) para göndermesi
+                          </p>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-300">
+                          <span>Aktif:</span>
+                          <input
+                            type="checkbox"
+                            checked={paymentSettings.visaCard?.enabled ?? true}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              visaCard: { ...(paymentSettings.visaCard || {}), enabled: e.target.checked }
+                            })}
+                            className="w-4 h-4 rounded text-blue-500"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Visa Kart Numarası (16 Hane)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="4098 5844 6336 1459"
+                            value={paymentSettings.visaCard?.cardNumber || "4098 5844 6336 1459"}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              visaCard: { ...(paymentSettings.visaCard || {}), cardNumber: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-blue-500/30 rounded-xl p-3 text-xs text-white font-mono font-bold focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Kart Sahibi (Ad Soyad)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Sunay Seyidli"
+                            value={paymentSettings.visaCard?.cardHolder || "Sunay Seyidli"}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              visaCard: { ...(paymentSettings.visaCard || {}), cardHolder: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Banka Adı / Tipi
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Kapital Bank / Birbank (Azərbaycan)"
+                            value={paymentSettings.visaCard?.bankName || "Kapital Bank / Birbank (Azərbaycan)"}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              visaCard: { ...(paymentSettings.visaCard || {}), bankName: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Kart Para Birimi
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="AZN (Manat)"
+                            value={paymentSettings.visaCard?.currency || "AZN"}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              visaCard: { ...(paymentSettings.visaCard || {}), currency: e.target.value }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                            Manat / TL Dönüşüm Oranı (1 AZN = ? TL)
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.1"
+                            placeholder="20"
+                            value={paymentSettings.visaCard?.aznRate || 20}
+                            onChange={(e) => setPaymentSettings({
+                              ...paymentSettings,
+                              visaCard: { ...(paymentSettings.visaCard || {}), aznRate: parseFloat(e.target.value) || 20 }
+                            })}
+                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                          Kart Transfer Talimatları & Açıklama
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={paymentSettings.visaCard?.instructions || ""}
+                          onChange={(e) => setPaymentSettings({
+                            ...paymentSettings,
+                            visaCard: { ...(paymentSettings.visaCard || {}), instructions: e.target.value }
+                          })}
+                          placeholder="Birbank, m10, Leobank veya Paysend ile bu 16 haneli karta doğrudan gönderim yapabilirsiniz..."
+                          className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* CREDIT PACKAGES */}
+                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
+                      <div className="flex items-center justify-between border-b border-[#27355a]/60 pb-3">
+                        <div>
+                          <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 text-amber-400">
+                            <Sparkles className="w-4 h-4" /> Kredi Satış Paketleri (Bonuslu)
+                          </h3>
+                          <p className="text-[11px] text-slate-400">
+                            Oyuncuların tek tıkla seçebileceği hazır kredi ve bonus paketleri
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddPackage(!showAddPackage)}
+                          className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1 cursor-pointer transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Yeni Paket Ekle</span>
+                        </button>
+                      </div>
+
+                      {showAddPackage && (
+                        <div className="p-4 bg-[#111625] border border-amber-500/30 rounded-2xl space-y-3">
+                          <h4 className="text-xs font-black text-amber-400 uppercase">Yeni Kredi Paketi</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-400 font-bold uppercase">Tutar (TL)</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newPackage.amountTL}
+                                onChange={(e) => setNewPackage({ ...newPackage, amountTL: parseFloat(e.target.value) || 0 })}
+                                className="w-full bg-[#171e32] border border-[#27355a] rounded-xl p-2 text-xs text-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-400 font-bold uppercase">Verilecek Kredi</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newPackage.credits}
+                                onChange={(e) => setNewPackage({ ...newPackage, credits: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-[#171e32] border border-[#27355a] rounded-xl p-2 text-xs text-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-400 font-bold uppercase">Bonus Kredi (Dahil)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={newPackage.bonus}
+                                onChange={(e) => setNewPackage({ ...newPackage, bonus: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-[#171e32] border border-[#27355a] rounded-xl p-2 text-xs text-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-400 font-bold uppercase">Rozet / Etiket</label>
+                              <input
+                                type="text"
+                                placeholder="Örn: %15 Bonus"
+                                value={newPackage.badge}
+                                onChange={(e) => setNewPackage({ ...newPackage, badge: e.target.value })}
+                                className="w-full bg-[#171e32] border border-[#27355a] rounded-xl p-2 text-xs text-white"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-2">
+                            <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                              <input
+                                type="checkbox"
+                                checked={newPackage.isPopular}
+                                onChange={(e) => setNewPackage({ ...newPackage, isPopular: e.target.checked })}
+                                className="w-4 h-4 rounded text-amber-500"
+                              />
+                              <span>Popüler / Çok Satan Rozeti Ekle</span>
+                            </label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setShowAddPackage(false)}
+                                className="px-3 py-1.5 bg-slate-800 text-slate-300 text-xs rounded-xl"
+                              >
+                                Vazgeç
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleAddPaymentPackage}
+                                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl"
+                              >
+                                Paketi Kaydet
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {paymentSettings.packages?.map((pkg: any) => (
+                          <div
+                            key={pkg.id}
+                            className="bg-[#111625] border border-[#27355a] rounded-2xl p-3.5 relative flex flex-col justify-between"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePaymentPackage(pkg.id)}
+                              className="absolute top-2.5 right-2.5 p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer"
+                              title="Paketi Kaldır"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-base font-black text-white">{pkg.amountTL} ₺</span>
+                                {pkg.badge && (
+                                  <span className="px-1.5 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[9px] font-black rounded">
+                                    {pkg.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs font-bold text-sky-400">{pkg.credits} Kredi</div>
+                              {pkg.bonus > 0 && (
+                                <div className="text-[10px] text-emerald-400">+{pkg.bonus} Bonus Kredi</div>
+                              )}
+                            </div>
+                            {pkg.isPopular && (
+                              <div className="mt-2 text-[9px] font-black text-amber-400 uppercase tracking-wider">
+                                ★ Çok Satan
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SAVE BUTTON */}
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={paymentSaving}
+                        className="px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-sky-950/50 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                      >
+                        {paymentSaving ? <Clock className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        <span>Ödeme Ayarlarını Kaydet</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* 6.6) TAB: PAYMENT ORDERS & APPROVAL */}
+              {activeTab === "payment-orders" && (
+                <div className="space-y-6">
+                  <div className="border-[#1b3d54] border-[#1e293b] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                        <Coins className="w-5 h-5 text-amber-400" /> Kredi Siparişleri & Ödeme Onay Masası
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Kredi kartı, Shopier, PayTR veya Banka Havalesi ile oluşturulan gerçek para siparişlerini inceleyin ve havaleleri onaylayın.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                        <input
+                          type="text"
+                          placeholder="Oyuncu veya Sipariş No..."
+                          value={paymentSearchQuery}
+                          onChange={(e) => setPaymentSearchQuery(e.target.value)}
+                          className="bg-[#171e32] border border-[#27355a] rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter tabs */}
+                  <div className="flex items-center gap-2">
+                    {(["all", "pending", "completed", "cancelled"] as const).map((filter) => {
+                      const count = paymentOrders.filter((o) => filter === "all" || o.status === filter).length;
+                      const labels = {
+                        all: "Tümü",
+                        pending: "Bekleyen Havale/Ödeme",
+                        completed: "Tamamlananlar",
+                        cancelled: "İptal Edilenler"
+                      };
+                      return (
+                        <button
+                          key={filter}
+                          type="button"
+                          onClick={() => setPaymentOrderFilter(filter)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            paymentOrderFilter === filter
+                              ? "bg-sky-500/20 text-sky-300 border border-sky-500/40"
+                              : "bg-[#171e32] text-slate-400 border border-transparent hover:text-white"
+                          }`}
+                        >
+                          {labels[filter]} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Orders Table */}
+                  <div className="bg-[#171e32] border border-[#27355a] rounded-2xl overflow-hidden shadow-xl">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-[#27355a] bg-[#121829] text-slate-400 text-[10px] font-black uppercase">
+                            <th className="p-4">Sipariş Kodu</th>
+                            <th className="p-4">Oyuncu</th>
+                            <th className="p-4">Yöntem</th>
+                            <th className="p-4">Tutar (TL)</th>
+                            <th className="p-4">Verilecek Kredi</th>
+                            <th className="p-4">Tarih</th>
+                            <th className="p-4">Durum</th>
+                            <th className="p-4 text-right">İşlemler</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#27355a]/40 text-slate-300">
+                          {paymentOrders
+                            .filter((o) => paymentOrderFilter === "all" || o.status === paymentOrderFilter)
+                            .filter((o) =>
+                              !paymentSearchQuery ||
+                              o.orderId?.toLowerCase().includes(paymentSearchQuery.toLowerCase()) ||
+                              o.username?.toLowerCase().includes(paymentSearchQuery.toLowerCase())
+                            ).length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="p-6 text-center italic text-slate-500">
+                                Bu filtreye uygun ödeme siparişi kaydı bulunamadı.
+                              </td>
+                            </tr>
+                          ) : (
+                            paymentOrders
+                              .filter((o) => paymentOrderFilter === "all" || o.status === paymentOrderFilter)
+                              .filter((o) =>
+                                !paymentSearchQuery ||
+                                o.orderId?.toLowerCase().includes(paymentSearchQuery.toLowerCase()) ||
+                                o.username?.toLowerCase().includes(paymentSearchQuery.toLowerCase())
+                              )
+                              .map((order) => (
+                                <tr key={order.orderId} className="hover:bg-slate-900/35 transition-colors">
+                                  <td className="p-4 font-mono font-bold text-sky-400 text-[11px]">
+                                    {order.orderId}
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={`https://mc-heads.net/avatar/${order.username}/24`}
+                                        alt={order.username}
+                                        className="w-5 h-5 rounded"
+                                      />
+                                      <span className="font-extrabold text-white">{order.username}</span>
+                                    </div>
+                                  </td>
+                                  <td className="p-4 uppercase font-bold text-[10px] text-slate-300">
+                                    <span className="px-2 py-0.5 bg-[#111625] border border-sky-500/20 rounded">
+                                      {order.method}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 font-black text-white">{order.amountTL} ₺</td>
+                                  <td className="p-4 font-black text-amber-400">
+                                    {order.credits} Kredi
+                                    {order.bonusCredits ? (
+                                      <span className="text-[10px] text-emerald-400 block">+{order.bonusCredits} Bonus</span>
+                                    ) : null}
+                                  </td>
+                                  <td className="p-4 text-slate-500 text-[11px]">
+                                    {order.createdAt ? new Date(order.createdAt).toLocaleString("tr-TR") : "-"}
+                                  </td>
+                                  <td className="p-4">
+                                    {order.status === "completed" && (
+                                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 w-fit">
+                                        <CheckCircle2 className="w-3 h-3" /> Tamamlandı
+                                      </span>
+                                    )}
+                                    {order.status === "pending" && (
+                                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 w-fit">
+                                        <Clock className="w-3 h-3 animate-spin" /> Bekliyor
+                                      </span>
+                                    )}
+                                    {order.status === "cancelled" && (
+                                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1 w-fit">
+                                        <XCircle className="w-3 h-3" /> İptal Edildi
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="p-4 text-right">
+                                    {order.status === "pending" ? (
+                                      <div className="flex items-center justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleApprovePaymentOrder(order.orderId)}
+                                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all"
+                                          title="Havale Ödemesini Onayla ve Krediyi Yükle"
+                                        >
+                                          <Check className="w-3 h-3" /> Onayla
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRejectPaymentOrder(order.orderId)}
+                                          className="px-3 py-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all"
+                                          title="Siparişi İptal Et / Reddet"
+                                        >
+                                          <X className="w-3 h-3" /> Reddet
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <span className="text-[10px] text-slate-500 italic">
+                                        {order.adminNote || "-"}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
               {activeTab === "wheel-settings" && (
                 <div className="space-y-6">
                   <div className="border-[#1b3d54] border-[#1e293b] pb-4">
