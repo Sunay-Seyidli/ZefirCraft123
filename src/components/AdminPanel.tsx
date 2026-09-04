@@ -114,8 +114,8 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
     { id: "categories" as SubMenuId, category: "store", label: "Mağaza Kategorileri", desc: "Rütbe, Eşya, VIP gibi ürün grupları düzenleme", icon: <Award className="w-4 h-4 text-amber-400" />, keywords: ["kategori", "mağaza", "grup", "vip", "eşya", "rütbe"] },
     { id: "products-list" as SubMenuId, category: "store", label: "Ürün Kataloğu & Fiyat", desc: "Mağaza eşya fiyatları, simgeleri ve sunucu komutları", icon: <ShoppingBag className="w-4 h-4 text-emerald-400" />, keywords: ["ürün", "fiyat", "komut", "eşya", "katalog", "satış", "mağaza"] },
     { id: "orders" as SubMenuId, category: "store", label: "Sipariş Geçmişi", desc: "Sunucuya gönderilen sipariş ve bakiye geçmişi", icon: <History className="w-4 h-4 text-cyan-400" />, badge: stats?.pendingPurchases, keywords: ["sipariş", "geçmiş", "satın alma", "teslimat", "ödeme"] },
-    { id: "payment-settings" as SubMenuId, category: "store", label: "Ödeme Yöntemleri (POS)", desc: "Shopier, PayTR, Banka IBAN, Papara ve Kredi Paketleri ayarları", icon: <CreditCard className="w-4 h-4 text-sky-400" />, keywords: ["ödeme", "shopier", "paytr", "havale", "papara", "kredi", "pos", "iban", "kart"] },
-    { id: "payment-orders" as SubMenuId, category: "store", label: "Kredi Siparişleri & Havale Onayı", desc: "Gelen gerçek para ödemeleri, bekleyen havaleler ve onay masası", icon: <Coins className="w-4 h-4 text-amber-400" />, keywords: ["ödeme", "sipariş", "havale", "onay", "dekont", "bakiye"] },
+    { id: "payment-settings" as SubMenuId, category: "store", label: "Kart & Kredi Ayarları", desc: "16 Haneli Kart Numarası ve Kredi Paketleri ayarları", icon: <CreditCard className="w-4 h-4 text-sky-400" />, keywords: ["ödeme", "kart", "kredi", "paket", "transfer"] },
+    { id: "payment-orders" as SubMenuId, category: "store", label: "Kredi Siparişleri & Onay", desc: "Gelen kart transfer bildirimleri ve onay masası", icon: <Coins className="w-4 h-4 text-amber-400" />, keywords: ["ödeme", "sipariş", "kart", "onay", "bildirim", "bakiye"] },
     { id: "quiz-settings" as SubMenuId, category: "earn", label: "Kredi Kazan & Anketler", desc: "Sistem durumunu aç/kapa, anket soruları, AdSense & reklam linkleri", icon: <HelpCircle className="w-4 h-4 text-amber-400" />, keywords: ["anket", "kredi", "kazan", "adsense", "reklam", "soru", "devre dışı", "aç", "kapat", "açık", "kapalı", "bakım"] },
     { id: "wheel-settings" as SubMenuId, category: "earn", label: "Şans Çarkı (Çarkıfelek)", desc: "Çarkıfelek aç/kapa, ödül oranları ve bilet bedelleri", icon: <Gift className="w-4 h-4 text-pink-400" />, keywords: ["çark", "çarkıfelek", "şans", "ödül", "oran", "kredi", "aç", "kapat"] },
     { id: "wheel-logs" as SubMenuId, category: "earn", label: "Çark Kazanım Logları", desc: "Çarkıfelek kazanan oyuncuların detaylı günlüğü", icon: <Coins className="w-4 h-4 text-[#ff2200]" />, keywords: ["çark", "kazanım", "günlük", "log", "ödül"] },
@@ -2526,322 +2526,15 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                       </div>
                     </div>
 
-                    {/* SHOPIER GATEWAY */}
-                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27355a]/60 pb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-black text-sm">
-                            S
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                              Shopier Sanal POS Entegrasyonu
-                            </h3>
-                            <p className="text-[11px] text-slate-400">
-                              Kredi Kartı / Banka Kartı ile 3D Secure güvenli tahsilat
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <span className="text-xs text-slate-300 font-bold">Aktif</span>
-                            <input
-                              type="checkbox"
-                              checked={paymentSettings.shopier?.enabled || false}
-                              onChange={(e) => setPaymentSettings({
-                                ...paymentSettings,
-                                shopier: { ...paymentSettings.shopier, enabled: e.target.checked }
-                              })}
-                              className="w-4 h-4 rounded text-sky-500"
-                            />
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <span className="text-xs text-amber-400 font-bold">Test Modu</span>
-                            <input
-                              type="checkbox"
-                              checked={paymentSettings.shopier?.testMode || false}
-                              onChange={(e) => setPaymentSettings({
-                                ...paymentSettings,
-                                shopier: { ...paymentSettings.shopier, testMode: e.target.checked }
-                              })}
-                              className="w-4 h-4 rounded text-amber-500"
-                            />
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Shopier API Key (İstemci Anahtarı)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="shopier_api_key_..."
-                            value={paymentSettings.shopier?.apiKey || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              shopier: { ...paymentSettings.shopier, apiKey: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Shopier API Secret (Gizli Anahtar)
-                          </label>
-                          <input
-                            type="password"
-                            placeholder="shopier_secret_..."
-                            value={paymentSettings.shopier?.apiSecret || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              shopier: { ...paymentSettings.shopier, apiSecret: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Website Index
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="1"
-                            value={paymentSettings.shopier?.websiteIndex || "1"}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              shopier: { ...paymentSettings.shopier, websiteIndex: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-3 bg-[#111625] border border-sky-500/20 rounded-xl text-[11px] text-slate-300 flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-sky-400">Geri Dönüş (Callback / Webhook) URL'si:</span>
-                          <span className="font-mono text-slate-400 ml-2">/api/credits/callback/shopier</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400">Shopier panelinizde geri dönüş URL'sine bu adresi giriniz.</span>
-                      </div>
-                    </div>
-
-                    {/* PAYTR GATEWAY */}
-                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27355a]/60 pb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-sm">
-                            P
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                              PayTR Sanal POS Entegrasyonu
-                            </h3>
-                            <p className="text-[11px] text-slate-400">
-                              Tüm yerli banka ve kredi kartlarına taksitli/tek çekim POS
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <span className="text-xs text-slate-300 font-bold">Aktif</span>
-                            <input
-                              type="checkbox"
-                              checked={paymentSettings.paytr?.enabled || false}
-                              onChange={(e) => setPaymentSettings({
-                                ...paymentSettings,
-                                paytr: { ...paymentSettings.paytr, enabled: e.target.checked }
-                              })}
-                              className="w-4 h-4 rounded text-sky-500"
-                            />
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <span className="text-xs text-amber-400 font-bold">Test Modu</span>
-                            <input
-                              type="checkbox"
-                              checked={paymentSettings.paytr?.testMode || false}
-                              onChange={(e) => setPaymentSettings({
-                                ...paymentSettings,
-                                paytr: { ...paymentSettings.paytr, testMode: e.target.checked }
-                              })}
-                              className="w-4 h-4 rounded text-amber-500"
-                            />
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Merchant ID (Mağaza No)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="PayTR Mağaza ID"
-                            value={paymentSettings.paytr?.merchantId || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              paytr: { ...paymentSettings.paytr, merchantId: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Merchant Key (Mağaza Parolası)
-                          </label>
-                          <input
-                            type="password"
-                            placeholder="PayTR Merchant Key"
-                            value={paymentSettings.paytr?.merchantKey || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              paytr: { ...paymentSettings.paytr, merchantKey: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Merchant Salt (Gizli Anahtar)
-                          </label>
-                          <input
-                            type="password"
-                            placeholder="PayTR Merchant Salt"
-                            value={paymentSettings.paytr?.merchantSalt || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              paytr: { ...paymentSettings.paytr, merchantSalt: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* HAVALE / FAST / PAPARA */}
-                    <div className="bg-[#171e32] border border-[#27355a] rounded-3xl p-6 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27355a]/60 pb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-sm">
-                            <Building2 className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                              Havale, EFT, FAST ve Papara
-                            </h3>
-                            <p className="text-[11px] text-slate-400">
-                              Oyuncuların banka hesaplarınıza para transferi yapıp onay talep edebileceği yöntem
-                            </p>
-                          </div>
-                        </div>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <span className="text-xs text-slate-300 font-bold">Havale/Papara Açık</span>
-                          <input
-                            type="checkbox"
-                            checked={paymentSettings.havale?.enabled || false}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              havale: { ...paymentSettings.havale, enabled: e.target.checked }
-                            })}
-                            className="w-4 h-4 rounded text-emerald-500"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Banka Adı / Şube
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Ziraat Bankası / Enpara / Garanti BBVA"
-                            value={paymentSettings.havale?.bankName || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              havale: { ...paymentSettings.havale, bankName: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Hesap Sahibi (Ad Soyad)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Ahmet Yılmaz"
-                            value={paymentSettings.havale?.accountHolder || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              havale: { ...paymentSettings.havale, accountHolder: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            IBAN Numarası
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="TR12 3456 7890 1234 5678 9012 34"
-                            value={paymentSettings.havale?.iban || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              havale: { ...paymentSettings.havale, iban: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Papara Numara / Mail (İsteğe Bağlı)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="1234567890 veya papara@zefircraft.com"
-                            value={paymentSettings.havale?.paparaNumber || ""}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              havale: { ...paymentSettings.havale, paparaNumber: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                          Oyuncuya Gösterilecek Havale Talimatı / Açıklama Notu
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={paymentSettings.havale?.instructions || ""}
-                          onChange={(e) => setPaymentSettings({
-                            ...paymentSettings,
-                            havale: { ...paymentSettings.havale, instructions: e.target.value }
-                          })}
-                          placeholder="Açıklama alanına SADECE kullanıcı adınızı veya Sipariş Kodunuzu yazınız..."
-                          className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-                    </div>
-
-                    {/* GATEWAY 4: VISA KART / DOĞRUDAN KART TRANSFERİ */}
+                    {/* VISA KART / DOĞRUDAN KART TRANSFERİ */}
                     <div className="bg-[#171e32] border border-blue-500/30 rounded-3xl p-6 space-y-4">
                       <div className="flex items-center justify-between border-b border-[#27355a]/60 pb-3">
                         <div>
                           <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 text-blue-400">
-                            <CreditCard className="w-4 h-4" /> Doğrudan Visa Kart Numarasına Transfer (Azerbaycan & Uluslararası)
+                            <CreditCard className="w-4 h-4" /> 16 Haneli Visa Kart Numarası (Manuel Onaylı Transfer)
                           </h3>
                           <p className="text-[11px] text-slate-400">
-                            Oyuncuların doğrudan 16 haneli kart numaranıza (Birbank, m10, Leobank veya Paysend/KoronaPay ile) para göndermesi
+                            Oyuncuların doğrudan 16 haneli kart numaranıza transfer yapıp bildirim formu iletmesi
                           </p>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-300">
@@ -2858,7 +2551,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                         </label>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
                             Visa Kart Numarası (16 Hane)
@@ -2877,65 +2570,15 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
 
                         <div className="space-y-1.5">
                           <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Kart Sahibi (Ad Soyad)
+                            Banka Adı / Yöntem Başlığı
                           </label>
                           <input
                             type="text"
-                            placeholder="Sunay Seyidli"
-                            value={paymentSettings.visaCard?.cardHolder || "Sunay Seyidli"}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              visaCard: { ...(paymentSettings.visaCard || {}), cardHolder: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Banka Adı / Tipi
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Kapital Bank / Birbank (Azərbaycan)"
-                            value={paymentSettings.visaCard?.bankName || "Kapital Bank / Birbank (Azərbaycan)"}
+                            placeholder="Visa Kart"
+                            value={paymentSettings.visaCard?.bankName || "Visa Kart"}
                             onChange={(e) => setPaymentSettings({
                               ...paymentSettings,
                               visaCard: { ...(paymentSettings.visaCard || {}), bankName: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Kart Para Birimi
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="AZN (Manat)"
-                            value={paymentSettings.visaCard?.currency || "AZN"}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              visaCard: { ...(paymentSettings.visaCard || {}), currency: e.target.value }
-                            })}
-                            className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                            Manat / TL Dönüşüm Oranı (1 AZN = ? TL)
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            step="0.1"
-                            placeholder="20"
-                            value={paymentSettings.visaCard?.aznRate || 20}
-                            onChange={(e) => setPaymentSettings({
-                              ...paymentSettings,
-                              visaCard: { ...(paymentSettings.visaCard || {}), aznRate: parseFloat(e.target.value) || 20 }
                             })}
                             className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
                           />
@@ -2953,7 +2596,7 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                             ...paymentSettings,
                             visaCard: { ...(paymentSettings.visaCard || {}), instructions: e.target.value }
                           })}
-                          placeholder="Birbank, m10, Leobank veya Paysend ile bu 16 haneli karta doğrudan gönderim yapabilirsiniz..."
+                          placeholder="Banka uygulamanızdan veya kartınızdan 16 haneli kart numaramıza doğrudan transfer yapabilirsiniz..."
                           className="w-full bg-[#111625] border border-[#27355a] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-400"
                         />
                       </div>
@@ -3215,9 +2858,23 @@ export default function AdminPanel({ adminName, onLogout }: AdminPanelProps) {
                                     </div>
                                   </td>
                                   <td className="p-4 uppercase font-bold text-[10px] text-slate-300">
-                                    <span className="px-2 py-0.5 bg-[#111625] border border-sky-500/20 rounded">
-                                      {order.method}
+                                    <span className={`px-2 py-0.5 rounded border ${
+                                      order.method === "visa" || order.paymentMethod === "visa"
+                                        ? "bg-blue-500/10 border-blue-500/30 text-blue-400 font-black"
+                                        : "bg-[#111625] border-sky-500/20"
+                                    }`}>
+                                      {order.method === "visa" || order.paymentMethod === "visa" ? "Visa Kart Transferi" : order.method}
                                     </span>
+                                    {order.senderName && (
+                                      <div className="text-[11px] text-white font-bold mt-1.5 normal-case">
+                                        👤 {order.senderName}
+                                      </div>
+                                    )}
+                                    {order.senderNote && (
+                                      <div className="text-[10px] text-slate-400 font-normal mt-0.5 normal-case italic">
+                                        📝 {order.senderNote}
+                                      </div>
+                                    )}
                                   </td>
                                   <td className="p-4 font-black text-white">{order.amountTL} ₺</td>
                                   <td className="p-4 font-black text-amber-400">

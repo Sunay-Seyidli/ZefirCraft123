@@ -1115,10 +1115,10 @@ app.get("/api/credits/settings", async (req, res) => {
         visaCard: {
           enabled: settings.visaCard?.enabled ?? true,
           cardNumber: settings.visaCard?.cardNumber || "4098 5844 6336 1459",
-          cardHolder: settings.visaCard?.cardHolder || "Sunay Seyidli",
-          bankName: settings.visaCard?.bankName || "Kapital Bank / Birbank (Azərbaycan)",
-          currency: settings.visaCard?.currency || "AZN",
-          aznRate: settings.visaCard?.aznRate || 20,
+          cardHolder: settings.visaCard?.cardHolder || "",
+          bankName: settings.visaCard?.bankName || "Visa Kart",
+          currency: settings.visaCard?.currency || "TL",
+          aznRate: settings.visaCard?.aznRate || 1,
           instructions: settings.visaCard?.instructions || ""
         }
       }

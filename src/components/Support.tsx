@@ -14,8 +14,8 @@ export default function Support() {
       a: "Sunucu eklentimiz (McDelivery) siteyi her 15 saniyede bir otomatik olarak sorgular. Bu sebeple satın aldığınız ürünler genellikle oyun içinde 15-30 saniye içerisinde envanterinize teslim edilir."
     },
     {
-      q: "Kredi bakiye yüklemesini nasıl yaparım?",
-      a: "Hesabınıza bakiye yüklemek için destek ekibimizle iletişime geçebilir veya yetkililerimiz aracılığıyla güvenli bakiye tanımlatabilirsiniz."
+      q: "Kredi nasıl kazanırım veya bakiye alabilirim?",
+      a: "Web sitemizdeki 'Kredi Kazan' ve 'Şans Çarkı' bölümlerini kullanarak ücretsiz kredi kazanabilir veya özel VIP ve destek işlemleri için Discord sunucumuzdan destek talebi açabilirsiniz."
     },
     {
       q: "Satın aldığım ürün envanterime gelmedi, ne yapmalıyım?",

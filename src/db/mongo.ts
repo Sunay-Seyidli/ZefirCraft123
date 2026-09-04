@@ -221,11 +221,11 @@ export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
   visaCard: {
     enabled: true,
     cardNumber: "4098 5844 6336 1459",
-    cardHolder: "Sunay Seyidli",
-    bankName: "Kapital Bank / Birbank (Azərbaycan)",
-    currency: "AZN",
-    aznRate: 20,
-    instructions: "Azərbaycan daxilində (Birbank, m10, Leobank, ABB) və ya xaricdən (Paysend, KoronaPay, UPT, Visa Direct) 16 rəqəmli Visa kart nömrəsinə birbaşa köçürmə edə bilərsiniz. Ödənişi etdikdən sonra formu göndərin, yetkili tərəfindən dərhal təsdiqlənsin!"
+    cardHolder: "",
+    bankName: "Visa Kart",
+    currency: "TL",
+    aznRate: 1,
+    instructions: "Banka uygulamanızdan veya kartınızdan 16 haneli kart numaramıza doğrudan transfer yapabilirsiniz. Transferi tamamladıktan sonra aşağıdaki formu doldurarak bildirim gönderiniz."
   }
 };
 

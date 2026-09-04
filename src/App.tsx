@@ -9,7 +9,6 @@ import {
 
 import Home from "./components/Home";
 import Store from "./components/Store";
-import CreditHub from "./components/CreditHub";
 import Support from "./components/Support";
 import Rules from "./components/Rules";
 import Apply from "./components/Apply";
@@ -69,7 +68,7 @@ function playMessageNotificationChime() {
 
 const getInitialPage = (): string => {
   if (typeof window === "undefined") return "home";
-  const validPages = ["home", "store", "credits", "wheel", "chest", "earn", "rankings", "map", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
+  const validPages = ["home", "store", "wheel", "chest", "earn", "rankings", "map", "support", "rules", "apply", "login", "admin", "profile", "friends", "social"];
   const path = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
   if (path === "map") {
     window.location.replace("http://zefircraft.ddns.net:8123/?worldname=Towny");
@@ -692,14 +691,6 @@ export default function App() {
             onNavigate={changePageWithLoader}
           />
         );
-      case "credits":
-        return (
-          <CreditHub
-            user={user}
-            onUpdateCredits={(newCr) => setUser(u => u ? { ...u, credits: newCr } : null)}
-            onOpenLogin={() => changePageWithLoader("login")}
-          />
-        );
       case "wheel":
         if (!wheelEnabled) {
           return (
@@ -835,7 +826,6 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Ana Sayfa", icon: <HomeIcon className="w-4 h-4" /> },
     { id: "store", label: "Mağaza", icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: "credits", label: "Kredi", icon: <CreditCard className="w-4 h-4" /> },
     { id: "map", label: "Harita", icon: <Map className="w-4 h-4" />, href: "http://zefircraft.ddns.net:8123/?worldname=Towny", isExternal: true },
     { id: "wheel", label: "Çarkıfelek", icon: <Gift className="w-4 h-4 text-amber-400 animate-pulse" /> },
     { id: "earn", label: "Kredi Kazan", icon: <Coins className="w-4 h-4 text-amber-400" /> },
@@ -1056,8 +1046,9 @@ export default function App() {
               <div className="flex items-center gap-3">
                 {/* Credits Bubble */}
                 <div
-                  onClick={() => changePageWithLoader("credits")}
+                  onClick={() => changePageWithLoader("store")}
                   className="bg-sky-500/10 border border-sky-500/25 rounded-xl px-3 py-1.5 flex items-center gap-2 cursor-pointer hover:bg-sky-500/20 transition-all shadow-md"
+                  title="Krediniz (Mağazayı Aç)"
                 >
                   <Coins className="w-4 h-4 text-sky-400 animate-pulse" />
                   <span className="text-xs font-black text-sky-300">
@@ -1410,7 +1401,7 @@ export default function App() {
             <div className="flex flex-col gap-2 text-xs">
               <button onClick={() => setCurrentPage("home")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Ana Sayfa</button>
               <button onClick={() => setCurrentPage("store")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Mağaza</button>
-              <button onClick={() => setCurrentPage("credits")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Kredi Yükle / Gönder</button>
+              <button onClick={() => setCurrentPage("store")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Sunucu Mağazası</button>
               <a href="http://zefircraft.ddns.net:8123/?worldname=Towny" target="_blank" rel="noopener noreferrer" className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer flex items-center gap-1">Canlı Harita <ExternalLink className="w-3 h-3 text-sky-400 inline" /></a>
               <a href="https://discord.gg/yH52952uCq" target="_blank" rel="noopener noreferrer" className="text-left text-sky-400 hover:text-sky-300 font-semibold transition-colors cursor-pointer flex items-center gap-1">Discord Topluluğu <ExternalLink className="w-3 h-3 inline" /></a>
               <button onClick={() => setCurrentPage("rules")} className="text-left text-slate-300 hover:text-sky-300 transition-colors cursor-pointer">Kurallar</button>

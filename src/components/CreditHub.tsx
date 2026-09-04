@@ -104,16 +104,31 @@ interface PaymentSettingsResponse {
 // OFFICIAL HIGH-DEFINITION PAYMENT BRAND LOGOS DIRECTLY FROM CDN
 // ─────────────────────────────────────────────────────────────────────────────
 
-function VisaLogo({ className = "h-5" }: { className?: string }) {
+function VisaSvg({ className = "h-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 32" className={`${className} w-auto`} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M38.8 3.5l-6.3 18.2h-4.2l3.9-18.2h6.6zm22.5 12.1c-.1-4.8-6.6-5.1-6.5-7.2.1-1.7 1.8-2.6 3.6-2.6 2.4 0 4.2.5 5.5 1.1l1-4.7c-1.4-.5-3.3-1-5.7-1-6.1 0-10.4 3.2-10.4 7.9-.1 3.4 3 5.3 5.4 6.5 2.4 1.2 3.2 2 3.2 3.1 0 1.7-2 2.4-3.9 2.4-2.7 0-4.8-.6-6.4-1.4l-1 4.8c1.6.7 4.1 1.2 6.7 1.2 6.4 0 10.6-3.1 10.6-7.8zM78.6 3.5h-5.1c-1.6 0-2.8.5-3.5 2.1l-10 24h6.8l1.4-3.8h8.3l.8 3.8h6l-5.7-26.1zm-7.6 15.6l2.6-7.1 1.5 7.1h-4.1zM26.4 3.5L20.2 20l-.7-3.5C18.3 12.7 14 7.4 9.1 4.8l5.8 24.8h6.8l10.1-26.1h-5.4z" fill="#1434CB"/>
+      <path d="M12.9 3.5H2.2L2 4.1c8.3 2.1 13.8 7.2 16.1 13.4l-2.3-11.6c-.4-1.7-1.6-2.3-2.9-2.4z" fill="#F7B600"/>
+    </svg>
+  );
+}
+
+function MastercardSvg({ className = "h-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 24" className={`${className} w-auto`} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="36" height="24" rx="4" fill="#0f172a" />
+      <circle cx="14" cy="12" r="7.5" fill="#EB001B" />
+      <circle cx="22" cy="12" r="7.5" fill="#F79E1B" fillOpacity="0.92" />
+      <path d="M18 6.5A7.5 7.5 0 0 0 18 17.5A7.5 7.5 0 0 0 18 6.5Z" fill="#FF5F00" />
+    </svg>
+  );
+}
+
+function VisaLogo() {
   return (
     <div className="flex items-center gap-2.5">
       <div className="h-8 px-2.5 rounded-xl bg-white flex items-center justify-center shadow-md shadow-blue-950/50 shrink-0">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
-          alt="Visa"
-          className={`${className} object-contain`}
-          loading="lazy"
-        />
+        <VisaSvg className="h-3.5" />
       </div>
       <div>
         <div className="flex items-center gap-1.5">
@@ -124,81 +139,7 @@ function VisaLogo({ className = "h-5" }: { className?: string }) {
             Doğrudan Kart
           </span>
         </div>
-        <div className="text-[10px] text-slate-400">Kapital Bank / Birbank (AZN)</div>
-      </div>
-    </div>
-  );
-}
-
-function ShopierLogo() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-8 px-2 rounded-xl bg-white flex items-center justify-center shadow-md shadow-orange-950/50 shrink-0">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Shopier_Logo.png/640px-Shopier_Logo.png"
-          alt="Shopier"
-          className="h-4 object-contain"
-          loading="lazy"
-        />
-      </div>
-      <div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-black text-white text-sm tracking-tight">
-            shopier<span className="text-[#FF6B00]">.</span>
-          </span>
-          <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-500/40 text-orange-300 text-[9px] font-black uppercase">
-            3D Secure
-          </span>
-        </div>
-        <div className="text-[10px] text-slate-400">Türk Banka & Kredi Kartları</div>
-      </div>
-    </div>
-  );
-}
-
-function PayTRLogo() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-8 px-2.5 rounded-xl bg-[#092244] border border-blue-500/40 flex items-center justify-center shadow-md shadow-blue-950/40 shrink-0">
-        <span className="font-black text-white text-xs tracking-tighter">Pay</span>
-        <span className="font-black text-red-400 text-xs tracking-tighter">TR</span>
-      </div>
-      <div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-black text-white text-sm tracking-tight">
-            Pay<span className="text-red-500">TR</span>
-          </span>
-          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 border border-blue-500/40 text-blue-300 text-[9px] font-black uppercase">
-            TCMB Lisanslı
-          </span>
-        </div>
-        <div className="text-[10px] text-slate-400">Tüm Kartlar & Taksit</div>
-      </div>
-    </div>
-  );
-}
-
-function FastBankLogo() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-8 px-2 rounded-xl bg-white flex items-center justify-center shadow-md shadow-emerald-950/50 shrink-0">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TCMB_FAST_Logo.svg/320px-TCMB_FAST_Logo.svg.png"
-          alt="FAST"
-          className="h-4 object-contain"
-          loading="lazy"
-        />
-      </div>
-      <div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-black text-white text-sm tracking-tight">
-            Havale <span className="text-emerald-400">/ FAST</span>
-          </span>
-          <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-black uppercase">
-            0% Komisyon
-          </span>
-        </div>
-        <div className="text-[10px] text-slate-400">Türkiye IBAN & 7/24 FAST</div>
+        <div className="text-[10px] text-slate-400">Karttan Karta Kolay Transfer</div>
       </div>
     </div>
   );
@@ -209,55 +150,24 @@ function PaymentNetworkBadges() {
     <div className="flex flex-wrap items-center justify-between gap-3 py-2.5 px-4 rounded-2xl bg-[#091224]/90 border border-sky-500/20 text-xs shadow-lg">
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Visa */}
-        <div className="h-7 px-2.5 rounded-lg bg-white flex items-center justify-center shadow-sm">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
-            alt="Visa"
-            className="h-3.5 object-contain"
-            loading="lazy"
-          />
+        <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center shadow-sm">
+          <VisaSvg className="h-3" />
         </div>
         {/* Mastercard */}
-        <div className="h-7 px-2 rounded-lg bg-[#222] flex items-center justify-center shadow-sm">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-            alt="Mastercard"
-            className="h-4 object-contain"
-            loading="lazy"
-          />
+        <div className="h-7 px-1.5 rounded-lg bg-[#0f172a] border border-slate-700 flex items-center justify-center shadow-sm">
+          <MastercardSvg className="h-4" />
         </div>
         {/* Troy */}
-        <div className="h-7 px-2 rounded-lg bg-[#142340] border border-cyan-400/30 flex items-center justify-center shadow-sm">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Troy_logo.svg"
-            alt="Troy"
-            className="h-3.5 object-contain brightness-125"
-            loading="lazy"
-          />
-        </div>
-        {/* Shopier */}
-        <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center shadow-sm">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Shopier_Logo.png/640px-Shopier_Logo.png"
-            alt="Shopier"
-            className="h-3 object-contain"
-            loading="lazy"
-          />
-        </div>
-        {/* FAST TCMB */}
-        <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center shadow-sm">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TCMB_FAST_Logo.svg/320px-TCMB_FAST_Logo.svg.png"
-            alt="FAST TCMB"
-            className="h-3.5 object-contain"
-            loading="lazy"
-          />
+        <div className="h-7 px-2.5 rounded-lg bg-[#004A80] flex items-center justify-center shadow-sm">
+          <span className="text-[10px] font-black text-white tracking-widest flex items-center gap-0.5">
+            TR<span className="text-[#00B4D8]">O</span>Y
+          </span>
         </div>
       </div>
 
       <div className="flex items-center gap-2 text-[11px] text-slate-300 font-semibold ml-auto">
         <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-        <span>256-Bit SSL & 3D Secure</span>
+        <span>Tüm Banka & Kartlardan Güvenli Transfer</span>
       </div>
     </div>
   );
@@ -413,24 +323,26 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
   const handleInitiatePayment = async () => {
     if (!user) {
       onOpenLogin();
+      triggerToast("Ödeme yapabilmek için lütfen önce giriş yapınız.", false);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      onOpenLogin();
+      triggerToast("Oturumunuzun süresi dolmuş, lütfen tekrar giriş yapınız.", false);
       return;
     }
 
     if (selectedMethod === "visa" || selectedMethod === "havale") {
       if (!senderName || senderName.trim().length < 3) {
-        triggerToast(
-          selectedMethod === "visa"
-            ? "Lütfen karta köçürmə edən şəxsin Adı və Soyadını qeyd edin."
-            : "Lütfen ödemeyi gönderen kişinin Adı Soyadı bilgisini giriniz.",
-          false
-        );
+        triggerToast("Lütfen transferi yapan kişinin Ad ve Soyadını giriniz.", false);
         return;
       }
     }
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch("/api/credits/create-order", {
         method: "POST",
         headers: {
@@ -454,7 +366,7 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
         return;
       }
 
-      // 1) Havale / Papara Notice
+      // 1) Havale / Visa Card Notice
       if (data.pending) {
         triggerToast(data.message || "Ödeme bildiriminiz alındı! Yetkililerimiz onayladığında krediniz yüklenecektir.", true);
         setSenderName("");
@@ -502,7 +414,8 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
 
       triggerToast("Ödeme işlemi oluşturuldu. Lütfen adımları takip ediniz.", true);
     } catch (e: any) {
-      triggerToast("Bir bağlantı hatası meydana geldi.", false);
+      console.error("[Payment initiation error]:", e);
+      triggerToast(e?.message ? `Bağlantı hatası: ${e.message}` : "Ödeme sunucusuyla iletişim kurulurken bir bağlantı hatası meydana geldi.", false);
     } finally {
       setLoading(false);
     }
@@ -646,7 +559,7 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
               ZefirCraft Kredi Portalı
             </h1>
             <p className="text-xs md:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Kredi kartı, banka kartı (3D Secure), havale/FAST ve Papara ile güvenle bakiye yükleyin veya diğer oyunculara anında kredi transfer edin.
+              16 haneli kart numaramıza kolayca transfer yaparak bakiye yükleyin veya diğer oyunculara anında kredi transfer edin.
             </p>
           </div>
 
@@ -857,358 +770,140 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
               </div>
             </div>
 
-            {/* Step 2: Payment Method */}
-            <div className="bg-[#0f172a]/90 border border-sky-500/25 rounded-3xl p-5 sm:p-6 md:p-8 space-y-5 shadow-xl">
+            {/* Step 2: Payment & Card Information */}
+            <div className="bg-[#0f172a]/90 border border-sky-500/25 rounded-3xl p-5 sm:p-6 md:p-8 space-y-6 shadow-xl">
               <div>
                 <h2 className="text-base sm:text-lg md:text-xl font-black text-white flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 text-xs font-black border border-sky-500/40">
                     2
                   </span>
-                  Ödeme Yöntemi Seçin
+                  Kart Bilgileri & Ödeme Bildirimi
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Resmi ödeme altyapıları ile güvenli işlem yapın. Komisyonsuz doğrudan kart transferi mevcuttur.
+                  Aşağıdaki 16 haneli Visa kart numarasına transferinizi yaptıktan sonra bildirim formunu doldurunuz.
                 </p>
               </div>
 
-              {/* Method Grid: 1 col on mobile for large tap targets, 2 cols on tablet/desktop */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
-                {/* 1) Visa Card Direct Transfer */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedMethod("visa")}
-                  className={`p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer space-y-2.5 relative ${
-                    selectedMethod === "visa"
-                      ? "bg-gradient-to-br from-blue-600/20 via-[#102347] to-[#0c162b] border-blue-400 ring-2 ring-blue-400/40 shadow-xl shadow-blue-950/30"
-                      : "bg-[#0b1324] border-slate-800 hover:border-slate-700 hover:bg-[#111c33]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <VisaLogo />
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedMethod === "visa" ? "border-blue-400 bg-blue-500" : "border-slate-700 bg-slate-900"
-                    }`}>
-                      {selectedMethod === "visa" && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+              {/* Luxury Digital Visa Card Visual */}
+              <div className="relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-gradient-to-tr from-[#09162e] via-[#0e2754] to-[#184288] p-5 sm:p-6 text-white shadow-2xl border border-blue-400/40">
+                <div className="flex items-center justify-between mb-5 sm:mb-6">
+                  {/* EMV Chip */}
+                  <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner flex items-center justify-center">
+                    <div className="w-7 h-5 border border-amber-900/40 rounded-sm grid grid-cols-2 gap-0.5 p-0.5">
+                      <div className="border-r border-b border-amber-900/40" />
+                      <div className="border-b border-amber-900/40" />
+                      <div className="border-r border-amber-900/40" />
+                      <div />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Kapital Bank / Birbank Visa kartımıza doğrudan komisyonsuz transfer. Azərbaycan (AZN) və Türkiyə/Xaric (Paysend, KoronaPay).
-                  </p>
-                </button>
+                  <div className="h-7 px-2.5 rounded-lg bg-white flex items-center justify-center shadow">
+                    <VisaSvg className="h-4" />
+                  </div>
+                </div>
 
-                {/* 2) Shopier 3D Secure */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedMethod("shopier")}
-                  className={`p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer space-y-2.5 relative ${
-                    selectedMethod === "shopier"
-                      ? "bg-gradient-to-br from-orange-500/15 via-[#1a233b] to-[#0c162b] border-orange-400 ring-2 ring-orange-400/40 shadow-xl shadow-orange-950/30"
-                      : "bg-[#0b1324] border-slate-800 hover:border-slate-700 hover:bg-[#111c33]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <ShopierLogo />
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedMethod === "shopier" ? "border-orange-400 bg-orange-500" : "border-slate-700 bg-slate-900"
-                    }`}>
-                      {selectedMethod === "shopier" && <Check className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />}
-                    </div>
+                {/* 16-Digit Card Number */}
+                <div className="space-y-1 mb-5">
+                  <span className="text-[9px] uppercase tracking-widest text-blue-200 font-bold block">
+                    Visa Kart Numarası
+                  </span>
+                  <div className="font-mono text-base sm:text-lg md:text-xl font-black tracking-widest text-white drop-shadow select-all break-all">
+                    {settings?.gateways?.visaCard?.cardNumber || "4098 5844 6336 1459"}
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Türkiye'nin en popüler 3D Secure ödeme altyapısı. Troy, Visa, Mastercard ile anında otomatik teslimat.
-                  </p>
-                </button>
+                </div>
 
-                {/* 3) Havale / FAST */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedMethod("havale")}
-                  className={`p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer space-y-2.5 relative ${
-                    selectedMethod === "havale"
-                      ? "bg-gradient-to-br from-emerald-500/15 via-[#1a233b] to-[#0c162b] border-emerald-400 ring-2 ring-emerald-400/40 shadow-xl shadow-emerald-950/30"
-                      : "bg-[#0b1324] border-slate-800 hover:border-slate-700 hover:bg-[#111c33]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <FastBankLogo />
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedMethod === "havale" ? "border-emerald-400 bg-emerald-500" : "border-slate-700 bg-slate-900"
-                    }`}>
-                      {selectedMethod === "havale" && <Check className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />}
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Tüm Türk bankalarından 7/24 FAST veya standart EFT/Havale ile sıfır komisyonlu doğrudan transfer.
-                  </p>
-                </button>
-
-                {/* 4) PayTR */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedMethod("paytr")}
-                  className={`p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer space-y-2.5 relative ${
-                    selectedMethod === "paytr"
-                      ? "bg-gradient-to-br from-blue-500/15 via-[#1a233b] to-[#0c162b] border-blue-400 ring-2 ring-blue-400/40 shadow-xl shadow-blue-950/30"
-                      : "bg-[#0b1324] border-slate-800 hover:border-slate-700 hover:bg-[#111c33]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <PayTRLogo />
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedMethod === "paytr" ? "border-blue-400 bg-blue-500" : "border-slate-700 bg-slate-900"
-                    }`}>
-                      {selectedMethod === "paytr" && <Check className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />}
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    TCMB lisanslı PayTR altyapısı ile kredi kartına taksit ve kurumsal ödeme seçenekleri.
-                  </p>
-                </button>
+                {/* Footer: Universal bank info */}
+                <div className="flex items-center justify-between text-[11px] text-blue-200/80 pt-3 border-t border-blue-400/20">
+                  <span>Tüm Banka & Kartlardan Gönderim</span>
+                  <span className="font-mono text-[10px] text-blue-300">7/24 Aktif</span>
+                </div>
               </div>
 
-              {/* VISA CARD DIRECT VIEW */}
-              {selectedMethod === "visa" && (
-                <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#0c172e] via-[#091224] to-[#070d1a] border border-blue-500/40 space-y-5 shadow-2xl animate-in fade-in">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-500/20 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
-                        <CreditCard className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                          Doğrudan Visa Kart Numarasına Transfer
-                        </h3>
-                        <p className="text-[11px] text-blue-300">
-                          {settings?.gateways?.visaCard?.bankName || "Kapital Bank / Birbank (Azərbaycan)"} • Kartdan Karta (C2C)
-                        </p>
-                      </div>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-black uppercase w-fit">
-                      0% Komissiya • Birbaşa
-                    </span>
+              {/* Actions: Copy Button & Amount */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(settings?.gateways?.visaCard?.cardNumber?.replace(/\s+/g, "") || "4098584463361459", "visaCard")}
+                  className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/30 cursor-pointer"
+                >
+                  {copiedField === "visaCard" ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-300" />
+                      Kart Numarası Kopyalandı (4098 5844 6336 1459)
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Kart Numarasını Kopyala (4098 5844 6336 1459)
+                    </>
+                  )}
+                </button>
+
+                <div className="px-4 py-2.5 rounded-xl bg-[#0e1b38] border border-blue-400/30 flex items-center justify-between sm:justify-start gap-3">
+                  <span className="text-xs text-slate-300 font-bold whitespace-nowrap">Gönderilecek:</span>
+                  <span className="text-lg font-black text-amber-400 font-mono">
+                    {selectedDetails.tl} ₺
+                  </span>
+                </div>
+              </div>
+
+              {/* Universal Support Information */}
+              <div className="p-4 rounded-2xl bg-[#081226] border border-blue-500/20 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-black text-sky-400 text-xs uppercase tracking-wide">
+                  <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+                  Tüm Kart ve Bankalardan Kolayca Gönderin
+                </div>
+                <p className="text-slate-300 leading-relaxed text-[11.5px]">
+                  Kullandığınız kartın veya bankanın ne olduğu fark etmeksizin (<strong>Mastercard, Visa, Troy</strong> veya <strong>Ziraat, Garanti, İş Bankası, Yapı Kredi, Akbank, Papara</strong> vb.), banka uygulamanızdaki <strong>"Karttan Karta Transfer"</strong> veya <strong>"Para Gönder"</strong> bölümünden bu 16 haneli kart numarasına transfer yapabilirsiniz.
+                </p>
+              </div>
+
+              {/* Transfer Notice Form Inputs */}
+              <div className="pt-2 border-t border-blue-500/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white block">
+                    Ödemeyi Gönderdikten Sonra Bildirim Formu:
+                  </span>
+                  <span className="text-[10px] text-amber-400 font-semibold">* Zorunlu Alan</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] text-slate-300 block mb-1 font-semibold">
+                      Gönderen Kişinin Adı ve Soyadı *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Örn: Ahmet Yılmaz"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="w-full bg-[#081226] border border-blue-500/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                    />
                   </div>
-
-                  {/* Luxury Digital Visa Card Visual - responsive sizing */}
-                  <div className="relative w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-gradient-to-tr from-[#09162e] via-[#0e2754] to-[#184288] p-5 sm:p-6 text-white shadow-2xl border border-blue-400/40">
-                    <div className="flex items-center justify-between mb-5 sm:mb-6">
-                      {/* EMV Chip */}
-                      <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner flex items-center justify-center">
-                        <div className="w-7 h-5 border border-amber-900/40 rounded-sm grid grid-cols-2 gap-0.5 p-0.5">
-                          <div className="border-r border-b border-amber-900/40" />
-                          <div className="border-b border-amber-900/40" />
-                          <div className="border-r border-amber-900/40" />
-                          <div />
-                        </div>
-                      </div>
-                      <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
-                        alt="Visa"
-                        className="h-6 object-contain brightness-150 filter drop-shadow"
-                      />
-                    </div>
-
-                    {/* 16-Digit Card Number */}
-                    <div className="space-y-1 mb-4 sm:mb-5">
-                      <span className="text-[9px] uppercase tracking-widest text-blue-200 font-bold block">
-                        Visa Kart Nömrəsi (Kodu)
-                      </span>
-                      <div className="font-mono text-base sm:text-lg md:text-xl font-black tracking-widest text-white drop-shadow select-all break-all">
-                        {settings?.gateways?.visaCard?.cardNumber || "4098 5844 6336 1459"}
-                      </div>
-                    </div>
-
-                    {/* Footer: Cardholder & Bank */}
-                    <div className="flex items-end justify-between text-xs pt-2 border-t border-blue-400/20">
-                      <div>
-                        <span className="text-[9px] uppercase tracking-wider text-blue-200 block">Kart Sahibi</span>
-                        <span className="font-black uppercase tracking-wider text-white">
-                          {settings?.gateways?.visaCard?.cardHolder || "Sunay Seyidli"}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[9px] uppercase tracking-wider text-blue-200 block">Valyuta / Növ</span>
-                        <span className="font-bold text-blue-100 text-[11px]">
-                          {settings?.gateways?.visaCard?.currency || "AZN (Manat)"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions & Conversion */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(settings?.gateways?.visaCard?.cardNumber?.replace(/\s+/g, "") || "4098584463361459", "visaCard")}
-                      className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/30 cursor-pointer"
-                    >
-                      {copiedField === "visaCard" ? (
-                        <>
-                          <Check className="w-4 h-4 text-emerald-300" />
-                          Kart Kopyalandı (4098 5844 6336 1459)
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          Kart Nömrəsini Kopyala (4098 5844 6336 1459)
-                        </>
-                      )}
-                    </button>
-
-                    {/* Live AZN Conversion Pill */}
-                    <div className="px-4 py-2.5 rounded-xl bg-[#0e1b38] border border-blue-400/30 flex items-center justify-between sm:justify-start gap-3">
-                      <span className="text-xs text-slate-300 font-bold whitespace-nowrap">Ödəniləcək:</span>
-                      <div className="text-right sm:text-left">
-                        <span className="text-base font-black text-amber-400">
-                          {(selectedDetails.tl / (settings?.gateways?.visaCard?.aznRate || 20)).toFixed(2)} ₼ AZN
-                        </span>
-                        <span className="text-[10px] text-slate-400 block font-mono">
-                          ({selectedDetails.tl} ₺ TL)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Guidance Cards for Azerbaijan and Turkey */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    <div className="p-3.5 rounded-xl bg-[#081226] border border-blue-500/20 space-y-1.5">
-                      <div className="flex items-center gap-1.5 font-bold text-blue-300">
-                        <span className="text-sm">🇦🇿</span>
-                        <span>Azərbaycanlı Oyunçular üçün:</span>
-                      </div>
-                      <p className="text-slate-300 leading-relaxed text-[11px]">
-                        <strong>Birbank, m10, Leobank, ABB</strong> və ya istənilən bank tətbiqinizdən "Kartdan Karta" seçin. <strong>4098 5844 6336 1459</strong> nömrəsinə <strong>{(selectedDetails.tl / (settings?.gateways?.visaCard?.aznRate || 20)).toFixed(2)} ₼ Manat</strong> göndərin.
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-[#081226] border border-blue-500/20 space-y-1.5">
-                      <div className="flex items-center gap-1.5 font-bold text-blue-300">
-                        <span className="text-sm">🇹🇷</span>
-                        <span>Türkiyədən və Xaricdən Göndərənlər üçün:</span>
-                      </div>
-                      <p className="text-slate-300 leading-relaxed text-[11px]">
-                        Türkiyədən bu 16 rəqəmli Visa kartına <strong>Paysend, KoronaPay, UPT</strong> və ya bankınızın <strong>Visa Direct</strong> funksiyası ilə saniyələr içində göndərə bilərsiniz. Və ya dərhal Türk kartınızla ödəmək üçün <strong>Shopier (3D Secure)</strong> seçə bilərsiniz.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Transfer Notice Form Inputs */}
-                  <div className="pt-3 border-t border-blue-500/20 space-y-3">
-                    <span className="text-xs font-bold text-white block">
-                      Ödənişi Göndərdikdən Sonra Təsdiq Bildirişi:
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-1 font-semibold">
-                          Göndərən Şəxsin Adı və Soyadı *
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="məs: Əli Məmmədov və ya Ahmet Yılmaz"
-                          value={senderName}
-                          onChange={(e) => setSenderName(e.target.value)}
-                          className="w-full bg-[#081226] border border-blue-500/30 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-1 font-semibold">
-                          Köçürmə Edilən Tətbiq / Bank
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="məs: Birbank / m10 / Leobank / Paysend"
-                          value={senderBank}
-                          onChange={(e) => setSenderBank(e.target.value)}
-                          className="w-full bg-[#081226] border border-blue-500/30 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-400 block mb-1 font-semibold">
-                        Qeyd / Əlavə Məlumat (İstəyə bağlı)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="məs: Saat 16:20-də Birbank-dan göndərildi"
-                        value={senderNote}
-                        onChange={(e) => setSenderNote(e.target.value)}
-                        className="w-full bg-[#081226] border border-blue-500/30 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-400"
-                      />
-                    </div>
+                  <div>
+                    <label className="text-[11px] text-slate-300 block mb-1 font-semibold">
+                      Gönderim Yaptığınız Banka / Uygulama
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Örn: Garanti, Ziraat, Papara vb."
+                      value={senderBank}
+                      onChange={(e) => setSenderBank(e.target.value)}
+                      className="w-full bg-[#081226] border border-blue-500/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                    />
                   </div>
                 </div>
-              )}
-
-              {/* HAVALE / FAST DETAILS */}
-              {selectedMethod === "havale" && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#090f1d] border border-emerald-500/40 space-y-4 animate-in fade-in">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-emerald-400 font-black text-sm uppercase">
-                      <Building2 className="w-4 h-4" />
-                      Sunucu Banka Hesap Bilgileri
-                    </div>
-                    <span className="text-[10px] text-slate-400">FAST ile 7/24 transfer</span>
-                  </div>
-
-                  {/* Bank / IBAN Card */}
-                  <div className="p-4 rounded-xl bg-[#0e172a] border border-emerald-500/20 space-y-1.5 shadow-inner text-xs">
-                    <span className="text-slate-400 font-bold block text-[11px]">Banka & Hesap Sahibi:</span>
-                    <div className="text-white font-black text-sm">{settings?.gateways?.havale?.bankName || "Ziraat Bankası"}</div>
-                    <div className="text-emerald-300 font-semibold">{settings?.gateways?.havale?.accountHolder || "ZefirCraft Yönetimi"}</div>
-                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <span className="font-mono text-slate-200 select-all font-bold text-xs break-all">
-                        {settings?.gateways?.havale?.iban || "TR12 0001 0000 0000 0000 0000 00"}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(settings?.gateways?.havale?.iban || "TR12 0001 0000 0000 0000 00", "iban")}
-                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 flex items-center justify-center gap-1 text-[11px] font-bold cursor-pointer transition-colors w-full sm:w-auto"
-                      >
-                        {copiedField === "iban" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                        {copiedField === "iban" ? "Kopyalandı" : "IBAN Kopyala"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Transfer Notice Form Inputs */}
-                  <div className="pt-3 border-t border-slate-800 space-y-3">
-                    <span className="text-xs font-bold text-white block">
-                      Transfer Yaptıktan Sonra Onay Bildirimi:
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-1 font-semibold">Gönderen Adı Soyadı *</label>
-                        <input
-                          type="text"
-                          placeholder="Dekonttaki Ad Soyad"
-                          value={senderName}
-                          onChange={(e) => setSenderName(e.target.value)}
-                          className="w-full bg-[#0b1222] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-1 font-semibold">Gönderilen Banka</label>
-                        <input
-                          type="text"
-                          placeholder="Örn: Ziraat Bankası / FAST"
-                          value={senderBank}
-                          onChange={(e) => setSenderBank(e.target.value)}
-                          className="w-full bg-[#0b1222] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-400 block mb-1 font-semibold">Açıklama / Dekont Notu (İsteğe Bağlı)</label>
-                      <input
-                        type="text"
-                        placeholder="Örn: Saat 15:30'da FAST ile iletildi"
-                        value={senderNote}
-                        onChange={(e) => setSenderNote(e.target.value)}
-                        className="w-full bg-[#0b1222] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="text-[11px] text-slate-300 block mb-1 font-semibold">
+                    Açıklama / İşlem Notu (İsteğe Bağlı)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Örn: Saat 15:40'ta transfer yapıldı"
+                    value={senderNote}
+                    onChange={(e) => setSenderNote(e.target.value)}
+                    className="w-full bg-[#081226] border border-blue-500/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                  />
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -1221,7 +916,7 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
                   Sipariş Özeti
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase">
-                  Güvenli POS
+                  Manuel Onaylı
                 </span>
               </div>
 
@@ -1251,13 +946,7 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
                 <div className="flex justify-between text-slate-400">
                   <span>Ödeme Yöntemi:</span>
                   <span className="font-bold text-sky-300 uppercase">
-                    {selectedMethod === "visa"
-                      ? "VISA KART (AZN / ₺)"
-                      : selectedMethod === "shopier"
-                      ? "SHOPIER 3D SECURE"
-                      : selectedMethod === "havale"
-                      ? "BANKA HAVALESİ / FAST"
-                      : "PAYTR POS"}
+                    VİSA KART TRANSFERİ
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
@@ -1284,26 +973,16 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
                     {selectedDetails.tl} ₺
                   </span>
                 </div>
-
-                {/* AZN equivalent for Visa method */}
-                {selectedMethod === "visa" && (
-                  <div className="flex justify-between items-baseline pt-1 p-2.5 rounded-xl bg-blue-500/10 border border-blue-400/25">
-                    <span className="text-xs font-bold text-amber-300">AZN Qarşılığı:</span>
-                    <span className="text-xl font-black text-amber-400">
-                      {(selectedDetails.tl / (settings?.gateways?.visaCard?.aznRate || 20)).toFixed(2)} ₼ AZN
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Security highlights */}
               <div className="p-3.5 rounded-xl bg-[#080e1c] border border-slate-800 space-y-1.5 text-[11px] text-slate-400">
                 <div className="flex items-center gap-2 text-slate-200 font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                  3D Secure & SSL Güvencesi
+                  Güvenli & Hızlı Onay
                 </div>
                 <p className="leading-relaxed text-[10px]">
-                  Tüm işlemler şifreli protokollerle korunmaktadır. Kart numaranız veya şifreniz asla sunucularımızda saklanmaz.
+                  Ödeme bildiriminiz doğrudan sunucu yetkililerimize iletilir ve kontrol edildikten sonra krediniz anında hesabınıza tanımlanır.
                 </p>
               </div>
 
@@ -1320,20 +999,10 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       İşlem Başlatılıyor...
                     </>
-                  ) : selectedMethod === "visa" ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Visa Ödəniş Bildirişini Göndər ({(selectedDetails.tl / (settings?.gateways?.visaCard?.aznRate || 20)).toFixed(2)} ₼)
-                    </>
-                  ) : selectedMethod === "havale" ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Havale Bildirimini Gönder
-                    </>
                   ) : (
                     <>
-                      <Lock className="w-4 h-4" />
-                      {selectedDetails.tl} ₺ ile Güvenli Öde
+                      <Check className="w-4 h-4" />
+                      Ödeme Bildirimini Gönder ({selectedDetails.tl} ₺)
                     </>
                   )}
                 </button>
@@ -1653,68 +1322,68 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1: Visa Card Direct */}
+              {/* Card 1: Direct Card Transfer */}
               <div className="p-6 rounded-2xl bg-[#090e1c] border border-blue-500/30 space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-base">
                   1
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-white">Visa Kart (4098 5844 6336 1459)</h3>
-                  <p className="text-xs text-blue-400 font-medium">Papara Gərəkməz • Sadəcə Kart Kodu İlə Ödəniş</p>
+                  <h3 className="text-base font-bold text-white">16 Haneli Karta Doğrudan Transfer</h3>
+                  <p className="text-xs text-blue-400 font-medium">Sıfır Komisyon • 4098 5844 6336 1459</p>
                 </div>
                 <div className="text-xs text-slate-300 space-y-2 leading-relaxed">
                   <p>
-                    <strong>Heç bir şirkət və ya Papara lazım deyil:</strong> Yalnız 16 rəqəmli Visa kart nömrənizlə (Kapital Bank / Birbank AZN) həm Azərbaycanlı, həm də Türk oyunçulardan ödəniş qəbul edə bilərsiniz.
+                    <strong>Şirket veya Aracı Gerekmez:</strong> Oyuncular istedikleri kredi paketini seçer ve ekrandaki 16 haneli kart numarasına bankalarından transfer yapar.
                   </p>
                   <p>
-                    <strong>Azərbaycanlılar:</strong> Birbank, m10, Leobank və ya istənilən bank tətbiqindən "Kartdan Karta" ilə <strong>4098 5844 6336 1459</strong> kartınıza birbaşa Manat (AZN) göndərir.
+                    <strong>Bildirim Formu:</strong> Transfer yapıldıktan sonra oyuncu sitedeki forma adını soyadını yazıp gönderir.
                   </p>
                   <p>
-                    <strong>Türklər Necə Göndərir?</strong> Türkiyədəki oyunçular <strong>Paysend</strong>, <strong>KoronaPay</strong> və ya banklarının <strong>Visa Direct</strong> xidməti ilə bu 16 rəqəmli kartınıza birbaşa TL/USD göndərə bilir və ya saytımızdakı <strong>Shopier 3D Secure</strong> ilə dərhal Türk kartları ilə ödəyə bilir!
+                    <strong>Yönetici Onayı:</strong> Admin panelinizden gelen bildirimi tek tıkla onayladığınızda krediler anında oyuncunun hesabına tanımlanır.
                   </p>
                 </div>
               </div>
 
-              {/* Card 2: Shopier */}
+              {/* Card 2: Mastercard & Other Card Compatibility */}
               <div className="p-6 rounded-2xl bg-[#090e1c] border border-orange-500/30 space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 font-black text-base">
                   2
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-white">Shopier (Otomatik 3D Secure)</h3>
-                  <p className="text-xs text-orange-400 font-medium">Türk Kartları • Şirketsiz Bireysel Kurulum</p>
+                  <h3 className="text-base font-bold text-white">Mastercard & Troy Kartlar Kabul Edilir mi?</h3>
+                  <p className="text-xs text-orange-400 font-medium">Tüm Kart Aileleri Desteklenir</p>
                 </div>
                 <div className="text-xs text-slate-300 space-y-2 leading-relaxed">
                   <p>
-                    <strong>Kimler Açabilir?</strong> 18 yaşını doldurmuş her birey vergi levhası veya şirket olmadan 5 dakikada ücretsiz hesap açabilir.
+                    <strong>Evet, Kesinlikle:</strong> Gönderen kişinin kartı Mastercard, Troy veya Visa olabilir.
                   </p>
                   <p>
-                    <strong>Kart Bilgisi Güvenliği:</strong> Kullanıcılar kart bilgilerini asla sitemize yazmazlar. 3D Secure SMS şifresini doğrudan Shopier'in resmi güvenli ekranında girerler.
+                    <strong>Karttan Karta Sistemi:</strong> Bankacılık altyapısındaki karttan karta (C2C / P2P) transfer protokolü sayesinde kart markası ne olursa olsun 16 haneli kartınıza para başarıyla ulaşır.
                   </p>
                   <p>
-                    <strong>Otomatik Teslimat:</strong> Ödeme yapıldığı anda oyuncunun kredisi sunucuda saniyeler içinde otomatik olarak yüklenir.
+                    Oyuncular kendi banka uygulamalarının (Ziraat, Garanti, İş Bankası, Yapı Kredi, Papara vb.) "Para Gönder &rarr; Karta Transfer" bölümünü kullanabilir.
                   </p>
                 </div>
               </div>
 
-              {/* Card 3: Havale & FAST */}
+              {/* Card 3: Currency & TL Acceptance */}
               <div className="p-6 rounded-2xl bg-[#090e1c] border border-emerald-500/30 space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-base">
                   3
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-bold text-white">Banka Havalesi & FAST (Türkiye)</h3>
-                  <p className="text-xs text-emerald-400 font-medium">Sıfır Komisyon • 7/24 FAST</p>
+                  <h3 className="text-base font-bold text-white">Kartım TL Kabul Ediyor mu?</h3>
+                  <p className="text-xs text-emerald-400 font-medium">Otomatik Kur Çevrimi</p>
                 </div>
                 <div className="text-xs text-slate-300 space-y-2 leading-relaxed">
                   <p>
-                    <strong>Ne Hesabı Lazım?</strong> Türk banka hesabı olan yöneticiler için Ziraat, Garanti, Enpara vb. IBAN bilgisi.
+                    <strong>Evet, Otomatik Çevrilir:</strong> Oyuncu Türk Lirası (TL) gönderdiğinde Visa ve bankanız parayı resmi kurlar üzerinden anında hesabınıza dönüştürerek yatırır.
                   </p>
                   <p>
-                    <strong>Nasıl Çalışır?</strong> Oyuncular belirtilen IBAN'a FAST ile ödeme gönderip siteden dekont bildirimi yapar.
+                    Oyuncunun cebinden TL çıkar, sizin kartınıza karşılığı sorunsuzca geçer; herhangi bir ek işlem veya ayar yapmanıza gerek yoktur.
                   </p>
                   <p>
-                    <strong>Onay:</strong> Yönetici Admin Panelinden tek tıkla onayladığında kredi hesaba aktarılır.
+                    <strong>Sorunsuz Bakiye:</strong> Sitede tüm paketler sade ve net ₺ (TL) olarak gösterilir.
                   </p>
                 </div>
               </div>
@@ -1726,9 +1395,9 @@ export default function CreditHub({ user, onUpdateCredits, onOpenLogin }: Credit
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <span className="font-black text-white block">Oyuncularımız İçin 3D Secure Güvenlik Standardı</span>
+                <span className="font-black text-white block">Oyuncularımız İçin Güvenlik Standardı</span>
                 <p>
-                  ZefirCraft web sitesinde hiçbir zaman kredi kartı veya banka kartı numaranız, son kullanma tarihi veya CVV kodunuz istenmez veya kaydedilmez. Tüm ödeme işlemleri Türkiye Cumhuriyeti Bankacılık Düzenleme ve Denetleme Kurumu (BDDK) ve TCMB lisanslı güvenli ödeme sağlayıcıları üzerinden SMS onaylı 3D Secure olarak tamamlanır.
+                  ZefirCraft web sitesinde hiçbir zaman kart şifreniz, son kullanma tarihiniz veya CVV güvenlik kodunuz istenmez veya kaydedilmez. Transferler doğrudan kendi banka veya kart uygulamanız üzerinden 16 haneli kart numarasına yapılır ve bildirim formunuz yetkili onayından geçerek güvenle kredilendirilir.
                 </p>
               </div>
             </div>
